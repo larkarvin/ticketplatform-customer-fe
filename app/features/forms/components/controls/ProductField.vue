@@ -40,13 +40,13 @@ function setQty(variantId: number, raw: number): void {
   <div class="rounded-lg border p-3 dark:bg-gray-900" :class="borderClass(props.invalid ?? false)">
     <p v-if="product" class="mb-2 text-sm font-medium text-gray-800 dark:text-white/90">{{ product.name }}</p>
     <p v-if="!variants.length" class="text-sm text-gray-500 dark:text-gray-400">No options available.</p>
-    <div v-for="v in variants" :key="v.id" class="flex items-center justify-between gap-3 py-1">
+    <div v-for="(v, i) in variants" :key="v.id" class="flex items-center justify-between gap-3 py-1">
       <span class="text-sm text-gray-700 dark:text-gray-300">
         {{ v.name }}
         <span v-if="priceLabel(v)" class="text-gray-500 dark:text-gray-400">· {{ priceLabel(v) }}</span>
       </span>
       <input
-        :id="`field-${props.field.id}`"
+        :id="i === 0 ? `field-${props.field.id}` : `field-${props.field.id}-${v.id}`"
         type="number"
         min="0"
         :max="maxQuantity"
