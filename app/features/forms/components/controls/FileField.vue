@@ -21,6 +21,7 @@ function onChange(e: Event): void {
 <template>
   <div>
     <label
+      :for="`field-${field.id}`"
       :class="[
         'flex min-h-tap cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-3 text-sm text-gray-600 hover:border-brand-500 dark:text-gray-300',
         borderClass(props.invalid ?? false),
@@ -33,7 +34,12 @@ function onChange(e: Event): void {
     </label>
     <p v-if="filename && !uploading" class="mt-1 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
       {{ filename }}
-      <button type="button" class="text-gray-400 hover:text-danger-600" aria-label="Remove file" @click="emit('clear')">
+      <button
+        type="button"
+        class="min-h-tap min-w-tap inline-flex items-center justify-center text-gray-400 hover:text-danger-600"
+        aria-label="Remove file"
+        @click="emit('clear')"
+      >
         <X :size="14" />
       </button>
     </p>
