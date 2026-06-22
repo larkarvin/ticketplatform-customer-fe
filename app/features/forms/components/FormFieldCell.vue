@@ -12,8 +12,23 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ 'update:modelValue': [unknown]; upload: [File] }>()
 
-// col_span 12 → full row; 6/4/3 → half (2-col max). Mobile stacks (grid-cols-1).
-const cellClass = computed(() => (props.field.col_span >= 12 ? 'sm:col-span-2' : 'sm:col-span-1'))
+// Faithfully honor the admin's 12-col grid on sm+ (col_span 3 → 4-up, 4 → 3-up, 6 → 2-up, 12 → full);
+// mobile stacks (the parent grid is grid-cols-1 below sm). Literal classes so Tailwind generates them.
+const COL_SPAN: Record<number, string> = {
+  1: 'sm:col-span-1',
+  2: 'sm:col-span-2',
+  3: 'sm:col-span-3',
+  4: 'sm:col-span-4',
+  5: 'sm:col-span-5',
+  6: 'sm:col-span-6',
+  7: 'sm:col-span-7',
+  8: 'sm:col-span-8',
+  9: 'sm:col-span-9',
+  10: 'sm:col-span-10',
+  11: 'sm:col-span-11',
+  12: 'sm:col-span-12',
+}
+const cellClass = computed(() => COL_SPAN[props.field.col_span] ?? 'sm:col-span-12')
 const showLabel = computed(() => isCollecting(props.field))
 </script>
 

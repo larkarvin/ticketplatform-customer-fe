@@ -56,7 +56,7 @@ const s = props.state
                 {{ section.description }}
               </p>
             </div>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-12">
               <FormFieldCell
                 v-for="field in section.fields"
                 :key="field.id"
