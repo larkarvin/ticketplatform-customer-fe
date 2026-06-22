@@ -21,9 +21,11 @@ export default defineNuxtConfig({
     },
   },
 
-  // Re-declare so #icons resolves from this app's root too (a layer's aliases resolve against the
-  // consumer's srcDir, so the layer's own #icons alias is not enough here).
+  // Kernel modules live in the fe-core submodule. `#core` and `#icons` (defined here, against this
+  // app's root) make them importable as `#core/api`, `#core/services/branding.service`, etc. — a
+  // layer's own `~`/`@`/`#` aliases resolve against the consumer, so the consumer must declare them.
   alias: {
+    '#core': fileURLToPath(new URL('./fe-core/app/core', import.meta.url)),
     '#icons': fileURLToPath(
       new URL(`./fe-core/app/icons/${process.env.NUXT_PUBLIC_ICON_SET || 'lucide'}/index.ts`, import.meta.url)
     ),
