@@ -40,6 +40,17 @@ describe('validateField', () => {
     expect(validateField(field({ type: 'number', max: 5 }), '7')).toBe('Must be at most 5')
     expect(validateField(field({ type: 'number' }), '4')).toBeNull()
   })
+  it('checks duration format', () => {
+    expect(validateField(field({ type: 'duration' }), 'nope')).toBe('Enter a valid duration (e.g. 1:30:00)')
+    expect(validateField(field({ type: 'duration' }), '1:30:00')).toBeNull()
+    expect(validateField(field({ type: 'duration' }), '45')).toBeNull()
+    expect(validateField(field({ type: 'duration' }), '01:22:33.555')).toBeNull()
+  })
+  it('checks product requires at least one selection', () => {
+    expect(validateField(field({ type: 'product', required: true }), [])).toBe('Name is required')
+    expect(validateField(field({ type: 'product', required: true }), [{ variant_id: 1, quantity: 1 }])).toBeNull()
+    expect(validateField(field({ type: 'product', required: false }), [])).toBeNull()
+  })
   it('checks select value is a known option', () => {
     const f = field({
       type: 'select',

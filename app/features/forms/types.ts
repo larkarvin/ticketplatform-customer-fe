@@ -1,4 +1,28 @@
 // DTOs for the public form endpoints (snake_case as returned by the API).
+
+// Product field: the catalog data is embedded in the field's `settings.product` (no separate fetch).
+export interface ProductVariantPrice {
+  currency: string
+  price: string
+}
+export interface ProductVariant {
+  id: number
+  name: string
+  sku: string | null
+  is_active: boolean
+  prices: ProductVariantPrice[]
+}
+export interface ProductFieldInfo {
+  id: number
+  name: string
+  variants: ProductVariant[]
+}
+/** The submit value of a product field: an array of variant selections (total qty ≤ max_quantity). */
+export interface ProductSelection {
+  variant_id: number
+  quantity: number
+}
+
 export interface FieldOption {
   id: number
   option_key: string

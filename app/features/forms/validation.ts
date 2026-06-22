@@ -1,6 +1,6 @@
 // Pure, metadata-driven validation. The backend remains authoritative (422); these checks only
 // avoid obvious round-trips. Display-only, readonly, and deferred types collect no data.
-import type { Field } from './types'
+import type { Field, ProductSelection } from './types'
 
 export const COLLECTING_TYPES = new Set<string>([
   'text',
@@ -13,7 +13,12 @@ export const COLLECTING_TYPES = new Set<string>([
   'time',
   'file',
   'image',
+  'duration',
+  'product',
 ])
+
+// Matches the backend rule: optional hours/minutes then seconds, optional milliseconds (e.g. 1:30:00).
+const DURATION_RE = /^(\d{1,2}:)?(\d{1,2}:)?(\d{1,2})(\.\d{1,3})?$/
 
 export function isCollecting(field: Field): boolean {
   return field.visibility !== 'readonly' && field.visibility !== 'admin' && COLLECTING_TYPES.has(field.type)
@@ -28,8 +33,20 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export function validateField(field: Field, value: unknown): string | null {
   if (!isCollecting(field)) return null
 
+  // Product value is an array of selections — its emptiness is "no quantity", not an empty string.
+  if (field.type === 'product') {
+    const selections = Array.isArray(value) ? (value as ProductSelection[]) : []
+    const total = selections.reduce((n, s) => n + (Number(s?.quantity) || 0), 0)
+    if (field.required && total < 1) return `${field.label} is required`
+    return null
+  }
+
   if (field.required && isEmpty(value)) return `${field.label} is required`
   if (isEmpty(value)) return null // optional + empty → fine
+
+  if (field.type === 'duration' && typeof value === 'string' && !DURATION_RE.test(value.trim())) {
+    return 'Enter a valid duration (e.g. 1:30:00)'
+  }
 
   if (field.type === 'email' && typeof value === 'string' && !EMAIL_RE.test(value.trim())) {
     return 'Enter a valid email address'

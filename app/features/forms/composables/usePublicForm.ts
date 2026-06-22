@@ -59,10 +59,10 @@ export async function usePublicForm(slug: string) {
 
   const allFields = computed<Field[]>(() => sections.value.flatMap((s) => s.fields))
 
-  // Seed answers for every collecting field.
+  // Seed answers for every collecting field. Product holds an array of selections; others a string.
   const answers = reactive<Record<string, unknown>>({})
   for (const f of allFields.value) {
-    if (isCollecting(f)) answers[String(f.id)] = ''
+    if (isCollecting(f)) answers[String(f.id)] = f.type === 'product' ? [] : ''
   }
 
   const errors = ref<Record<number, string>>({})

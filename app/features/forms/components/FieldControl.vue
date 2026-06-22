@@ -2,10 +2,12 @@
 import { computed } from 'vue'
 import type { Field } from '~/features/forms/types'
 import DateField from './controls/DateField.vue'
+import DurationField from './controls/DurationField.vue'
 import EmailField from './controls/EmailField.vue'
 import FileField from './controls/FileField.vue'
 import NumberField from './controls/NumberField.vue'
 import PhoneField from './controls/PhoneField.vue'
+import ProductField from './controls/ProductField.vue'
 import SelectField from './controls/SelectField.vue'
 import TextareaField from './controls/TextareaField.vue'
 import TextField from './controls/TextField.vue'
@@ -33,6 +35,8 @@ const controls: Record<string, unknown> = {
   select: SelectField,
   date: DateField,
   time: TimeField,
+  duration: DurationField,
+  product: ProductField,
 }
 const displays: Record<string, unknown> = {
   paragraph: ParagraphBlock,
