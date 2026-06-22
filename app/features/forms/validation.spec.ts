@@ -1,6 +1,10 @@
+import { registerFieldType } from '#core/field-engine/registry'
+import type { Field } from '#core/field-engine/types'
+import { validateAll, validateField } from '#core/field-engine/validation'
 import { describe, expect, it } from 'vitest'
-import type { Field } from './types'
-import { validateAll, validateField } from './validation'
+
+// product is a registered extension (collecting); register a stub so validation treats it as such.
+registerFieldType({ type: 'product', component: {}, collectsData: true, defaultValue: () => [] })
 
 function field(p: Partial<Field>): Field {
   return {

@@ -1,6 +1,9 @@
-// DTOs for the public form endpoints (snake_case as returned by the API).
+// Form/submission DTOs for the public form endpoints (snake_case). The neutral field shapes
+// (Field/FieldGroup/FieldOption) live in the shared engine: #core/field-engine/types.
+import type { Field, FieldGroup } from '#core/field-engine/types'
 
 // Product field: the catalog data is embedded in the field's `settings.product` (no separate fetch).
+// "product" is domain vocabulary, so these types + the ProductField control stay in the feature, not core.
 export interface ProductVariantPrice {
   currency: string
   price: string
@@ -21,42 +24,6 @@ export interface ProductFieldInfo {
 export interface ProductSelection {
   variant_id: number
   quantity: number
-}
-
-export interface FieldOption {
-  id: number
-  option_key: string
-  value: string
-  label: string
-  price: number | null
-  sort_order: number
-}
-
-export interface Field {
-  id: number
-  field_group_id: number | null
-  field_key: string
-  type: string
-  label: string
-  placeholder: string | null
-  description: string | null
-  required: boolean
-  visibility: 'public' | 'readonly' | 'admin'
-  min: number | null
-  max: number | null
-  allow_decimal: boolean | null
-  settings: Record<string, unknown>
-  sort_order: number
-  col_span: number
-  options: FieldOption[]
-}
-
-export interface FieldGroup {
-  id: number
-  title: string
-  description: string | null
-  sort_order: number
-  fields: Field[]
 }
 
 export interface Form {

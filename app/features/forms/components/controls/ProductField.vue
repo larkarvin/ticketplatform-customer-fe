@@ -3,9 +3,10 @@
      is an array of { variant_id, quantity } selections (total quantity ≤ max_quantity). Pricing is shown
      for context; the order/payment flow itself is a later cycle. -->
 <script setup lang="ts">
+import { borderClass } from '#core/field-engine/components/controls/inputClass'
+import type { Field } from '#core/field-engine/types'
 import { computed } from 'vue'
-import type { Field, ProductFieldInfo, ProductSelection, ProductVariant } from '~/features/forms/types'
-import { borderClass } from './inputClass'
+import type { ProductFieldInfo, ProductSelection, ProductVariant } from '~/features/forms/types'
 
 const props = defineProps<{ field: Field; modelValue: unknown; invalid?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [ProductSelection[]] }>()

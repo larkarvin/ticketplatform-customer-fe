@@ -2,11 +2,13 @@
 // Owns the form's client state: SSR fetch, answers, the inline error map (client + 422), and submit
 // orchestration. No transport (services) or UI here.
 import { isValidationError } from '#core/errors'
+import { getFieldType } from '#core/field-engine/registry'
+import type { Field } from '#core/field-engine/types'
+import { isCollecting, validateAll } from '#core/field-engine/validation'
 import { computed, reactive, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { formsService } from '~/features/forms/services/forms.service'
-import type { Field, Form, SubmitAnswers, SubmitResult } from '~/features/forms/types'
-import { isCollecting, validateAll } from '~/features/forms/validation'
+import type { Form, SubmitAnswers, SubmitResult } from '~/features/forms/types'
 
 interface Section {
   id: string
@@ -59,10 +61,12 @@ export async function usePublicForm(slug: string) {
 
   const allFields = computed<Field[]>(() => sections.value.flatMap((s) => s.fields))
 
-  // Seed answers for every collecting field. Product holds an array of selections; others a string.
+  // Seed answers for every collecting field; extensions (e.g. product) supply their own default value.
   const answers = reactive<Record<string, unknown>>({})
   for (const f of allFields.value) {
-    if (isCollecting(f)) answers[String(f.id)] = f.type === 'product' ? [] : ''
+    if (!isCollecting(f)) continue
+    const ext = getFieldType(f.type)
+    answers[String(f.id)] = ext?.defaultValue ? ext.defaultValue() : ''
   }
 
   const errors = ref<Record<number, string>>({})

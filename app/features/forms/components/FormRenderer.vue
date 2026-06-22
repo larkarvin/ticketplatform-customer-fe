@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import FieldCell from '#core/field-engine/components/FieldCell.vue'
 import type { PublicFormState } from '~/features/forms/composables/usePublicForm'
-import FormFieldCell from './FormFieldCell.vue'
 const props = defineProps<{ state: PublicFormState }>()
 const s = props.state
 </script>
@@ -111,7 +111,7 @@ const s = props.state
               </p>
             </div>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-12">
-              <FormFieldCell
+              <FieldCell
                 v-for="field in section.fields"
                 :key="field.id"
                 :field="field"

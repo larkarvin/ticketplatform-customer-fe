@@ -13,20 +13,24 @@ Public form fill + submit with file/image upload, validation, guest email suppor
 - Inline error display per field; focus to first error on validation failure.
 - Success confirmation with link to edit submission (deferred backend).
 
-## Layer order (service → validation → composable → renderer)
+## The shared field engine lives in core
 
-**`types.ts`** — DTOs for API contracts: `Form`, `Field`, `FieldOption`, `FieldGroup`, `SubmitResult`, `UploadedMedia`, `SubmitAnswers`. Snake_case as returned by API.
+The fillable **field renderer** is in the shared layer — **`#core/field-engine`** — so other apps (e.g. a staff form preview) reuse it. This feature owns only the form-fill *submission* flow on top of it.
 
-**`services/forms.service.ts`** — API calls only; no reactivity, no business logic.
+From core (`#core/field-engine`): neutral `types` (`Field`/`FieldGroup`/`FieldOption`), `validation` (`validateField`/`validateAll`/`isCollecting`), the `FieldControl` dispatcher + `FieldCell`, the generic controls (text/email/textarea/phone/number/select/date/time/duration/file+image) and display blocks, and a `registry` for custom field types.
+
+Custom (domain) field types register into that registry — they don't go in core. Here, `plugins/field-types.ts` registers **`product`** (`ProductField.vue` + `defaultValue: () => []`); `product`'s submit value is `{ variant_id, quantity }[]`, built from the catalog embedded in `settings.product`.
+
+## This feature (submission on top of the engine)
+
+**`types.ts`** — form/submission DTOs: `Form`, `SubmitResult`, `UploadedMedia`, `SubmitAnswers`, and the product types. (`Field`/`FieldGroup` come from `#core/field-engine/types`.)
+
+**`services/forms.service.ts`** — API calls only; no reactivity.
 - `getPublicForm(slug)` — fetch form + structure.
 - `submitForm(slug, answers)` — POST submission; throws 422 with field errors.
 - `uploadFieldMedia(slug, fieldId, file)` — multipart upload; returns `UploadedMedia`.
 
-**`validation.ts`** — Pure, metadata-driven checks to avoid round-trips (backend remains authoritative). Exported constants + functions:
-- `COLLECTING_TYPES` — set of field types that gather user input.
-- `isCollecting(field)` — true if field should seed an answer.
-- `validateField(field, value)` → error string or null.
-- `validateAll(fields, answers)` → error map keyed by field ID.
+**`composables/usePublicForm.ts`** — SSR fetch, answers/error state, multi-step wizard, submit + 422 mapping. **`components/FormRenderer.vue`** — the wizard chrome (stepper, Back/Next, guards, success) wrapping `#core` `FieldCell`s.
 
 **`composables/usePublicForm.ts`** — **state, orchestration, no UI.** Wraps the service in Nuxt `useAsyncData` and composes the form's client state. Exports one async function:
 - `usePublicForm(slug)` → returns `PublicFormState`: 
