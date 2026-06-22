@@ -3,6 +3,7 @@
 // orchestration. No transport (services) or UI here.
 import { isValidationError } from '#core/errors'
 import { computed, reactive, ref } from 'vue'
+import { toast } from 'vue-sonner'
 import { formsService } from '~/features/forms/services/forms.service'
 import type { Field, Form, SubmitAnswers, SubmitResult } from '~/features/forms/types'
 import { isCollecting, validateAll } from '~/features/forms/validation'
@@ -165,12 +166,15 @@ export async function usePublicForm(slug: string) {
       submitted.value = await formsService.submitForm(slug, payload)
     } catch (e) {
       if (isValidationError(e)) {
+        // guest_email is a non-numeric 422 key; route it to the -1 slot the template reads.
         const mapped: Record<number, string> = {}
-        for (const [key, msg] of Object.entries(e.fields)) mapped[Number(key)] = msg
+        for (const [key, msg] of Object.entries(e.fields)) mapped[key === 'guest_email' ? -1 : Number(key)] = msg
         errors.value = mapped
         focusFirstError()
+      } else {
+        // 403/5xx/network are toasted by the api client; 400/404/409 are rethrown for us to message.
+        toast.error("Couldn't submit your response. Please try again.")
       }
-      // 5xx/network already toasted by the api client.
     } finally {
       submitting.value = false
     }
