@@ -76,7 +76,7 @@ const s = props.state
                 </li>
                 <li
                   v-if="i < s.sections.value.length - 1"
-                  class="h-px flex-1 bg-gray-200 dark:bg-gray-700"
+                  class="-mx-1.5 h-px flex-1 bg-gray-200 dark:bg-gray-700"
                   aria-hidden="true"
                 />
               </template>
