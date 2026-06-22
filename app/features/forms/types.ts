@@ -8,16 +8,30 @@ export interface ProductVariantPrice {
   currency: string
   price: string
 }
+/** Subset of the backend ProductImageResource the renderer uses. */
+export interface ProductImageMedia {
+  id: number
+  url: string
+  thumb_url: string | null
+  alt_text: string | null
+}
+export interface ProductAttributeValue {
+  attribute: string | null
+  value: string
+}
 export interface ProductVariant {
   id: number
   name: string
   sku: string | null
   is_active: boolean
+  image: ProductImageMedia | null
+  attribute_values: ProductAttributeValue[]
   prices: ProductVariantPrice[]
 }
 export interface ProductFieldInfo {
   id: number
   name: string
+  image: ProductImageMedia | null
   variants: ProductVariant[]
 }
 /** The submit value of a product field: an array of variant selections (total qty ≤ max_quantity). */
