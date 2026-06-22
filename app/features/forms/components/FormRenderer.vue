@@ -55,13 +55,15 @@ const s = props.state
           <nav v-if="s.isMultiStep.value" aria-label="Form steps">
             <ol class="relative flex items-center pb-8">
               <template v-for="(section, i) in s.sections.value" :key="section.id">
-                <li class="relative">
+                <li class="relative" :class="i < s.currentStep.value ? 'group' : ''">
+                  <!-- Dot. On hover of a clickable (completed) step the padding-circle tints in, so it
+                       reads as a circle with the dot in the middle. -->
                   <button
                     type="button"
                     :disabled="i >= s.currentStep.value"
                     :aria-current="i === s.currentStep.value ? 'step' : undefined"
                     :aria-label="section.title || `Step ${i + 1}`"
-                    class="block rounded-full p-1.5 enabled:cursor-pointer disabled:cursor-default"
+                    class="block rounded-full p-1.5 transition-colors enabled:cursor-pointer disabled:cursor-default group-hover:bg-brand-500/10"
                     @click="s.goToStep(i)"
                   >
                     <span
@@ -73,19 +75,24 @@ const s = props.state
                       "
                     />
                   </button>
-                  <!-- Title under the dot. Edge steps align to the edge, middle steps center on the dot.
-                       A page-colored bg + the active step on top (z-20) keep labels readable if they overlap. -->
-                  <span
-                    class="pointer-events-none absolute top-full whitespace-nowrap bg-white px-1 text-xs dark:bg-gray-900"
+                  <!-- Title under the dot — clickable too (completed steps). Edge steps align to the edge,
+                       middle steps center on the dot. Page-colored bg + the active step on top (z-20) keep
+                       labels readable if they overlap. tabindex -1: the dot is the keyboard control. -->
+                  <button
+                    type="button"
+                    :disabled="i >= s.currentStep.value"
+                    tabindex="-1"
+                    class="absolute top-full whitespace-nowrap bg-white px-1 text-xs transition-colors enabled:cursor-pointer disabled:cursor-default group-hover:text-gray-700 group-hover:underline dark:bg-gray-900 dark:group-hover:text-gray-200"
                     :class="[
                       i === 0 ? 'left-0' : i === s.sections.value.length - 1 ? 'right-0' : 'left-1/2 -translate-x-1/2',
                       i === s.currentStep.value
                         ? 'z-20 font-semibold text-gray-900 dark:text-white/90'
                         : 'z-10 text-gray-500 dark:text-gray-400',
                     ]"
+                    @click="s.goToStep(i)"
                   >
                     {{ section.title || `Step ${i + 1}` }}
-                  </span>
+                  </button>
                 </li>
                 <li
                   v-if="i < s.sections.value.length - 1"
