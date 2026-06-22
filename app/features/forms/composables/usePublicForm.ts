@@ -91,6 +91,39 @@ export async function usePublicForm(slug: string) {
   const submitting = ref(false)
   const submitted = ref<SubmitResult | null>(null)
 
+  // ── Multi-step paging: each section (field group) is a step. Single-section forms stay one page. ──
+  const currentStep = ref(0)
+  const totalSteps = computed(() => sections.value.length)
+  const isMultiStep = computed(() => totalSteps.value > 1)
+  const currentSection = computed(() => sections.value[currentStep.value] ?? null)
+  const isFirstStep = computed(() => currentStep.value === 0)
+  const isLastStep = computed(() => currentStep.value >= totalSteps.value - 1)
+  // What the renderer shows: just the current step when paging, all sections otherwise.
+  const visibleSections = computed<Section[]>(() =>
+    isMultiStep.value ? (currentSection.value ? [currentSection.value] : []) : sections.value
+  )
+
+  // Validate just the current step's fields before advancing (errors show only for the visible step).
+  function validateStep(): boolean {
+    const section = currentSection.value
+    errors.value = section ? validateAll(section.fields, answers) : {}
+    if (Object.keys(errors.value).length) {
+      focusFirstError()
+      return false
+    }
+    return true
+  }
+  function nextStep(): void {
+    if (isLastStep.value || !validateStep()) return
+    currentStep.value++
+    if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  function prevStep(): void {
+    if (isFirstStep.value) return
+    currentStep.value--
+    if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   function setAnswer(fieldId: number, value: unknown): void {
     answers[String(fieldId)] = value
     if (errors.value[fieldId]) {
@@ -100,6 +133,11 @@ export async function usePublicForm(slug: string) {
 
   async function submit(): Promise<void> {
     if (submitting.value || isClosed.value || isPriced.value || membersOnlyBlocked.value) return
+    // On a paged form, Enter / submit before the last step just advances.
+    if (isMultiStep.value && !isLastStep.value) {
+      nextStep()
+      return
+    }
     const clientErrors = validateAll(allFields.value, answers)
     if (needsGuestEmail.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.value.trim())) {
       clientErrors[-1] = 'Enter a valid email address'
@@ -151,6 +189,14 @@ export async function usePublicForm(slug: string) {
     setAnswer,
     uploads,
     uploadFile,
+    currentStep,
+    totalSteps,
+    isMultiStep,
+    isFirstStep,
+    isLastStep,
+    visibleSections,
+    nextStep,
+    prevStep,
   }
 }
 

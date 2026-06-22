@@ -49,7 +49,11 @@ const s = props.state
         </p>
 
         <form class="space-y-8" novalidate @submit.prevent="s.submit()">
-          <section v-for="section in s.sections.value" :key="section.id" class="space-y-3">
+          <p v-if="s.isMultiStep.value" class="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Step {{ s.currentStep.value + 1 }} of {{ s.totalSteps.value }}
+          </p>
+
+          <section v-for="section in s.visibleSections.value" :key="section.id" class="space-y-3">
             <div v-if="section.title">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white/90">{{ section.title }}</h2>
               <p v-if="section.description" class="text-sm text-gray-500 dark:text-gray-400">
@@ -70,7 +74,8 @@ const s = props.state
             </div>
           </section>
 
-          <div v-if="s.needsGuestEmail.value">
+          <!-- Guest email + submit live on the last step (or the only page). -->
+          <div v-if="s.needsGuestEmail.value && (!s.isMultiStep.value || s.isLastStep.value)">
             <label for="guest-email" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
               Your email
               <span class="text-danger-500">*</span>
@@ -86,14 +91,36 @@ const s = props.state
             </p>
           </div>
 
-          <button
-            type="submit"
-            :disabled="s.submitting.value || s.isPriced.value"
-            class="min-h-tap rounded-lg px-6 text-base font-medium text-white disabled:opacity-60"
-            :style="{ backgroundColor: 'var(--color-brand-500)' }"
-          >
-            {{ s.submitting.value ? 'Submitting…' : s.form.submit_button_text || 'Submit' }}
-          </button>
+          <div class="flex items-center justify-between gap-3">
+            <button
+              v-if="s.isMultiStep.value && !s.isFirstStep.value"
+              type="button"
+              class="min-h-tap rounded-lg border border-gray-300 px-6 text-base font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              @click="s.prevStep()"
+            >
+              Back
+            </button>
+            <span v-else></span>
+
+            <button
+              v-if="s.isMultiStep.value && !s.isLastStep.value"
+              type="button"
+              class="min-h-tap rounded-lg px-6 text-base font-medium text-white"
+              :style="{ backgroundColor: 'var(--color-brand-500)' }"
+              @click="s.nextStep()"
+            >
+              Next
+            </button>
+            <button
+              v-else
+              type="submit"
+              :disabled="s.submitting.value || s.isPriced.value"
+              class="min-h-tap rounded-lg px-6 text-base font-medium text-white disabled:opacity-60"
+              :style="{ backgroundColor: 'var(--color-brand-500)' }"
+            >
+              {{ s.submitting.value ? 'Submitting…' : s.form.submit_button_text || 'Submit' }}
+            </button>
+          </div>
         </form>
       </template>
     </template>
