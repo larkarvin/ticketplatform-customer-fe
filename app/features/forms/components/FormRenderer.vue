@@ -53,9 +53,9 @@ const s = props.state
                filled+ringed; upcoming are plain. Completed dots are clickable to go back. The step's
                name shows as the section heading below. -->
           <nav v-if="s.isMultiStep.value" aria-label="Form steps">
-            <ol class="flex items-center">
+            <ol class="relative flex items-center pb-8">
               <template v-for="(section, i) in s.sections.value" :key="section.id">
-                <li>
+                <li class="relative">
                   <button
                     type="button"
                     :disabled="i >= s.currentStep.value"
@@ -73,6 +73,19 @@ const s = props.state
                       "
                     />
                   </button>
+                  <!-- Title under the dot. Edge steps align to the edge, middle steps center on the dot.
+                       A page-colored bg + the active step on top (z-20) keep labels readable if they overlap. -->
+                  <span
+                    class="pointer-events-none absolute top-full whitespace-nowrap bg-white px-1 text-xs dark:bg-gray-900"
+                    :class="[
+                      i === 0 ? 'left-0' : i === s.sections.value.length - 1 ? 'right-0' : 'left-1/2 -translate-x-1/2',
+                      i === s.currentStep.value
+                        ? 'z-20 font-semibold text-gray-900 dark:text-white/90'
+                        : 'z-10 text-gray-500 dark:text-gray-400',
+                    ]"
+                  >
+                    {{ section.title || `Step ${i + 1}` }}
+                  </span>
                 </li>
                 <li
                   v-if="i < s.sections.value.length - 1"
