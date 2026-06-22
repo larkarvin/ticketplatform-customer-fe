@@ -49,34 +49,37 @@ const s = props.state
         </p>
 
         <form class="space-y-8" novalidate @submit.prevent="s.submit()">
-          <!-- Wizard step indicator: a dot + label per step. Completed steps are clickable (go back). -->
+          <!-- Wizard progress: full-width dots joined by lines. Reached steps (current + past) are
+               filled+ringed; upcoming are plain. Completed dots are clickable to go back. The step's
+               name shows as the section heading below. -->
           <nav v-if="s.isMultiStep.value" aria-label="Form steps">
-            <ol class="flex flex-wrap items-center gap-x-5 gap-y-2">
-              <li v-for="(section, i) in s.sections.value" :key="section.id">
-                <button
-                  type="button"
-                  :disabled="i >= s.currentStep.value"
-                  class="flex min-h-tap items-center gap-2 disabled:cursor-default"
-                  :aria-current="i === s.currentStep.value ? 'step' : undefined"
-                  @click="s.goToStep(i)"
-                >
-                  <span
-                    class="h-2.5 w-2.5 shrink-0 rounded-full transition-colors"
-                    :class="i > s.currentStep.value ? 'bg-gray-300 dark:bg-gray-600' : ''"
-                    :style="i <= s.currentStep.value ? { backgroundColor: 'var(--color-brand-500)' } : {}"
-                  />
-                  <span
-                    class="text-sm"
-                    :class="
-                      i === s.currentStep.value
-                        ? 'font-semibold text-gray-900 dark:text-white/90'
-                        : 'text-gray-500 dark:text-gray-400'
-                    "
+            <ol class="flex items-center">
+              <template v-for="(section, i) in s.sections.value" :key="section.id">
+                <li>
+                  <button
+                    type="button"
+                    :disabled="i >= s.currentStep.value"
+                    :aria-current="i === s.currentStep.value ? 'step' : undefined"
+                    :aria-label="section.title || `Step ${i + 1}`"
+                    class="block rounded-full p-1.5 enabled:cursor-pointer disabled:cursor-default"
+                    @click="s.goToStep(i)"
                   >
-                    {{ section.title || 'Details' }}
-                  </span>
-                </button>
-              </li>
+                    <span
+                      class="block h-3 w-3 rounded-full transition-all"
+                      :class="
+                        i <= s.currentStep.value
+                          ? 'bg-brand-500 ring-2 ring-brand-500/30'
+                          : 'bg-gray-300 dark:bg-gray-600'
+                      "
+                    />
+                  </button>
+                </li>
+                <li
+                  v-if="i < s.sections.value.length - 1"
+                  class="h-px flex-1 bg-gray-200 dark:bg-gray-700"
+                  aria-hidden="true"
+                />
+              </template>
             </ol>
           </nav>
 
