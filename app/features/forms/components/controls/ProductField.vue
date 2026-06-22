@@ -23,6 +23,8 @@ const variants = computed<ProductVariant[]>(() => (product.value?.variants ?? []
 
 const selections = computed<ProductSelection[]>(() => (Array.isArray(props.modelValue) ? props.modelValue : []))
 const qtyFor = (variantId: number) => selections.value.find((s) => s.variant_id === variantId)?.quantity ?? 0
+// max_quantity is a TOTAL across variants — cap on the running total, not per variant.
+const totalQty = computed(() => selections.value.reduce((n, s) => n + s.quantity, 0))
 
 // Variant image, falling back to the product image when the variant has none.
 const variantImage = (v: ProductVariant) => v.image ?? product.value?.image ?? null
@@ -37,7 +39,9 @@ function priceLabel(v: ProductVariant): string {
 }
 
 function setQty(variantId: number, raw: number): void {
-  const qty = Math.max(0, Math.min(Number.isFinite(raw) ? raw : 0, maxQuantity.value))
+  // Clamp by the allowance left for the whole field (total of the other variants).
+  const ceiling = Math.max(0, maxQuantity.value - (totalQty.value - qtyFor(variantId)))
+  const qty = Math.max(0, Math.min(Number.isFinite(raw) ? raw : 0, ceiling))
   const next = selections.value.filter((s) => s.variant_id !== variantId)
   if (qty > 0) next.push({ variant_id: variantId, quantity: qty })
   emit('update:modelValue', next)
@@ -99,7 +103,7 @@ function setQty(variantId: number, raw: number): void {
         <button
           type="button"
           class="flex min-h-tap min-w-tap items-center justify-center text-gray-600 disabled:opacity-40 dark:text-gray-300"
-          :disabled="qtyFor(v.id) >= maxQuantity"
+          :disabled="totalQty >= maxQuantity"
           :aria-label="`Increase quantity for ${v.name}`"
           @click="setQty(v.id, qtyFor(v.id) + 1)"
         >
