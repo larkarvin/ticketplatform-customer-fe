@@ -13,4 +13,6 @@ The spine every later customer-FE cycle drops onto: the shared layer link, the S
 
 ## Out of scope (later cycles)
 
-The shared **field renderer**, **events** (discovery + detail + registration), **forms** rendering/submission, **registration**, **payment**, and **my-tickets / account linking**. Backend slug-resolution endpoints for `/e` and `/f` are also deferred to the Events/Forms cycles — the stubs render from the path param only. Design direction (Airbnb-style discovery, checkout flow) is recorded in the spec, not built here.
+**Events** (discovery + detail + registration), **registration**, **payment**, and **my-tickets / account linking**. Backend slug-resolution endpoints for `/e` are also deferred to the Events cycle — the stub renders from the path param only. Design direction (Airbnb-style discovery, checkout flow) is recorded in the spec, not built here.
+
+**Forms** rendering/submission now shipped — see [`app/features/forms/README.md`](../../app/features/forms/README.md).
