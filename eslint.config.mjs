@@ -18,5 +18,10 @@ export default withNuxt(
     rules: {
       'vue/multi-word-component-names': 'off',
     },
+  },
+  {
+    // Spec files use vitest's mock-before-import pattern; import/first must be off.
+    files: ['app/**/*.spec.ts'],
+    rules: { 'import/first': 'off' },
   }
 )

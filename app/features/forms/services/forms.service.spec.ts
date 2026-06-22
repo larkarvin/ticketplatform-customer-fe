@@ -30,7 +30,7 @@ describe('formsService', () => {
     post.mockResolvedValue({ id: 3, uuid: 'abc', original_filename: 'f.png', url: '/u' })
     const file = new File(['x'], 'f.png', { type: 'image/png' })
     const media = await formsService.uploadFieldMedia('x', 9, file)
-    const [url, body] = post.mock.calls[0]
+    const [url, body] = post.mock.calls[0] ?? []
     expect(url).toBe('/forms/public/x/fields/9/upload')
     expect(body).toBeInstanceOf(FormData)
     expect((body as FormData).get('file')).toBe(file)

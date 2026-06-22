@@ -4,10 +4,23 @@ import { validateAll, validateField } from './validation'
 
 function field(p: Partial<Field>): Field {
   return {
-    id: 1, field_group_id: null, field_key: 'k', type: 'text', label: 'Name',
-    placeholder: null, description: null, required: false, visibility: 'public',
-    min: null, max: null, allow_decimal: null, settings: {}, sort_order: 0,
-    col_span: 12, options: [], ...p,
+    id: 1,
+    field_group_id: null,
+    field_key: 'k',
+    type: 'text',
+    label: 'Name',
+    placeholder: null,
+    description: null,
+    required: false,
+    visibility: 'public',
+    min: null,
+    max: null,
+    allow_decimal: null,
+    settings: {},
+    sort_order: 0,
+    col_span: 12,
+    options: [],
+    ...p,
   }
 }
 
@@ -28,7 +41,10 @@ describe('validateField', () => {
     expect(validateField(field({ type: 'number' }), '4')).toBeNull()
   })
   it('checks select value is a known option', () => {
-    const f = field({ type: 'select', options: [{ id: 1, option_key: 'a', value: 'a', label: 'A', price: null, sort_order: 0 }] })
+    const f = field({
+      type: 'select',
+      options: [{ id: 1, option_key: 'a', value: 'a', label: 'A', price: null, sort_order: 0 }],
+    })
     expect(validateField(f, 'b')).toBe('Choose one of the options')
     expect(validateField(f, 'a')).toBeNull()
   })

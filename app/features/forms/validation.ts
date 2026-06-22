@@ -3,7 +3,16 @@
 import type { Field } from './types'
 
 export const COLLECTING_TYPES = new Set<string>([
-  'text', 'email', 'textarea', 'phone', 'number', 'select', 'date', 'time', 'file', 'image',
+  'text',
+  'email',
+  'textarea',
+  'phone',
+  'number',
+  'select',
+  'date',
+  'time',
+  'file',
+  'image',
 ])
 
 export function isCollecting(field: Field): boolean {

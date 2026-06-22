@@ -7,5 +7,6 @@ const props = defineProps<{ field: Field }>()
 const html = computed(() => DOMPurify.sanitize(String(props.field.settings.content ?? ''), { FORBID_TAGS: ['img'] }))
 </script>
 <template>
+  <!-- eslint-disable-next-line vue/no-v-html -->
   <div class="prose prose-sm max-w-none text-gray-700 dark:prose-invert" v-html="html" />
 </template>
