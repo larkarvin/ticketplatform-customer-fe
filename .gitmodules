@@ -1,0 +1,3 @@
+[submodule "fe-core"]
+	path = fe-core
+	url = git@github.com:larkarvin/ticketplatform-fe-core.git
