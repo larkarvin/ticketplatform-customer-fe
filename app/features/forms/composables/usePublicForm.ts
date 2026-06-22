@@ -113,15 +113,26 @@ export async function usePublicForm(slug: string) {
     }
     return true
   }
+  function scrollTop(): void {
+    if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   function nextStep(): void {
     if (isLastStep.value || !validateStep()) return
     currentStep.value++
-    if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollTop()
   }
   function prevStep(): void {
     if (isFirstStep.value) return
     currentStep.value--
-    if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollTop()
+  }
+  // Jump straight to an already-completed (earlier) step. Backward only — moving forward goes through
+  // nextStep so each step is validated before it's left.
+  function goToStep(index: number): void {
+    if (index >= 0 && index < currentStep.value) {
+      currentStep.value = index
+      scrollTop()
+    }
   }
 
   function setAnswer(fieldId: number, value: unknown): void {
@@ -197,6 +208,7 @@ export async function usePublicForm(slug: string) {
     visibleSections,
     nextStep,
     prevStep,
+    goToStep,
   }
 }
 

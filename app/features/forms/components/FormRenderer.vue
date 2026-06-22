@@ -49,9 +49,36 @@ const s = props.state
         </p>
 
         <form class="space-y-8" novalidate @submit.prevent="s.submit()">
-          <p v-if="s.isMultiStep.value" class="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Step {{ s.currentStep.value + 1 }} of {{ s.totalSteps.value }}
-          </p>
+          <!-- Wizard step indicator: a dot + label per step. Completed steps are clickable (go back). -->
+          <nav v-if="s.isMultiStep.value" aria-label="Form steps">
+            <ol class="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <li v-for="(section, i) in s.sections.value" :key="section.id">
+                <button
+                  type="button"
+                  :disabled="i >= s.currentStep.value"
+                  class="flex min-h-tap items-center gap-2 disabled:cursor-default"
+                  :aria-current="i === s.currentStep.value ? 'step' : undefined"
+                  @click="s.goToStep(i)"
+                >
+                  <span
+                    class="h-2.5 w-2.5 shrink-0 rounded-full transition-colors"
+                    :class="i > s.currentStep.value ? 'bg-gray-300 dark:bg-gray-600' : ''"
+                    :style="i <= s.currentStep.value ? { backgroundColor: 'var(--color-brand-500)' } : {}"
+                  />
+                  <span
+                    class="text-sm"
+                    :class="
+                      i === s.currentStep.value
+                        ? 'font-semibold text-gray-900 dark:text-white/90'
+                        : 'text-gray-500 dark:text-gray-400'
+                    "
+                  >
+                    {{ section.title || 'Details' }}
+                  </span>
+                </button>
+              </li>
+            </ol>
+          </nav>
 
           <section v-for="section in s.visibleSections.value" :key="section.id" class="space-y-3">
             <div v-if="section.title">
