@@ -62,6 +62,19 @@ export async function usePublicForm(slug: string) {
   )
   const membersOnlyBlocked = computed(() => form.members_only && !form.allow_non_members)
 
+  const uploads = reactive<Record<number, { uploading: boolean; filename: string | null }>>({})
+  async function uploadFile(fieldId: number, file: File): Promise<void> {
+    uploads[fieldId] = { uploading: true, filename: file.name }
+    try {
+      const media = await formsService.uploadFieldMedia(slug, fieldId, file)
+      setAnswer(fieldId, media.uuid)
+      uploads[fieldId] = { uploading: false, filename: media.original_filename }
+    } catch {
+      uploads[fieldId] = { uploading: false, filename: null }
+      // api client already toasted the failure
+    }
+  }
+
   const submitting = ref(false)
   const submitted = ref<SubmitResult | null>(null)
 
@@ -123,6 +136,8 @@ export async function usePublicForm(slug: string) {
     submitted,
     submit,
     setAnswer,
+    uploads,
+    uploadFile,
   }
 }
 

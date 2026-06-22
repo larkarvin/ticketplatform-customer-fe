@@ -48,6 +48,10 @@ export function validateField(field: Field, value: unknown): string | null {
     if (!keys.includes(String(value))) return 'Choose one of the options'
   }
 
+  if ((field.type === 'file' || field.type === 'image') && field.required && isEmpty(value)) {
+    return `${field.label} is required`
+  }
+
   return null
 }
 

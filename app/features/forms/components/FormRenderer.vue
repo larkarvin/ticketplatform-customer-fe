@@ -63,7 +63,9 @@ const s = props.state
                 :field="field"
                 :model-value="s.answers[String(field.id)]"
                 :error="s.errors.value[field.id]"
+                :upload="s.uploads[field.id]"
                 @update:model-value="s.setAnswer(field.id, $event)"
+                @upload="s.uploadFile(field.id, $event)"
               />
             </div>
           </section>

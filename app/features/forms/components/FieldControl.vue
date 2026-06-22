@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { Field } from '~/features/forms/types'
 import DateField from './controls/DateField.vue'
 import EmailField from './controls/EmailField.vue'
+import FileField from './controls/FileField.vue'
 import NumberField from './controls/NumberField.vue'
 import PhoneField from './controls/PhoneField.vue'
 import SelectField from './controls/SelectField.vue'
@@ -15,8 +16,13 @@ import HeadingBlock from './display/HeadingBlock.vue'
 import ParagraphBlock from './display/ParagraphBlock.vue'
 import Spacer from './display/Spacer.vue'
 
-const props = defineProps<{ field: Field; modelValue: unknown; invalid?: boolean }>()
-const emit = defineEmits<{ 'update:modelValue': [unknown] }>()
+const props = defineProps<{
+  field: Field
+  modelValue: unknown
+  invalid?: boolean
+  upload?: { uploading: boolean; filename: string | null }
+}>()
+const emit = defineEmits<{ 'update:modelValue': [unknown]; upload: [File] }>()
 
 const controls: Record<string, unknown> = {
   text: TextField,
@@ -41,6 +47,16 @@ const display = computed(() => displays[props.field.type] ?? null)
 
 <template>
   <component :is="display" v-if="display" :field="field" />
+  <FileField
+    v-else-if="field.type === 'file' || field.type === 'image'"
+    :field="field"
+    :model-value="modelValue"
+    :invalid="invalid"
+    :uploading="upload?.uploading"
+    :filename="upload?.filename"
+    @select="emit('upload', $event)"
+    @clear="emit('update:modelValue', '')"
+  />
   <component
     :is="control"
     v-else-if="control"
