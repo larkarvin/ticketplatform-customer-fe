@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Toaster } from 'vue-sonner'
+
 const { branding } = useTenant()
 const config = useRuntimeConfig()
 
@@ -14,4 +16,5 @@ useHead(() => ({
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
+  <Toaster position="top-center" :rich-colors="true" />
 </template>

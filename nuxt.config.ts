@@ -13,7 +13,7 @@ export default defineNuxtConfig({
 
   extends: ['./fe-core'],
 
-  modules: ['@nuxt/eslint', '@nuxt/image', '@pinia/nuxt'],
+  modules: ['@nuxt/eslint', '@pinia/nuxt'],
 
   postcss: {
     plugins: {

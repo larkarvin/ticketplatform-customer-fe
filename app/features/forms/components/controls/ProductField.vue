@@ -83,6 +83,10 @@ const lightboxImages = computed(() =>
         <img
           :src="thumb(product.image) ?? undefined"
           :alt="product.image?.alt_text ?? product.name"
+          width="64"
+          height="64"
+          loading="lazy"
+          decoding="async"
           class="h-16 w-16 object-cover"
         />
       </button>
@@ -116,6 +120,10 @@ const lightboxImages = computed(() =>
           <img
             :src="thumb(product.image) ?? undefined"
             :alt="product.image?.alt_text ?? product.name"
+            width="64"
+            height="64"
+            loading="lazy"
+            decoding="async"
             class="h-16 w-16 object-cover"
           />
         </button>
