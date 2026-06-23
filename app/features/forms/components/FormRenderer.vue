@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
+import { Mail } from '#icons'
 import type { PublicFormState } from '~/features/forms/composables/usePublicForm'
 const props = defineProps<{ state: PublicFormState }>()
 const s = props.state
@@ -130,12 +131,20 @@ const s = props.state
               Your email
               <span class="text-danger-500">*</span>
             </label>
-            <input
-              id="guest-email"
-              v-model="s.guestEmail.value"
-              type="email"
-              class="min-h-tap w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-base text-gray-900 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
-            />
+            <div class="relative">
+              <input
+                id="guest-email"
+                v-model="s.guestEmail.value"
+                type="email"
+                placeholder="your@email.com"
+                class="min-h-tap w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-14 text-base text-gray-900 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
+              />
+              <span
+                class="pointer-events-none absolute inset-y-0 left-0 flex items-center border-r border-gray-300 px-4 text-gray-500 dark:border-gray-700 dark:text-gray-400"
+              >
+                <Mail :size="20" />
+              </span>
+            </div>
             <p v-if="s.errors.value[-1]" class="mt-1 text-sm text-danger-600 dark:text-danger-400">
               {{ s.errors.value[-1] }}
             </p>
