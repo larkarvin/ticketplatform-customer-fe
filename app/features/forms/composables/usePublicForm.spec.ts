@@ -126,6 +126,19 @@ describe('usePublicForm', () => {
     expect(s.guestEmail.value).toBe('')
   })
 
+  it('asks for a contact email on a members-only form that allows non-members (no email field)', async () => {
+    getPublicForm.mockResolvedValue(
+      form({
+        members_only: true,
+        allow_non_members: true,
+        requires_guest_email: false,
+        fields: [field({ id: 1, type: 'text' })],
+      })
+    )
+    const s = await usePublicForm('s')
+    expect(s.needsGuestEmail.value).toBe(true)
+  })
+
   it('blocks submit and surfaces an inline error for a missing required field', async () => {
     getPublicForm.mockResolvedValue(form({ fields: [field({ id: 1, type: 'text', required: true })] }))
     const s = await usePublicForm('s')

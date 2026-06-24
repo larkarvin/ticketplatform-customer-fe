@@ -82,7 +82,11 @@ export async function usePublicForm(slug: string) {
     const v = emailField.value ? answers[String(emailField.value.id)] : ''
     return typeof v === 'string' ? v.trim() : ''
   })
-  const needsGuestEmail = computed(() => form.requires_guest_email || !!emailField.value)
+  // Collect a contact email on every guest-submittable form (prefilled from the email field when there
+  // is one). Gating on guest-submittability — not the backend's `requires_guest_email`, which is false
+  // for members-only forms — avoids a dead-end where a guest on a members-only-but-allow-non-members
+  // form with no email field gets a 422 for an input that was never shown.
+  const needsGuestEmail = computed(() => !form.members_only || form.allow_non_members)
   function setGuestEmail(value: string): void {
     guestEmailEdited.value = true
     guestEmail.value = value
