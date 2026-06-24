@@ -180,6 +180,14 @@ describe('usePublicForm', () => {
     expect(item?.value).toBe('2 × Shirt (Medium – Red)')
   })
 
+  it('clears the contact-email error when the guest edits the address', async () => {
+    getPublicForm.mockResolvedValue(form({ requires_guest_email: true, fields: [field({ id: 1, type: 'text' })] }))
+    const s = await usePublicForm('s')
+    s.errors.value = { [-1]: 'Enter a valid email address' }
+    s.setGuestEmail('a@b.com')
+    expect(s.errors.value[-1]).toBeUndefined()
+  })
+
   it('blocks submit and surfaces an inline error for a missing required field', async () => {
     getPublicForm.mockResolvedValue(form({ fields: [field({ id: 1, type: 'text', required: true })] }))
     const s = await usePublicForm('s')

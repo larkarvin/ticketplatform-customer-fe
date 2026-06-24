@@ -116,6 +116,10 @@ export async function usePublicForm(slug: string) {
   function setGuestEmail(value: string): void {
     guestEmailEdited.value = true
     guestEmail.value = value
+    // Clear any prior contact-email error as the guest edits (mirrors setAnswer for field errors).
+    if (errors.value[-1]) {
+      errors.value = Object.fromEntries(Object.entries(errors.value).filter(([k]) => Number(k) !== -1))
+    }
   }
   // Mirror the email field into the contact box until the guest types their own destination.
   watch(detectedEmail, (v) => !guestEmailEdited.value && (guestEmail.value = v), { immediate: true })

@@ -203,6 +203,7 @@ const payLabel = computed(() => {
                       : 'border-gray-300 focus:border-brand-300'
                   "
                   @input="s.setGuestEmail(($event.target as HTMLInputElement).value)"
+                  @blur="editingEmail = false"
                 />
               </div>
               <p v-if="s.errors.value[-1]" class="mt-1.5 text-sm text-danger-600">{{ s.errors.value[-1] }}</p>
