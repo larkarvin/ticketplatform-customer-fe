@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import type { Form } from '~/features/forms/types'
 
 const { getPublicForm, submitForm } = vi.hoisted(() => ({ getPublicForm: vi.fn(), submitForm: vi.fn() }))
@@ -102,6 +102,28 @@ describe('usePublicForm', () => {
     const s = await usePublicForm('s')
     expect(s.answers['1']).toBe('')
     expect('2' in s.answers).toBe(false)
+  })
+
+  it('prefills the contact email from the form email field, then stops once the guest edits it', async () => {
+    getPublicForm.mockResolvedValue(form({ fields: [field({ id: 5, type: 'email', label: 'Email' })] }))
+    const s = await usePublicForm('s')
+    // An email field means we still collect a contact email (to prefill), not skip it.
+    expect(s.needsGuestEmail.value).toBe(true)
+    s.setAnswer(5, 'a@b.com')
+    await nextTick()
+    expect(s.guestEmail.value).toBe('a@b.com')
+    // Once the guest edits the destination, later field changes must not clobber it.
+    s.setGuestEmail('me@home.com')
+    s.setAnswer(5, 'c@d.com')
+    await nextTick()
+    expect(s.guestEmail.value).toBe('me@home.com')
+  })
+
+  it('still asks for a contact email when the form has no email field', async () => {
+    getPublicForm.mockResolvedValue(form({ requires_guest_email: true, fields: [field({ id: 1, type: 'text' })] }))
+    const s = await usePublicForm('s')
+    expect(s.needsGuestEmail.value).toBe(true)
+    expect(s.guestEmail.value).toBe('')
   })
 
   it('blocks submit and surfaces an inline error for a missing required field', async () => {

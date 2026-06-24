@@ -5,7 +5,7 @@ import { isValidationError } from '#core/errors'
 import { getFieldType } from '#core/field-engine/registry'
 import type { Field } from '#core/field-engine/types'
 import { isCollecting, validateAll } from '#core/field-engine/validation'
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { formsService } from '~/features/forms/services/forms.service'
 import type { Form, SubmitAnswers, SubmitResult } from '~/features/forms/types'
@@ -70,8 +70,25 @@ export async function usePublicForm(slug: string) {
   }
 
   const errors = ref<Record<number, string>>({})
+
+  // Every guest submission needs one contact email (where the confirmation + edit link go). When the
+  // form has its own email field we treat that as the source and prefill the final step from it; the
+  // guest can still edit the destination. With no email field they just type it. Either way the final
+  // `guestEmail` is the single authoritative contact we submit.
   const guestEmail = ref('')
-  const needsGuestEmail = computed(() => form.requires_guest_email && !allFields.value.some((f) => f.type === 'email'))
+  const guestEmailEdited = ref(false)
+  const emailField = computed(() => allFields.value.find((f) => f.type === 'email') ?? null)
+  const detectedEmail = computed(() => {
+    const v = emailField.value ? answers[String(emailField.value.id)] : ''
+    return typeof v === 'string' ? v.trim() : ''
+  })
+  const needsGuestEmail = computed(() => form.requires_guest_email || !!emailField.value)
+  function setGuestEmail(value: string): void {
+    guestEmailEdited.value = true
+    guestEmail.value = value
+  }
+  // Mirror the email field into the contact box until the guest types their own destination.
+  watch(detectedEmail, (v) => !guestEmailEdited.value && (guestEmail.value = v), { immediate: true })
 
   const now = Date.now()
   const isClosed = computed(() => !!form.submission_deadline && new Date(form.submission_deadline).getTime() < now)
@@ -198,6 +215,7 @@ export async function usePublicForm(slug: string) {
     answers,
     errors,
     guestEmail,
+    setGuestEmail,
     needsGuestEmail,
     isClosed,
     isPriced,
