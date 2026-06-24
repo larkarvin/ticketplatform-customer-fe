@@ -13,6 +13,7 @@ import { borderClass } from '#core/field-engine/components/controls/inputClass'
 import type { Field } from '#core/field-engine/types'
 import { ChevronDown } from '#icons'
 import { computed, ref } from 'vue'
+import { variantLabel } from '~/features/forms/productLabels'
 import type {
   ProductFieldInfo,
   ProductImageMedia,
@@ -44,12 +45,6 @@ const totalQty = computed(() => selections.value.reduce((n, s) => n + s.quantity
 
 const thumb = (img: ProductImageMedia | null) => (img ? (img.thumb_url ?? img.url) : null)
 
-// A variant in plain words for the listing: its attribute values joined ("Medium – Red"), falling
-// back to the variant name when it has no attributes.
-function rowLabel(v: ProductVariant): string {
-  const values = v.attribute_values.map((a) => a.value).filter(Boolean)
-  return values.length ? values.join(' – ') : v.name
-}
 function priceLabel(v: ProductVariant): string {
   const p = v.prices[0]
   return p ? `${p.currency} ${p.price}` : ''
@@ -75,14 +70,20 @@ const priceSummary = computed(() => {
   const currency = prices[0]!.currency
   return min === Math.max(...nums) ? `${currency} ${min.toFixed(2)}` : `From ${currency} ${min.toFixed(2)}`
 })
-// What the person has chosen, in plain words, for the collapsed summary.
-const selectedRows = computed(() =>
+// What the person has chosen, for the collapsed summary: each line in plain words with its subtotal
+// ("1 × Small – Blue" → "USD 500.00").
+const selectedLines = computed(() =>
   selections.value
     .map((s) => {
       const v = variants.value.find((vr) => vr.id === s.variant_id)
-      return v ? `${s.quantity} × ${rowLabel(v)}` : null
+      if (!v) return null
+      const p = v.prices[0]
+      return {
+        label: `${s.quantity} × ${variantLabel(v)}`,
+        amount: p ? `${p.currency} ${(Number(p.price) * s.quantity).toFixed(2)}` : '',
+      }
     })
-    .filter((r): r is string => r !== null)
+    .filter((line): line is { label: string; amount: string } => line !== null)
 )
 
 // The id of the first variant's stepper input doubles as the field's label/error target — but only
@@ -127,7 +128,7 @@ const galleryImages = computed<{ url: string; alt_text: string; caption?: string
     })
   }
   add(product.value?.image ?? null)
-  for (const v of variants.value) add(v.image, rowLabel(v))
+  for (const v of variants.value) add(v.image, variantLabel(v))
   return out
 })
 function openGallery(): void {
@@ -210,8 +211,11 @@ function openGallery(): void {
 
       <!-- Collapsed: a price teaser or the current selection, plus the one button that opens the options. -->
       <div v-else-if="!isExpanded">
-        <ul v-if="selectedRows.length" class="mt-2 space-y-0.5 text-sm text-gray-700">
-          <li v-for="(row, i) in selectedRows" :key="i">{{ row }}</li>
+        <ul v-if="selectedLines.length" class="mt-2 space-y-0.5 text-sm text-gray-700">
+          <li v-for="(line, i) in selectedLines" :key="i" class="flex justify-between gap-2">
+            <span>{{ line.label }}</span>
+            <span v-if="line.amount" class="shrink-0 tabular-nums text-gray-500">{{ line.amount }}</span>
+          </li>
         </ul>
         <p v-else-if="priceSummary" class="mt-1 text-sm text-gray-500">{{ priceSummary }}</p>
         <button
@@ -222,7 +226,7 @@ function openGallery(): void {
           :aria-controls="optionsId"
           @click="toggle"
         >
-          {{ selectedRows.length ? 'Edit selection' : chooseLabel }}
+          {{ selectedLines.length ? 'Edit selection' : chooseLabel }}
           <ChevronDown :size="18" />
         </button>
       </div>
@@ -234,11 +238,11 @@ function openGallery(): void {
           :key="v.id"
           class="flex items-center gap-3 border-t border-gray-100 py-2 first:border-t-0"
         >
-          <p class="min-w-0 flex-1 truncate text-sm text-gray-700">{{ rowLabel(v) }}</p>
+          <p class="min-w-0 flex-1 truncate text-sm text-gray-700">{{ variantLabel(v) }}</p>
           <p v-if="priceLabel(v)" class="shrink-0 text-sm text-gray-500">{{ priceLabel(v) }}</p>
           <QuantityStepper
             :input-id="stepperId(i, v)"
-            :label="rowLabel(v)"
+            :label="variantLabel(v)"
             :value="qtyFor(v.id)"
             :can-decrement="qtyFor(v.id) > 0"
             :can-increment="totalQty < maxQuantity"
