@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
 import { Check, CheckCircle, ChevronLeft, ChevronRight, Clock, CreditCard, Lock, Mail } from '#icons'
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import OrderSummary from '~/features/forms/components/OrderSummary.vue'
 import ReviewSummary from '~/features/forms/components/ReviewSummary.vue'
 import type { PublicFormState } from '~/features/forms/composables/usePublicForm'
@@ -24,6 +24,15 @@ const progressPct = computed(() => Math.round((stepNumber.value / s.totalSteps.v
 
 // One quiet helper, on the field steps only, to explain the required asterisk.
 const hasRequired = computed(() => s.sections.value.some((sec) => sec.fields.some((f) => f.required)))
+
+// On Review the contact email shows as confirmed text with a "Change" link once it has a value; first
+// entry, an explicit Change, or a validation error reveals the input.
+const editingEmail = ref(false)
+const emailInput = ref<HTMLInputElement | null>(null)
+function changeEmail(): void {
+  editingEmail.value = true
+  void nextTick(() => emailInput.value?.focus())
+}
 
 // With money involved the final action is to pay (with the total once it's known); otherwise it submits.
 const payLabel = computed(() => {
@@ -146,14 +155,36 @@ const payLabel = computed(() => {
               Working out your total…
             </p>
 
-            <!-- Contact email — prefilled from the form's email field when it has one; always editable. -->
+            <!-- Contact email — prefilled from the form's email field when it has one. Shows as confirmed
+                 text with a Change link once filled; first entry / Change / errors reveal the input. -->
             <div v-if="s.needsGuestEmail.value">
               <label for="guest-email" class="mb-1.5 block text-base font-medium text-gray-800">
                 Send my confirmation to
                 <span class="text-danger-500">*</span>
               </label>
-              <p class="mb-2 text-sm text-gray-500">We'll email you a copy and a link to edit your answers.</p>
-              <div class="relative">
+              <p class="mb-2 text-sm text-gray-500">
+                This is where we'll send a copy of your submission{{
+                  s.isPriced.value ? ' and your order receipt' : ''
+                }}.
+              </p>
+
+              <div
+                v-if="s.guestEmail.value && !editingEmail && !s.errors.value[-1]"
+                class="flex min-h-control-lg items-center justify-between gap-3 rounded-xl border border-gray-200 px-4"
+              >
+                <span class="inline-flex min-w-0 items-center gap-2 text-base text-gray-900">
+                  <Mail :size="18" class="shrink-0 text-gray-400" />
+                  <span class="truncate">{{ s.guestEmail.value }}</span>
+                </span>
+                <button
+                  type="button"
+                  class="min-h-tap shrink-0 text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline"
+                  @click="changeEmail"
+                >
+                  Change
+                </button>
+              </div>
+              <div v-else class="relative">
                 <span
                   class="pointer-events-none absolute inset-y-0 left-0 flex items-center border-r border-gray-300 px-4 text-gray-500"
                 >
@@ -161,6 +192,7 @@ const payLabel = computed(() => {
                 </span>
                 <input
                   id="guest-email"
+                  ref="emailInput"
                   :value="s.guestEmail.value"
                   type="email"
                   placeholder="your@email.com"
