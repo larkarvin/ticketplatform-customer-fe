@@ -26,6 +26,15 @@ describe('formsService', () => {
     expect(res.submission_id).toBe(7)
   })
 
+  it('calculatePayment posts answers under a data envelope and unwraps the breakdown', async () => {
+    post.mockResolvedValue({ data: { currency: 'USD', items: [], fees: [], subtotal: 0, fees_total: 0, total: 500 } })
+    const res = await formsService.calculatePayment('x', { '1': 'Jo', '2': [{ variant_id: 5, quantity: 1 }] })
+    expect(post).toHaveBeenCalledWith('/forms/public/x/calculate', {
+      data: { '1': 'Jo', '2': [{ variant_id: 5, quantity: 1 }] },
+    })
+    expect(res.total).toBe(500)
+  })
+
   it('uploadFieldMedia posts multipart FormData to the field upload endpoint', async () => {
     post.mockResolvedValue({ id: 3, uuid: 'abc', original_filename: 'f.png', url: '/u' })
     const file = new File(['x'], 'f.png', { type: 'image/png' })

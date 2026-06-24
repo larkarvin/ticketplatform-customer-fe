@@ -2,6 +2,7 @@
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
 import { Check, CheckCircle, ChevronLeft, ChevronRight, Clock, Lock, Mail } from '#icons'
 import { computed } from 'vue'
+import OrderSummary from '~/features/forms/components/OrderSummary.vue'
 import ReviewSummary from '~/features/forms/components/ReviewSummary.vue'
 import type { PublicFormState } from '~/features/forms/composables/usePublicForm'
 
@@ -24,8 +25,12 @@ const progressPct = computed(() => Math.round((stepNumber.value / s.totalSteps.v
 // One quiet helper, on the field steps only, to explain the required asterisk.
 const hasRequired = computed(() => s.sections.value.some((sec) => sec.fields.some((f) => f.required)))
 
-// With money involved the final action is to pay; otherwise it submits.
-const payLabel = computed(() => (s.isPriced.value ? 'Pay' : s.form.submit_button_text || 'Submit'))
+// With money involved the final action is to pay (with the total once it's known); otherwise it submits.
+const payLabel = computed(() => {
+  if (!s.isPriced.value) return s.form.submit_button_text || 'Submit'
+  const b = s.breakdown.value
+  return b && b.total > 0 ? `Pay ${b.currency} ${b.total.toFixed(2)}` : 'Pay'
+})
 </script>
 
 <template>
@@ -134,6 +139,12 @@ const payLabel = computed(() => (s.isPriced.value ? 'Pay' : s.form.submit_button
           <!-- ── Review step: a read-back of the answers, then the contact email ── -->
           <template v-if="s.isReviewStep.value">
             <ReviewSummary :groups="s.reviewGroups.value" @edit="s.goToStep($event)" />
+
+            <!-- Order summary — server-computed total for priced forms. -->
+            <OrderSummary v-if="s.isPriced.value && s.breakdown.value" :breakdown="s.breakdown.value" />
+            <p v-else-if="s.isPriced.value && s.calcLoading.value" class="text-base text-gray-500">
+              Working out your total…
+            </p>
 
             <!-- Contact email — prefilled from the form's email field when it has one; always editable. -->
             <div v-if="s.needsGuestEmail.value">

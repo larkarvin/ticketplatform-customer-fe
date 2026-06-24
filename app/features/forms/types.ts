@@ -76,3 +76,25 @@ export interface UploadedMedia {
 
 /** Answers keyed by field id, plus optional guest email. */
 export type SubmitAnswers = Record<string, unknown> & { guest_email?: string }
+
+// Server-computed price breakdown for a priced submission (POST /forms/public/{slug}/calculate).
+export interface PaymentLineItem {
+  field_label: string
+  /** Plain-words label for the chosen option/variant; falls back to the field label. */
+  option_label?: string
+  quantity: number
+  unit_price: number
+  amount: number
+}
+export interface PaymentFee {
+  label: string
+  amount: number
+}
+export interface PaymentBreakdown {
+  currency: string
+  items: PaymentLineItem[]
+  fees: PaymentFee[]
+  subtotal: number
+  fees_total: number
+  total: number
+}

@@ -9,7 +9,14 @@ import { computed, reactive, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { summariseSelections } from '~/features/forms/productLabels'
 import { formsService } from '~/features/forms/services/forms.service'
-import type { Form, ProductFieldInfo, ProductSelection, SubmitAnswers, SubmitResult } from '~/features/forms/types'
+import type {
+  Form,
+  PaymentBreakdown,
+  ProductFieldInfo,
+  ProductSelection,
+  SubmitAnswers,
+  SubmitResult,
+} from '~/features/forms/types'
 
 /** One reviewed answer (a field's label + its value in plain words). */
 export interface ReviewItem {
@@ -176,6 +183,26 @@ export async function usePublicForm(slug: string) {
       .filter((g) => g.items.length > 0)
   )
 
+  // Server-authoritative price breakdown, fetched when a priced form reaches the Review step — and
+  // again on return after an edit-back (re-entering the step re-runs it), so the total always matches
+  // the current answers. Never computed on the client.
+  const breakdown = ref<PaymentBreakdown | null>(null)
+  const calcLoading = ref(false)
+  async function refreshBreakdown(): Promise<void> {
+    if (!isPriced.value) return
+    calcLoading.value = true
+    try {
+      breakdown.value = await formsService.calculatePayment(slug, { ...answers })
+    } catch {
+      breakdown.value = null // api client toasts the failure; hide the breakdown rather than show stale
+    } finally {
+      calcLoading.value = false
+    }
+  }
+  watch(isReviewStep, (onReview) => {
+    if (onReview) void refreshBreakdown()
+  })
+
   // Validate just the current step's fields before advancing (errors show only for the visible step).
   function validateStep(): boolean {
     const section = currentSection.value
@@ -282,6 +309,8 @@ export async function usePublicForm(slug: string) {
     isMultiStep,
     isReviewStep,
     reviewGroups,
+    breakdown,
+    calcLoading,
     isFirstStep,
     isLastStep,
     visibleSections,
