@@ -177,7 +177,7 @@ describe('usePublicForm', () => {
     const s = await usePublicForm('s')
     s.setAnswer(7, [{ variant_id: 11, quantity: 2 }])
     const item = s.reviewGroups.value.flatMap((g) => g.items).find((it) => it.fieldId === 7)
-    expect(item?.value).toBe('2 × Medium – Red')
+    expect(item?.value).toBe('2 × Shirt (Medium – Red)')
   })
 
   it('blocks submit and surfaces an inline error for a missing required field', async () => {

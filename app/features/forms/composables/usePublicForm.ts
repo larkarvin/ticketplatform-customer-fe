@@ -7,7 +7,7 @@ import type { Field } from '#core/field-engine/types'
 import { isCollecting, validateAll } from '#core/field-engine/validation'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
-import { summariseSelections } from '~/features/forms/productLabels'
+import { variantLabel } from '~/features/forms/productLabels'
 import { formsService } from '~/features/forms/services/forms.service'
 import type {
   Form,
@@ -167,7 +167,19 @@ export async function usePublicForm(slug: string) {
     if (field.type === 'product') {
       const product = field.settings.product as ProductFieldInfo | undefined
       if (!Array.isArray(value) || !product) return ''
-      return summariseSelections(value as ProductSelection[], product.variants).join(', ')
+      // Show the product name alongside its variant ("1 × Shirt (Medium – Red)"). For a simple product
+      // whose variant label is just the product name, don't repeat it.
+      return (value as ProductSelection[])
+        .map((sel) => {
+          const v = product.variants.find((vr) => vr.id === sel.variant_id)
+          if (!v) return null
+          const variant = variantLabel(v)
+          return product.name && variant !== product.name
+            ? `${sel.quantity} × ${product.name} (${variant})`
+            : `${sel.quantity} × ${variant}`
+        })
+        .filter((line): line is string => line !== null)
+        .join(', ')
     }
     if (field.type === 'file' || field.type === 'image') {
       return uploads[field.id]?.filename ?? (value ? 'Uploaded' : '')
