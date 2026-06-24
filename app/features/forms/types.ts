@@ -80,6 +80,8 @@ export type SubmitAnswers = Record<string, unknown> & { guest_email?: string }
 // Server-computed price breakdown for a priced submission (POST /forms/public/{slug}/calculate).
 export interface PaymentLineItem {
   field_label: string
+  /** The product's name for product line items (absent for priced select options). */
+  product_name?: string
   /** Plain-words label for the chosen option/variant; falls back to the field label. */
   option_label?: string
   quantity: number

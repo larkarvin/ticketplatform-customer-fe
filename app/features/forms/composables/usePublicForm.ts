@@ -5,7 +5,7 @@ import { isValidationError } from '#core/errors'
 import { getFieldType } from '#core/field-engine/registry'
 import type { Field } from '#core/field-engine/types'
 import { isCollecting, validateAll } from '#core/field-engine/validation'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { summariseSelections } from '~/features/forms/productLabels'
 import { formsService } from '~/features/forms/services/forms.service'
@@ -58,6 +58,11 @@ export async function usePublicForm(slug: string) {
       ],
     }
   })
+
+  // Restore any locally-saved draft once we're on the client (after hydration) and keep it saved as the
+  // form is filled, so a refresh or back-navigation doesn't make the person retype. Registered before
+  // the await so the lifecycle hook binds to this setup; `restoreDraft`/`saveDraft` are defined below.
+  if (import.meta.client) onMounted(() => restoreDraft())
 
   await asyncForm
 
@@ -145,6 +150,9 @@ export async function usePublicForm(slug: string) {
   const reviewStepIndex = computed(() => sectionCount.value)
   const isReviewStep = computed(() => currentStep.value >= reviewStepIndex.value)
   const isMultiStep = computed(() => totalSteps.value > 1)
+  // Only worth a step plaque when there's genuinely more than one section to page through; a single
+  // section (it + Review) just shows the fields, no "Step 1 / Next: Review" chrome.
+  const showStepper = computed(() => sectionCount.value > 1)
   const currentSection = computed(() => sections.value[currentStep.value] ?? null)
   const isFirstStep = computed(() => currentStep.value === 0)
   const isLastStep = computed(() => currentStep.value >= totalSteps.value - 1)
@@ -202,6 +210,47 @@ export async function usePublicForm(slug: string) {
   watch(isReviewStep, (onReview) => {
     if (onReview) void refreshBreakdown()
   })
+
+  // ── Local draft ──────────────────────────────────────────────────────────────────────────────────
+  // Persist the answers + contact email as the form is filled so a refresh or back-navigation doesn't
+  // make the person retype; restored on load (see onMounted above) and cleared on a successful submit.
+  // Keyed by slug, best-effort (storage may be unavailable).
+  const draftKey = `form-draft:${slug}`
+  let saveTimer: ReturnType<typeof setTimeout> | null = null
+  function saveDraft(): void {
+    if (!import.meta.client) return
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ answers, guestEmail: guestEmail.value }))
+      } catch {
+        // storage full / blocked — drafting is best-effort
+      }
+    }, 400)
+  }
+  function restoreDraft(): void {
+    if (!import.meta.client) return
+    const raw = localStorage.getItem(draftKey)
+    if (!raw) return
+    const saved = ((): { answers?: Record<string, unknown>; guestEmail?: string } | null => {
+      try {
+        return JSON.parse(raw)
+      } catch {
+        return null
+      }
+    })()
+    if (!saved || typeof saved !== 'object') return
+    if (saved.answers) {
+      for (const [key, value] of Object.entries(saved.answers)) if (key in answers) answers[key] = value
+    }
+    if (typeof saved.guestEmail === 'string' && saved.guestEmail) setGuestEmail(saved.guestEmail)
+  }
+  function clearDraft(): void {
+    if (saveTimer) clearTimeout(saveTimer)
+    if (import.meta.client) localStorage.removeItem(draftKey)
+  }
+  // Serialise the answers so this stays a shallow watch (no deep watcher) yet reacts to any change.
+  watch([() => JSON.stringify(answers), guestEmail], saveDraft)
 
   // Validate just the current step's fields before advancing (errors show only for the visible step).
   function validateStep(): boolean {
@@ -263,6 +312,7 @@ export async function usePublicForm(slug: string) {
       const payload: SubmitAnswers = { ...answers }
       if (needsGuestEmail.value) payload.guest_email = guestEmail.value.trim()
       submitted.value = await formsService.submitForm(slug, payload)
+      clearDraft() // submitted — drop the local draft so a return visit starts fresh
     } catch (e) {
       if (isValidationError(e)) {
         // guest_email is a non-numeric 422 key; route it to the -1 slot the template reads.
@@ -307,6 +357,7 @@ export async function usePublicForm(slug: string) {
     currentStep,
     totalSteps,
     isMultiStep,
+    showStepper,
     isReviewStep,
     reviewGroups,
     breakdown,

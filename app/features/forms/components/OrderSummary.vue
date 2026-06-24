@@ -14,8 +14,11 @@ const money = (amount: number, currency: string) => `${currency} ${amount.toFixe
     <dl class="space-y-2 text-base">
       <div v-for="(item, i) in breakdown.items" :key="`i${i}`" class="flex justify-between gap-3">
         <dt class="text-gray-700">
-          {{ item.option_label || item.field_label }}
+          {{ item.product_name || item.option_label || item.field_label }}
           <span v-if="item.quantity > 1" class="text-gray-500">× {{ item.quantity }}</span>
+          <span v-if="item.product_name && item.option_label" class="block text-sm text-gray-500">
+            {{ item.option_label }}
+          </span>
         </dt>
         <dd class="shrink-0 tabular-nums text-gray-900">{{ money(item.amount, breakdown.currency) }}</dd>
       </div>

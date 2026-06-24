@@ -13,7 +13,7 @@ import { borderClass } from '#core/field-engine/components/controls/inputClass'
 import type { Field } from '#core/field-engine/types'
 import { ChevronDown } from '#icons'
 import { computed, ref } from 'vue'
-import { summariseSelections, variantLabel } from '~/features/forms/productLabels'
+import { variantLabel } from '~/features/forms/productLabels'
 import type {
   ProductFieldInfo,
   ProductImageMedia,
@@ -70,8 +70,21 @@ const priceSummary = computed(() => {
   const currency = prices[0]!.currency
   return min === Math.max(...nums) ? `${currency} ${min.toFixed(2)}` : `From ${currency} ${min.toFixed(2)}`
 })
-// What the person has chosen, in plain words, for the collapsed summary.
-const selectedRows = computed(() => summariseSelections(selections.value, variants.value))
+// What the person has chosen, for the collapsed summary: each line in plain words with its subtotal
+// ("1 × Small – Blue" → "USD 500.00").
+const selectedLines = computed(() =>
+  selections.value
+    .map((s) => {
+      const v = variants.value.find((vr) => vr.id === s.variant_id)
+      if (!v) return null
+      const p = v.prices[0]
+      return {
+        label: `${s.quantity} × ${variantLabel(v)}`,
+        amount: p ? `${p.currency} ${(Number(p.price) * s.quantity).toFixed(2)}` : '',
+      }
+    })
+    .filter((line): line is { label: string; amount: string } => line !== null)
+)
 
 // The id of the first variant's stepper input doubles as the field's label/error target — but only
 // when the options are open. While collapsed the toggle button carries that id instead, so the label
@@ -198,8 +211,11 @@ function openGallery(): void {
 
       <!-- Collapsed: a price teaser or the current selection, plus the one button that opens the options. -->
       <div v-else-if="!isExpanded">
-        <ul v-if="selectedRows.length" class="mt-2 space-y-0.5 text-sm text-gray-700">
-          <li v-for="(row, i) in selectedRows" :key="i">{{ row }}</li>
+        <ul v-if="selectedLines.length" class="mt-2 space-y-0.5 text-sm text-gray-700">
+          <li v-for="(line, i) in selectedLines" :key="i" class="flex justify-between gap-2">
+            <span>{{ line.label }}</span>
+            <span v-if="line.amount" class="shrink-0 tabular-nums text-gray-500">{{ line.amount }}</span>
+          </li>
         </ul>
         <p v-else-if="priceSummary" class="mt-1 text-sm text-gray-500">{{ priceSummary }}</p>
         <button
@@ -210,7 +226,7 @@ function openGallery(): void {
           :aria-controls="optionsId"
           @click="toggle"
         >
-          {{ selectedRows.length ? 'Edit selection' : chooseLabel }}
+          {{ selectedLines.length ? 'Edit selection' : chooseLabel }}
           <ChevronDown :size="18" />
         </button>
       </div>

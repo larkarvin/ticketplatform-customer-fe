@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
-import { Check, CheckCircle, ChevronLeft, ChevronRight, Clock, Lock, Mail } from '#icons'
+import { Check, CheckCircle, ChevronLeft, ChevronRight, Clock, CreditCard, Lock, Mail } from '#icons'
 import { computed } from 'vue'
 import OrderSummary from '~/features/forms/components/OrderSummary.vue'
 import ReviewSummary from '~/features/forms/components/ReviewSummary.vue'
@@ -89,7 +89,7 @@ const payLabel = computed(() => {
 
       <template v-else>
         <!-- ── Signature: the step plaque ───────────────────────────────────── -->
-        <div v-if="s.isMultiStep.value" class="mb-8 rounded-xl bg-brand-25 p-5 ring-1 ring-brand-100">
+        <div v-if="s.showStepper.value" class="mb-8 rounded-xl bg-brand-25 p-5 ring-1 ring-brand-100">
           <div class="flex items-center gap-4">
             <!-- Brand tint as the surface; text stays neutral so it survives any org hue (incl. light
                  brands where brand-coloured text fails contrast). -->
@@ -114,7 +114,7 @@ const payLabel = computed(() => {
 
         <form class="space-y-10" novalidate @submit.prevent="s.submit()">
           <section v-for="section in s.visibleSections.value" :key="section.id" class="space-y-5">
-            <div v-if="section.title && !s.isMultiStep.value">
+            <div v-if="section.title && !s.showStepper.value">
               <h2 class="text-xl font-semibold text-gray-900">{{ section.title }}</h2>
               <p v-if="section.description" class="mt-1 text-base text-gray-600">{{ section.description }}</p>
             </div>
@@ -208,7 +208,7 @@ const payLabel = computed(() => {
               :disabled="s.submitting.value || s.isPriced.value"
               class="inline-flex min-h-control-lg flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-8"
             >
-              <Check v-if="!s.submitting.value" :size="20" />
+              <component :is="s.isPriced.value ? CreditCard : Check" v-if="!s.submitting.value" :size="20" />
               {{ s.submitting.value ? 'Submitting…' : payLabel }}
             </button>
           </div>
