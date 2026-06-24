@@ -1,20 +1,31 @@
 <script setup lang="ts">
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
-import { Check, CheckCircle, ChevronLeft, ChevronRight, Clock, Lock, Mail, ShoppingCart } from '#icons'
+import { Check, CheckCircle, ChevronLeft, ChevronRight, Clock, Lock, Mail } from '#icons'
 import { computed } from 'vue'
+import ReviewSummary from '~/features/forms/components/ReviewSummary.vue'
 import type { PublicFormState } from '~/features/forms/composables/usePublicForm'
 
 const props = defineProps<{ state: PublicFormState }>()
 const s = props.state
 
 // Plaque data: 1-based step, the step now on screen, and the one coming next (for the "Next:" hint).
+// The final step is always Review.
 const stepNumber = computed(() => s.currentStep.value + 1)
-const currentTitle = computed(() => s.visibleSections.value[0]?.title || `Step ${stepNumber.value}`)
-const nextTitle = computed(() => s.sections.value[s.currentStep.value + 1]?.title || null)
+const currentTitle = computed(() =>
+  s.isReviewStep.value ? 'Review' : s.visibleSections.value[0]?.title || `Step ${stepNumber.value}`
+)
+const nextTitle = computed(() => {
+  const next = s.currentStep.value + 1
+  if (next >= s.totalSteps.value) return null
+  return next === s.totalSteps.value - 1 ? 'Review' : s.sections.value[next]?.title || null
+})
 const progressPct = computed(() => Math.round((stepNumber.value / s.totalSteps.value) * 100))
 
-// One quiet helper is worth showing only when there's a required field to explain the asterisk for.
+// One quiet helper, on the field steps only, to explain the required asterisk.
 const hasRequired = computed(() => s.sections.value.some((sec) => sec.fields.some((f) => f.required)))
+
+// With money involved the final action is to pay; otherwise it submits.
+const payLabel = computed(() => (s.isPriced.value ? 'Pay' : s.form.submit_button_text || 'Submit'))
 </script>
 
 <template>
@@ -45,7 +56,10 @@ const hasRequired = computed(() => s.sections.value.some((sec) => sec.fields.som
         <p v-if="s.form.description" class="mt-3 text-lg leading-relaxed text-gray-600">
           {{ s.form.description }}
         </p>
-        <p v-if="hasRequired && !s.isClosed.value && !s.membersOnlyBlocked.value" class="mt-3 text-base text-gray-500">
+        <p
+          v-if="hasRequired && !s.isClosed.value && !s.membersOnlyBlocked.value && !s.isReviewStep.value"
+          class="mt-3 text-base text-gray-500"
+        >
           Questions marked
           <span class="font-semibold text-danger-500">*</span>
           need an answer.
@@ -93,15 +107,6 @@ const hasRequired = computed(() => s.sections.value.some((sec) => sec.fields.som
           </div>
         </div>
 
-        <!-- ── Payment-not-here notice (form still renders below, submit disabled) ── -->
-        <div
-          v-if="s.isPriced.value"
-          class="mb-8 flex items-start gap-3 rounded-xl bg-warning-50 p-5 text-warning-800 ring-1 ring-warning-200"
-        >
-          <ShoppingCart :size="22" class="mt-0.5 shrink-0 text-warning-600" />
-          <p class="text-base">This form needs a payment, which isn't set up here yet.</p>
-        </div>
-
         <form class="space-y-10" novalidate @submit.prevent="s.submit()">
           <section v-for="section in s.visibleSections.value" :key="section.id" class="space-y-5">
             <div v-if="section.title && !s.isMultiStep.value">
@@ -126,36 +131,40 @@ const hasRequired = computed(() => s.sections.value.some((sec) => sec.fields.som
             </div>
           </section>
 
-          <!-- Contact email lives on the last step (or the only page). Prefilled from the form's email
-               field when it has one; always editable. -->
-          <div v-if="s.needsGuestEmail.value && (!s.isMultiStep.value || s.isLastStep.value)">
-            <label for="guest-email" class="mb-1.5 block text-base font-medium text-gray-800">
-              Send my confirmation to
-              <span class="text-danger-500">*</span>
-            </label>
-            <p class="mb-2 text-sm text-gray-500">We'll email you a copy and a link to edit your answers.</p>
-            <div class="relative">
-              <span
-                class="pointer-events-none absolute inset-y-0 left-0 flex items-center border-r border-gray-300 px-4 text-gray-500"
-              >
-                <Mail :size="20" />
-              </span>
-              <input
-                id="guest-email"
-                :value="s.guestEmail.value"
-                type="email"
-                placeholder="your@email.com"
-                class="min-h-control-lg w-full rounded-xl border bg-transparent py-3 pr-4 pl-14 text-base text-gray-900 placeholder:text-gray-400 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10"
-                :class="
-                  s.errors.value[-1]
-                    ? 'border-danger-400 focus:border-danger-400'
-                    : 'border-gray-300 focus:border-brand-300'
-                "
-                @input="s.setGuestEmail(($event.target as HTMLInputElement).value)"
-              />
+          <!-- ── Review step: a read-back of the answers, then the contact email ── -->
+          <template v-if="s.isReviewStep.value">
+            <ReviewSummary :groups="s.reviewGroups.value" @edit="s.goToStep($event)" />
+
+            <!-- Contact email — prefilled from the form's email field when it has one; always editable. -->
+            <div v-if="s.needsGuestEmail.value">
+              <label for="guest-email" class="mb-1.5 block text-base font-medium text-gray-800">
+                Send my confirmation to
+                <span class="text-danger-500">*</span>
+              </label>
+              <p class="mb-2 text-sm text-gray-500">We'll email you a copy and a link to edit your answers.</p>
+              <div class="relative">
+                <span
+                  class="pointer-events-none absolute inset-y-0 left-0 flex items-center border-r border-gray-300 px-4 text-gray-500"
+                >
+                  <Mail :size="20" />
+                </span>
+                <input
+                  id="guest-email"
+                  :value="s.guestEmail.value"
+                  type="email"
+                  placeholder="your@email.com"
+                  class="min-h-control-lg w-full rounded-xl border bg-transparent py-3 pr-4 pl-14 text-base text-gray-900 placeholder:text-gray-400 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10"
+                  :class="
+                    s.errors.value[-1]
+                      ? 'border-danger-400 focus:border-danger-400'
+                      : 'border-gray-300 focus:border-brand-300'
+                  "
+                  @input="s.setGuestEmail(($event.target as HTMLInputElement).value)"
+                />
+              </div>
+              <p v-if="s.errors.value[-1]" class="mt-1.5 text-sm text-danger-600">{{ s.errors.value[-1] }}</p>
             </div>
-            <p v-if="s.errors.value[-1]" class="mt-1.5 text-sm text-danger-600">{{ s.errors.value[-1] }}</p>
-          </div>
+          </template>
 
           <!-- ── Actions ──────────────────────────────────────────────────────── -->
           <!-- Mobile: a sticky full-bleed footer so Back/Continue are always in thumb reach as the form
@@ -164,7 +173,7 @@ const hasRequired = computed(() => s.sections.value.some((sec) => sec.fields.som
             class="sticky bottom-0 z-10 -mx-4 flex items-center gap-3 border-t border-gray-200 bg-white px-4 py-4 sm:static sm:mx-0 sm:border-gray-100 sm:bg-transparent sm:px-0 sm:py-0 sm:pt-6"
           >
             <button
-              v-if="s.isMultiStep.value && !s.isFirstStep.value"
+              v-if="!s.isFirstStep.value"
               type="button"
               class="inline-flex min-h-control-lg cursor-pointer items-center gap-1.5 rounded-xl border border-gray-300 px-5 text-base font-medium text-gray-700 hover:bg-gray-50"
               @click="s.prevStep()"
@@ -174,7 +183,7 @@ const hasRequired = computed(() => s.sections.value.some((sec) => sec.fields.som
             </button>
 
             <button
-              v-if="s.isMultiStep.value && !s.isLastStep.value"
+              v-if="!s.isReviewStep.value"
               type="button"
               class="inline-flex min-h-control-lg flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600 sm:flex-none sm:px-8"
               @click="s.nextStep()"
@@ -189,7 +198,7 @@ const hasRequired = computed(() => s.sections.value.some((sec) => sec.fields.som
               class="inline-flex min-h-control-lg flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-8"
             >
               <Check v-if="!s.submitting.value" :size="20" />
-              {{ s.submitting.value ? 'Submitting…' : s.form.submit_button_text || 'Submit' }}
+              {{ s.submitting.value ? 'Submitting…' : payLabel }}
             </button>
           </div>
         </form>

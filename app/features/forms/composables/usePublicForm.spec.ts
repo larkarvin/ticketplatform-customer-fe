@@ -1,3 +1,4 @@
+import { registerFieldType } from '#core/field-engine/registry'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import type { Form } from '~/features/forms/types'
@@ -137,6 +138,46 @@ describe('usePublicForm', () => {
     )
     const s = await usePublicForm('s')
     expect(s.needsGuestEmail.value).toBe(true)
+  })
+
+  it('summarises a product selection in plain words for the review step', async () => {
+    registerFieldType({ type: 'product', component: {}, collectsData: true, defaultValue: () => [] })
+    getPublicForm.mockResolvedValue(
+      form({
+        fields: [
+          field({
+            id: 7,
+            type: 'product',
+            label: 'Shirt',
+            settings: {
+              product: {
+                id: 1,
+                name: 'Shirt',
+                image: null,
+                variants: [
+                  {
+                    id: 11,
+                    name: 'M-Red',
+                    sku: null,
+                    is_active: true,
+                    image: null,
+                    attribute_values: [
+                      { attribute: 'Size', value: 'Medium' },
+                      { attribute: 'Color', value: 'Red' },
+                    ],
+                    prices: [],
+                  },
+                ],
+              },
+            },
+          }),
+        ],
+      })
+    )
+    const s = await usePublicForm('s')
+    s.setAnswer(7, [{ variant_id: 11, quantity: 2 }])
+    const item = s.reviewGroups.value.flatMap((g) => g.items).find((it) => it.fieldId === 7)
+    expect(item?.value).toBe('2 × Medium – Red')
   })
 
   it('blocks submit and surfaces an inline error for a missing required field', async () => {

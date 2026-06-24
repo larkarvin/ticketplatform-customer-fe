@@ -13,6 +13,7 @@ import { borderClass } from '#core/field-engine/components/controls/inputClass'
 import type { Field } from '#core/field-engine/types'
 import { ChevronDown } from '#icons'
 import { computed, ref } from 'vue'
+import { summariseSelections, variantLabel } from '~/features/forms/productLabels'
 import type {
   ProductFieldInfo,
   ProductImageMedia,
@@ -44,12 +45,6 @@ const totalQty = computed(() => selections.value.reduce((n, s) => n + s.quantity
 
 const thumb = (img: ProductImageMedia | null) => (img ? (img.thumb_url ?? img.url) : null)
 
-// A variant in plain words for the listing: its attribute values joined ("Medium – Red"), falling
-// back to the variant name when it has no attributes.
-function rowLabel(v: ProductVariant): string {
-  const values = v.attribute_values.map((a) => a.value).filter(Boolean)
-  return values.length ? values.join(' – ') : v.name
-}
 function priceLabel(v: ProductVariant): string {
   const p = v.prices[0]
   return p ? `${p.currency} ${p.price}` : ''
@@ -76,14 +71,7 @@ const priceSummary = computed(() => {
   return min === Math.max(...nums) ? `${currency} ${min.toFixed(2)}` : `From ${currency} ${min.toFixed(2)}`
 })
 // What the person has chosen, in plain words, for the collapsed summary.
-const selectedRows = computed(() =>
-  selections.value
-    .map((s) => {
-      const v = variants.value.find((vr) => vr.id === s.variant_id)
-      return v ? `${s.quantity} × ${rowLabel(v)}` : null
-    })
-    .filter((r): r is string => r !== null)
-)
+const selectedRows = computed(() => summariseSelections(selections.value, variants.value))
 
 // The id of the first variant's stepper input doubles as the field's label/error target — but only
 // when the options are open. While collapsed the toggle button carries that id instead, so the label
@@ -127,7 +115,7 @@ const galleryImages = computed<{ url: string; alt_text: string; caption?: string
     })
   }
   add(product.value?.image ?? null)
-  for (const v of variants.value) add(v.image, rowLabel(v))
+  for (const v of variants.value) add(v.image, variantLabel(v))
   return out
 })
 function openGallery(): void {
@@ -234,11 +222,11 @@ function openGallery(): void {
           :key="v.id"
           class="flex items-center gap-3 border-t border-gray-100 py-2 first:border-t-0"
         >
-          <p class="min-w-0 flex-1 truncate text-sm text-gray-700">{{ rowLabel(v) }}</p>
+          <p class="min-w-0 flex-1 truncate text-sm text-gray-700">{{ variantLabel(v) }}</p>
           <p v-if="priceLabel(v)" class="shrink-0 text-sm text-gray-500">{{ priceLabel(v) }}</p>
           <QuantityStepper
             :input-id="stepperId(i, v)"
-            :label="rowLabel(v)"
+            :label="variantLabel(v)"
             :value="qtyFor(v.id)"
             :can-decrement="qtyFor(v.id) > 0"
             :can-increment="totalQty < maxQuantity"

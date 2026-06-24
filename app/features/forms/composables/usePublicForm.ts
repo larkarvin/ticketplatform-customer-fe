@@ -7,8 +7,22 @@ import type { Field } from '#core/field-engine/types'
 import { isCollecting, validateAll } from '#core/field-engine/validation'
 import { computed, reactive, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import { summariseSelections } from '~/features/forms/productLabels'
 import { formsService } from '~/features/forms/services/forms.service'
-import type { Form, SubmitAnswers, SubmitResult } from '~/features/forms/types'
+import type { Form, ProductFieldInfo, ProductSelection, SubmitAnswers, SubmitResult } from '~/features/forms/types'
+
+/** One reviewed answer (a field's label + its value in plain words). */
+export interface ReviewItem {
+  fieldId: number
+  label: string
+  value: string
+}
+/** A reviewed section: its heading, the step to jump to when editing, and its answered items. */
+export interface ReviewGroup {
+  stepIndex: number
+  title: string
+  items: ReviewItem[]
+}
 
 interface Section {
   id: string
@@ -117,16 +131,49 @@ export async function usePublicForm(slug: string) {
   const submitting = ref(false)
   const submitted = ref<SubmitResult | null>(null)
 
-  // ── Multi-step paging: each section (field group) is a step. Single-section forms stay one page. ──
+  // ── Paging: each section (field group) is a step, then a final Review step that's always present. ──
   const currentStep = ref(0)
-  const totalSteps = computed(() => sections.value.length)
+  const sectionCount = computed(() => sections.value.length)
+  const totalSteps = computed(() => sectionCount.value + 1)
+  const reviewStepIndex = computed(() => sectionCount.value)
+  const isReviewStep = computed(() => currentStep.value >= reviewStepIndex.value)
   const isMultiStep = computed(() => totalSteps.value > 1)
   const currentSection = computed(() => sections.value[currentStep.value] ?? null)
   const isFirstStep = computed(() => currentStep.value === 0)
   const isLastStep = computed(() => currentStep.value >= totalSteps.value - 1)
-  // What the renderer shows: just the current step when paging, all sections otherwise.
+  // The renderer shows the current step's section while paging, and nothing on the Review step.
   const visibleSections = computed<Section[]>(() =>
-    isMultiStep.value ? (currentSection.value ? [currentSection.value] : []) : sections.value
+    isReviewStep.value || !currentSection.value ? [] : [currentSection.value]
+  )
+
+  // The Review step's read-back: each section's answered fields in plain words, with the step to jump
+  // back to for editing. Empty answers and display-only fields are skipped.
+  function formatAnswer(field: Field, value: unknown): string {
+    if (field.type === 'product') {
+      const product = field.settings.product as ProductFieldInfo | undefined
+      if (!Array.isArray(value) || !product) return ''
+      return summariseSelections(value as ProductSelection[], product.variants).join(', ')
+    }
+    if (field.type === 'file' || field.type === 'image') {
+      return uploads[field.id]?.filename ?? (value ? 'Uploaded' : '')
+    }
+    if (field.type === 'select') {
+      const opt = field.options.find((o) => o.option_key === String(value))
+      return opt?.label ?? (typeof value === 'string' ? value : '')
+    }
+    return typeof value === 'string' ? value : value == null ? '' : String(value)
+  }
+  const reviewGroups = computed<ReviewGroup[]>(() =>
+    sections.value
+      .map((sec, i) => ({
+        stepIndex: i,
+        title: sec.title || 'Your answers',
+        items: sec.fields
+          .filter((f) => isCollecting(f))
+          .map((f) => ({ fieldId: f.id, label: f.label, value: formatAnswer(f, answers[String(f.id)]) }))
+          .filter((it) => it.value !== ''),
+      }))
+      .filter((g) => g.items.length > 0)
   )
 
   // Validate just the current step's fields before advancing (errors show only for the visible step).
@@ -233,6 +280,8 @@ export async function usePublicForm(slug: string) {
     currentStep,
     totalSteps,
     isMultiStep,
+    isReviewStep,
+    reviewGroups,
     isFirstStep,
     isLastStep,
     visibleSections,
