@@ -12,7 +12,8 @@
     "format:dirty": "git diff --name-only --diff-filter=ACMR | grep -E '\\.(vue|ts|js|css)$' | xargs -r prettier --write",
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
     "@pinia/colada": "^1.3.1",
