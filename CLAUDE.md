@@ -37,6 +37,8 @@ delta wins.
 - **Guest-first / no auth gating.** The staff role-gating model (route + sidebar + action `can()` checks,
   `<feature>` middleware) does **not** apply to public guest flows. Account/auth only where a logged-in
   customer area genuinely exists.
-- **Enforcement is per-repo.** staff-fe's enforcement map (eslint rules, `check:arch`, docs/feature
-  inventory) lives in staff-fe. Honor the same *intent* here; this repo enforces via its own
-  config/scripts (or, until they exist, treat those rules as 🔸 convention checked in review).
+- **Enforcement is per-repo.** This repo has `npm run verify` (`typecheck` + `lint` + `test`) and the
+  no-`any` + `@typescript-eslint/ban-ts-comment` lint gates. staff-fe's architecture enforcement
+  (`check:arch`, the custom `no-hardcoded-token` / `no-domain-vocab-in-core` rules, layer-boundary
+  `no-restricted-imports`) is **not yet ported** — honor that *intent* as 🔸 convention in review until
+  the app grows enough features to need it.
