@@ -61,7 +61,7 @@ onMounted(() => {
   if (draft) {
     const draftTickets = draft.tickets.filter((t) => cartStore.ticketDef(t.ticket_id) !== undefined)
     if (selectionKey(draftTickets) === selectionKey(cartStore.cart.value)) {
-      cartStore.cart.value = draftTickets
+      cartStore.replaceCart(draftTickets)
     }
     for (const key of Object.keys(c.checkoutAnswers)) {
       Reflect.deleteProperty(c.checkoutAnswers, key)

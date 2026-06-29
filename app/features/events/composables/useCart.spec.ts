@@ -90,4 +90,54 @@ describe('useCart', () => {
     expect(c.cart.value.every((i) => i.ticket_id === 9)).toBe(true)
     expect(c.quantityOf(999)).toBe(0)
   })
+
+  describe('replaceCart', () => {
+    it('sets the cart contents to the provided tickets', () => {
+      const c = useCart(event(ticket({})), [{ ticket_id: 9, quantity: 1 }])
+      const replacement = [
+        { uid: '9-5', ticket_id: 9, participants: [{ field_data: {} }] },
+        { uid: '9-6', ticket_id: 9, participants: [{ field_data: {} }] },
+      ]
+      c.replaceCart(replacement)
+      expect(c.cart.value).toHaveLength(2)
+      expect(c.cart.value[0]!.uid).toBe('9-5')
+      expect(c.cart.value[1]!.uid).toBe('9-6')
+    })
+
+    it('reconciles counters so addTicket never collides with restored uids', () => {
+      // Reproduce the collision scenario:
+      // 1. Seed with 9:2 → uids 9-1, 9-2; counters[9]=2
+      const c = useCart(event(ticket({ max_per_order: 10 })), [{ ticket_id: 9, quantity: 2 }])
+      expect(c.cart.value.map((i) => i.uid)).toEqual(['9-1', '9-2'])
+
+      // 2. Remove the first instance → cart has only 9-2; counters[9] still 2 in old code
+      c.removeTicket('9-1')
+      expect(c.cart.value.map((i) => i.uid)).toEqual(['9-2'])
+
+      // 3. addTicket(9) → mints 9-3 (counter increments to 3)
+      c.addTicket(9)
+      expect(c.cart.value.map((i) => i.uid)).toEqual(['9-2', '9-3'])
+
+      // 4. Snapshot the cart (simulates what gets saved to localStorage)
+      const savedCart = c.cart.value.map((t) => ({ ...t, participants: [...t.participants] }))
+
+      // 5. replaceCart with that snapshot — this is the draft restore path.
+      //    selectionKey("9-2","9-3") matches selectionKey of a fresh 9:2 seed,
+      //    so the restore happens. Before the fix, counters[9] would still be
+      //    whatever the fresh seed left it at (2), causing 9-3 collision on next add.
+      c.replaceCart(savedCart)
+      expect(c.cart.value.map((i) => i.uid)).toEqual(['9-2', '9-3'])
+
+      // 6. addTicket(9) must mint a uid that is NOT 9-3 and not already in the cart.
+      const uidsBefore = new Set(c.cart.value.map((i) => i.uid))
+      c.addTicket(9)
+      const uids = c.cart.value.map((i) => i.uid)
+      const uniqueUids = new Set(uids)
+      expect(uniqueUids.size).toBe(uids.length) // no duplicates
+      // The newly minted uid must not collide with any pre-existing uid (incl. 9-3)
+      const newUid = uids.find((u) => !uidsBefore.has(u))
+      expect(newUid).toBeDefined()
+      expect(newUid).not.toBe('9-3')
+    })
+  })
 })

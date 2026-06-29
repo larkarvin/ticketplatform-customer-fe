@@ -55,6 +55,17 @@ export function useCart(event: PublicEvent, initial: CheckoutSelection[]) {
     instance.participants.splice(index, 1)
   }
 
+  function replaceCart(tickets: CartTicket[]): void {
+    for (const t of tickets) {
+      const match = /^(\d+)-(\d+)$/.exec(t.uid)
+      if (!match) continue
+      const id = Number(match[1])
+      const n = Number(match[2])
+      counters[id] = Math.max(counters[id] ?? 0, n)
+    }
+    cart.value = tickets
+  }
+
   const serializeToQuery = (): string =>
     event.tickets
       .map((t) => [t.id, quantityOf(t.id)] as const)
@@ -72,6 +83,7 @@ export function useCart(event: PublicEvent, initial: CheckoutSelection[]) {
     removeTicket,
     addParticipant,
     removeParticipant,
+    replaceCart,
     serializeToQuery,
   }
 }
