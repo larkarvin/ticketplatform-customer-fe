@@ -13,6 +13,8 @@ function ticket(p: Partial<PublicTicket> = {}): PublicTicket {
     price_formatted: '$25.00',
     early_bird_price: null,
     early_bird_ends_at: null,
+    is_early_bird: false,
+    early_bird_price_formatted: null,
     currency: 'USD',
     is_on_sale: true,
     is_available: true,
@@ -42,7 +44,9 @@ describe('EventTicketList', () => {
 
   it('shows the early-bird price with the regular price struck through', () => {
     const w = mount(EventTicketList, {
-      props: { tickets: [ticket({ price_formatted: '$50.00', early_bird_price: 40, early_bird_ends_at: null })] },
+      props: {
+        tickets: [ticket({ is_early_bird: true, early_bird_price_formatted: '$40.00', price_formatted: '$50.00' })],
+      },
     })
     expect(w.text()).toContain('$40.00') // early-bird (current) price
     expect(w.find('.line-through').text()).toContain('$50.00') // regular price, struck

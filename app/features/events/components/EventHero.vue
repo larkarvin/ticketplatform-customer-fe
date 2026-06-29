@@ -17,11 +17,11 @@ const when = computed(() => formatEventDate(props.event.starts_at, props.event.e
 
     <div class="space-y-1 text-base text-gray-600 dark:text-gray-300">
       <p class="flex items-center gap-2">
-        <Calendar :size="18" class="shrink-0 text-gray-400" />
+        <Calendar :size="18" class="shrink-0 text-gray-400" aria-hidden="true" />
         {{ when }}
       </p>
       <p v-if="event.location" class="flex items-center gap-2">
-        <MapPin :size="18" class="shrink-0 text-gray-400" />
+        <MapPin :size="18" class="shrink-0 text-gray-400" aria-hidden="true" />
         <span>
           {{ event.location }}
           <template v-if="event.location_details">· {{ event.location_details }}</template>

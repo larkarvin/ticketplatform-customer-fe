@@ -8,19 +8,8 @@ import type { PublicTicket } from '../types'
 defineProps<{ tickets: PublicTicket[] }>()
 const emit = defineEmits<{ buy: [ticketId: number] }>()
 
-function money(amount: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)
-}
-
-// Early-bird is active when a lower price is set and its window hasn't closed.
-function isEarlyBird(t: PublicTicket): boolean {
-  if (t.early_bird_price == null) return false
-  if (!t.early_bird_ends_at) return true
-  return new Date(t.early_bird_ends_at).getTime() > Date.now()
-}
-
 function currentPrice(t: PublicTicket): string {
-  return isEarlyBird(t) && t.early_bird_price != null ? money(t.early_bird_price, t.currency) : t.price_formatted
+  return t.is_early_bird && t.early_bird_price_formatted ? t.early_bird_price_formatted : t.price_formatted
 }
 
 function buyable(t: PublicTicket): boolean {
@@ -49,7 +38,7 @@ function statusLabel(t: PublicTicket): string {
           </div>
           <div class="shrink-0 text-right">
             <p class="text-lg font-bold text-gray-900 dark:text-white">{{ currentPrice(t) }}</p>
-            <p v-if="isEarlyBird(t)" class="text-xs text-gray-400 line-through">{{ t.price_formatted }}</p>
+            <p v-if="t.is_early_bird" class="text-xs text-gray-400 line-through">{{ t.price_formatted }}</p>
           </div>
         </div>
 

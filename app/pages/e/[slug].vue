@@ -2,11 +2,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { toast } from 'vue-sonner'
-import { usePublicEvent } from '~/features/events'
-import EventBanner from '~/features/events/components/EventBanner.vue'
-import EventDetailsBody from '~/features/events/components/EventDetailsBody.vue'
-import EventHero from '~/features/events/components/EventHero.vue'
-import EventTicketList from '~/features/events/components/EventTicketList.vue'
+import { EventBanner, EventDetailsBody, EventHero, EventTicketList, usePublicEvent } from '~/features/events'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))

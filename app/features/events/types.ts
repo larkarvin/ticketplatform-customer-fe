@@ -16,6 +16,8 @@ export interface PublicTicket {
   price_formatted: string
   early_bird_price: number | null
   early_bird_ends_at: string | null
+  is_early_bird: boolean
+  early_bird_price_formatted: string | null
   currency: string
   is_on_sale: boolean
   is_available: boolean
