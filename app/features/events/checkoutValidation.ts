@@ -1,15 +1,12 @@
 // app/features/events/checkoutValidation.ts
-// Pure required-field check over attendees + order-level add-ons. Backend stays authoritative; this
-// only avoids an obvious round-trip and drives the inline error display. Error keys match exactly what
-// the UI consumes: `${uid}.${index}.${field_key}` (participants), `${field_key}` (add-ons).
+// Pure required-field check over attendees only. Order-level add-ons (the "Optional extras" section)
+// are always optional and never gate progress, so they are deliberately NOT validated here. Backend
+// stays authoritative; this only avoids an obvious round-trip and drives the inline error display.
+// Error keys match exactly what the UI consumes: `${uid}.${index}.${field_key}` (participants).
 import { validateField } from '#core/field-engine/validation'
 import type { CartTicket, PublicEvent } from '~/features/events/types'
 
-export function validateCheckout(
-  event: PublicEvent,
-  cart: CartTicket[],
-  checkoutAnswers: Record<string, unknown>
-): Record<string, string> {
+export function validateCheckout(event: PublicEvent, cart: CartTicket[]): Record<string, string> {
   const errors: Record<string, string> = {}
 
   for (const inst of cart) {
@@ -22,11 +19,6 @@ export function validateCheckout(
         if (msg) errors[`${inst.uid}.${i}.${f.field_key}`] = msg
       }
     })
-  }
-
-  for (const f of event.form_fields ?? []) {
-    const msg = validateField(f, checkoutAnswers[f.field_key])
-    if (msg) errors[f.field_key] = msg
   }
 
   return errors

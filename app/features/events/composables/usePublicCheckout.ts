@@ -26,7 +26,7 @@ export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
   const { calculation, status: totalsStatus, recalc: recalcTotals } = useCheckoutTotals(event.slug, buildCalcPayload)
 
   function validate(): boolean {
-    fieldErrors.value = validateCheckout(event, cart.value, checkoutAnswers)
+    fieldErrors.value = validateCheckout(event, cart.value)
     return Object.keys(fieldErrors.value).length === 0
   }
 

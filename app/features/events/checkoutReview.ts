@@ -59,7 +59,7 @@ export function buildReviewGroups(
   const addonItems = (event.form_fields ?? [])
     .map((f) => ({ key: f.field_key, label: f.label, value: formatAnswer(f, checkoutAnswers[f.field_key]) }))
     .filter((it) => it.value !== '')
-  if (addonItems.length) groups.push({ editTarget: EDIT_ADDONS, title: 'Additional details', items: addonItems })
+  if (addonItems.length) groups.push({ editTarget: EDIT_ADDONS, title: 'Optional extras', items: addonItems })
 
   return groups
 }

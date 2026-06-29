@@ -37,7 +37,10 @@ function goToReview(): void {
     scrollToFirstError()
     return
   }
-  if (typeof window !== 'undefined') window.history.pushState({ checkoutView: 'review' }, '')
+  // Merge our marker into Vue Router's existing history.state rather than replacing it, so the
+  // router's own nav metadata (position index, scroll restoration) survives the back/forward round-trip.
+  if (typeof window !== 'undefined')
+    window.history.pushState({ ...(window.history.state ?? {}), checkoutView: 'review' }, '')
   view.value = 'review'
   if (typeof window !== 'undefined') window.scrollTo({ top: 0 })
 }

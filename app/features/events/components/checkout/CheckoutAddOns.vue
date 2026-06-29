@@ -20,7 +20,10 @@ function setAnswer(key: string, value: unknown): void {
 
 <template>
   <section v-if="fields.length" class="space-y-4">
-    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Additional details</h2>
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Optional extras</h2>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Add only what you'd like.</p>
+    </div>
     <div class="grid grid-cols-12 gap-4">
       <FieldCell
         v-for="f in fields"

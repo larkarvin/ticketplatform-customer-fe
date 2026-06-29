@@ -80,23 +80,23 @@ const cart = (fd: Record<string, unknown>): CartTicket[] => [
 
 describe('validateCheckout', () => {
   it('flags a missing required participant field with the UI key shape', () => {
-    const errors = validateCheckout(event(), cart({}), {})
+    const errors = validateCheckout(event(), cart({}))
     expect(errors['u1.0.full_name']).toBeTruthy()
   })
 
   it('passes when required participant fields are filled', () => {
-    expect(validateCheckout(event(), cart({ full_name: 'Juan' }), {})).toEqual({})
+    expect(validateCheckout(event(), cart({ full_name: 'Juan' }))).toEqual({})
   })
 
   it('skips participant validation for collect_details_later tickets', () => {
     const ev = event({ tickets: [{ ...baseTicket, collect_details_later: true, participant_fields: [nameField] }] })
-    expect(validateCheckout(ev, cart({}), {})).toEqual({})
+    expect(validateCheckout(ev, cart({}))).toEqual({})
   })
 
-  it('flags a missing required add-on by field_key', () => {
+  it('never gates on add-on fields — checkout extras are always optional', () => {
+    // A required-looking add-on left unanswered must NOT produce an error: extras never block progress.
     const addon: Field = { ...nameField, id: 2, field_key: 'shirt', label: 'Shirt size' }
     const ev = event({ form_fields: [addon] })
-    const errors = validateCheckout(ev, cart({ full_name: 'Juan' }), {})
-    expect(errors['shirt']).toBeTruthy()
+    expect(validateCheckout(ev, cart({ full_name: 'Juan' }))).toEqual({})
   })
 })
