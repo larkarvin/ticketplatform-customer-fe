@@ -1,14 +1,17 @@
-<!-- Sticky bottom bar: running total + disabled pay CTA (payment deferred). -->
+<!-- Sticky bottom bar. Entry mode: running total + Continue to review. Review mode: total + Back +
+     disabled pay placeholder (payment deferred). -->
 <script setup lang="ts">
+import { ChevronLeft, ChevronRight } from '#icons'
 import { computed } from 'vue'
 import type { OrderCalculation } from '../../types'
 
 const props = defineProps<{
   calculation: OrderCalculation | null
   status: 'idle' | 'updating' | 'error'
+  mode: 'entry' | 'review'
 }>()
 
-const emit = defineEmits<{ retry: [] }>()
+const emit = defineEmits<{ retry: []; continue: []; back: [] }>()
 
 const totalText = computed(() =>
   props.calculation ? `${props.calculation.currency} ${props.calculation.total.toFixed(2)}` : '—'
@@ -21,7 +24,6 @@ const totalText = computed(() =>
     style="padding-bottom: env(safe-area-inset-bottom)"
   >
     <div class="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
-      <!-- Total -->
       <div class="min-w-0">
         <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</p>
         <p
@@ -32,12 +34,9 @@ const totalText = computed(() =>
         >
           Updating…
         </p>
-        <p v-else class="text-lg font-bold tabular-nums text-gray-900 dark:text-white">
-          {{ totalText }}
-        </p>
+        <p v-else class="text-lg font-bold tabular-nums text-gray-900 dark:text-white">{{ totalText }}</p>
       </div>
 
-      <!-- Actions -->
       <div class="flex flex-shrink-0 items-center gap-3">
         <span v-if="status === 'error'" class="flex items-center gap-2 text-sm text-danger-600 dark:text-danger-400">
           Couldn't update total
@@ -50,13 +49,36 @@ const totalText = computed(() =>
             Retry
           </button>
         </span>
+
         <button
+          v-if="mode === 'entry'"
           type="button"
-          disabled
-          class="min-h-tap cursor-not-allowed rounded-xl bg-brand-500 px-6 text-base font-semibold text-white opacity-50"
+          data-test="continue"
+          class="inline-flex min-h-tap cursor-pointer items-center gap-1.5 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600"
+          @click="emit('continue')"
         >
-          Payment coming soon
+          Continue to review
+          <ChevronRight :size="20" />
         </button>
+
+        <template v-else>
+          <button
+            type="button"
+            data-test="back"
+            class="inline-flex min-h-tap cursor-pointer items-center gap-1.5 rounded-xl border border-gray-300 px-5 text-base font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+            @click="emit('back')"
+          >
+            <ChevronLeft :size="20" />
+            Back
+          </button>
+          <button
+            type="button"
+            disabled
+            class="min-h-tap cursor-not-allowed rounded-xl bg-brand-500 px-6 text-base font-semibold text-white opacity-50"
+          >
+            Payment coming soon
+          </button>
+        </template>
       </div>
     </div>
   </div>
