@@ -15,7 +15,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ remove: [uid: string] }>()
 
-const cards = ref<Array<{ focusIdentity: () => void } | null>>([])
+const cards = ref<Array<InstanceType<typeof ParticipantCard> | null>>([])
 const collapsed = ref(props.ticket.collect_details_later)
 const fields = computed(() => props.ticket.participant_fields ?? [])
 
@@ -37,6 +37,11 @@ function copyInto(i: number): void {
   if (!target) return
   target.field_data = { ...src }
   cards.value[i]?.focusIdentity()
+}
+
+function setGroupName(value: string): void {
+  const inst = props.instance
+  inst.group_name = value
 }
 
 function groupLabel(): string {
@@ -86,20 +91,19 @@ function groupLabel(): string {
           {{ ticket.group_name_label }}
           <span class="text-xs text-gray-400">(optional)</span>
         </label>
-        <!-- eslint-disable vue/no-mutating-props -->
         <input
           :id="`gn-${instance.uid}`"
-          v-model="instance.group_name"
+          :value="instance.group_name"
           type="text"
           class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          @input="setGroupName(($event.target as HTMLInputElement).value)"
         />
-        <!-- eslint-enable vue/no-mutating-props -->
       </div>
 
       <ParticipantCard
         v-for="(p, i) in instance.participants"
         :key="i"
-        :ref="(el) => (cards[i] = el as never)"
+        :ref="(el) => (cards[i] = el as InstanceType<typeof ParticipantCard> | null)"
         :fields="fields"
         :participant="p"
         :index="i"
