@@ -25,18 +25,34 @@ function ticket(p: Partial<PublicTicket> = {}): PublicTicket {
 }
 
 describe('EventTicketList', () => {
-  it('lists tickets with name and formatted price', () => {
+  it('lists tickets with name and price', () => {
     const w = mount(EventTicketList, { props: { tickets: [ticket({ name: 'VIP', price_formatted: '$99.00' })] } })
     expect(w.text()).toContain('VIP')
     expect(w.text()).toContain('$99.00')
   })
 
-  it('shows a disabled Get tickets CTA labelled on sale soon', () => {
-    const w = mount(EventTicketList, { props: { tickets: [ticket()] } })
+  it('renders a Buy button per ticket and emits buy with the ticket id', async () => {
+    const w = mount(EventTicketList, { props: { tickets: [ticket({ id: 7 })] } })
     const btn = w.find('button')
-    expect(btn.exists()).toBe(true)
+    expect(btn.text()).toBe('Buy ticket')
+    expect(btn.attributes('disabled')).toBeUndefined()
+    await btn.trigger('click')
+    expect(w.emitted('buy')?.[0]).toEqual([7])
+  })
+
+  it('shows the early-bird price with the regular price struck through', () => {
+    const w = mount(EventTicketList, {
+      props: { tickets: [ticket({ price_formatted: '$50.00', early_bird_price: 40, early_bird_ends_at: null })] },
+    })
+    expect(w.text()).toContain('$40.00') // early-bird (current) price
+    expect(w.find('.line-through').text()).toContain('$50.00') // regular price, struck
+  })
+
+  it('disables the button and shows status when a ticket is sold out', () => {
+    const w = mount(EventTicketList, { props: { tickets: [ticket({ is_available: false })] } })
+    const btn = w.find('button')
     expect(btn.attributes('disabled')).toBeDefined()
-    expect(w.text()).toContain('On sale soon')
+    expect(btn.text()).toBe('Sold out')
   })
 
   it('shows an empty state when there are no tickets', () => {

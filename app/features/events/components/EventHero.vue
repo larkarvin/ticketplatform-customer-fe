@@ -1,4 +1,6 @@
 <!-- customer-fe/app/features/events/components/EventHero.vue -->
+<!-- Event header: title + date/time + location. The cover image is rendered separately as the
+     full-width EventBanner above the two-column content. -->
 <script setup lang="ts">
 import { Calendar, MapPin } from '#icons'
 import { computed } from 'vue'
@@ -10,14 +12,7 @@ const when = computed(() => formatEventDate(props.event.starts_at, props.event.e
 </script>
 
 <template>
-  <header class="space-y-4">
-    <div class="overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
-      <img v-if="event.cover" :src="event.cover.url" :alt="event.title" class="h-full max-h-96 w-full object-cover" />
-      <div v-else class="flex h-48 items-center justify-center text-gray-400">
-        <Calendar :size="48" />
-      </div>
-    </div>
-
+  <header class="space-y-3">
     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ event.title }}</h1>
 
     <div class="space-y-1 text-base text-gray-600 dark:text-gray-300">

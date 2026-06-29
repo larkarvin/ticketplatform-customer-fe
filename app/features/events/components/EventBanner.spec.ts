@@ -1,8 +1,8 @@
-// customer-fe/app/features/events/components/EventHero.spec.ts
+// customer-fe/app/features/events/components/EventBanner.spec.ts
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import type { PublicEvent } from '../types'
-import EventHero from './EventHero.vue'
+import EventBanner from './EventBanner.vue'
 
 function event(p: Partial<PublicEvent> = {}): PublicEvent {
   return {
@@ -14,7 +14,7 @@ function event(p: Partial<PublicEvent> = {}): PublicEvent {
     year: 2026,
     description: null,
     details: null,
-    location: 'Parish Hall',
+    location: null,
     location_details: null,
     starts_at: '2026-04-05T23:00:00Z',
     ends_at: null,
@@ -30,11 +30,14 @@ function event(p: Partial<PublicEvent> = {}): PublicEvent {
   }
 }
 
-describe('EventHero', () => {
-  it('renders title, date and location', () => {
-    const w = mount(EventHero, { props: { event: event() } })
-    expect(w.text()).toContain('Spring Gala')
-    expect(w.text()).toContain('April 5, 2026')
-    expect(w.text()).toContain('Parish Hall')
+describe('EventBanner', () => {
+  it('renders the cover image when present', () => {
+    const w = mount(EventBanner, { props: { event: event({ cover: { id: 1, url: 'https://x/c.jpg' } }) } })
+    expect(w.find('img').attributes('src')).toBe('https://x/c.jpg')
+  })
+
+  it('renders a fallback (no img) when there is no cover', () => {
+    const w = mount(EventBanner, { props: { event: event() } })
+    expect(w.find('img').exists()).toBe(false)
   })
 })
