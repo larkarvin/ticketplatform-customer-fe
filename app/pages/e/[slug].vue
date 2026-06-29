@@ -1,17 +1,20 @@
+<!-- customer-fe/app/pages/e/[slug].vue -->
 <script setup lang="ts">
-// Event route stub. Proves path routing + shell + per-page title/OG. Real data fetch lands in the
-// Events cycle.
+import { computed } from 'vue'
+import { usePublicEvent } from '~/features/events'
+import EventDetailsBody from '~/features/events/components/EventDetailsBody.vue'
+import EventHero from '~/features/events/components/EventHero.vue'
+import EventTicketList from '~/features/events/components/EventTicketList.vue'
+
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-useHead(() => ({
-  title: `Event: ${slug.value}`,
-  meta: [{ property: 'og:title', content: `Event: ${slug.value}` }],
-}))
+const { event } = await usePublicEvent(slug.value)
 </script>
 
 <template>
-  <section>
-    <h1 class="mb-2 text-2xl font-semibold">Event</h1>
-    <p class="text-gray-500">Event "{{ slug }}" — details coming soon.</p>
-  </section>
+  <article class="mx-auto w-full max-w-3xl space-y-8 px-4 py-6">
+    <EventHero :event="event" />
+    <EventDetailsBody :html="event.details" />
+    <EventTicketList :tickets="event.tickets" />
+  </article>
 </template>
