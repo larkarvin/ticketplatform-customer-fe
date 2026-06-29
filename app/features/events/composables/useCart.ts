@@ -6,12 +6,13 @@ export function useCart(event: PublicEvent, initial: CheckoutSelection[]) {
   const counters: Record<number, number> = {}
 
   function makeInstance(id: number): CartTicket {
-    const admits = ticketDef(id)?.admits_per_ticket ?? 1
+    const def = ticketDef(id)
+    const minP = def?.min_participants ?? 1
     const n = (counters[id] = (counters[id] ?? 0) + 1)
     return {
       uid: `${id}-${n}`,
       ticket_id: id,
-      participants: Array.from({ length: admits }, () => ({ field_data: {} })),
+      participants: Array.from({ length: minP }, () => ({ field_data: {} })),
     }
   }
 
@@ -38,6 +39,22 @@ export function useCart(event: PublicEvent, initial: CheckoutSelection[]) {
     cart.value = cart.value.filter((c) => c.uid !== uid)
   }
 
+  function addParticipant(uid: string): void {
+    const instance = cart.value.find((c) => c.uid === uid)
+    if (!instance) return
+    const max = ticketDef(instance.ticket_id)?.max_participants ?? 1
+    if (instance.participants.length >= max) return
+    instance.participants.push({ field_data: {} })
+  }
+
+  function removeParticipant(uid: string, index: number): void {
+    const instance = cart.value.find((c) => c.uid === uid)
+    if (!instance) return
+    const min = ticketDef(instance.ticket_id)?.min_participants ?? 1
+    if (instance.participants.length <= min) return
+    instance.participants.splice(index, 1)
+  }
+
   const serializeToQuery = (): string =>
     event.tickets
       .map((t) => [t.id, quantityOf(t.id)] as const)
@@ -45,5 +62,16 @@ export function useCart(event: PublicEvent, initial: CheckoutSelection[]) {
       .map(([id, q]) => `${id}:${q}`)
       .join(',')
 
-  return { cart, ticketDef, ticketsFor, quantityOf, maxFor, addTicket, removeTicket, serializeToQuery }
+  return {
+    cart,
+    ticketDef,
+    ticketsFor,
+    quantityOf,
+    maxFor,
+    addTicket,
+    removeTicket,
+    addParticipant,
+    removeParticipant,
+    serializeToQuery,
+  }
 }
