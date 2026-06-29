@@ -11,12 +11,9 @@ const props = defineProps<{
   identityKey: string | null
   errors: Record<string, string>
   errorPrefix: string
-  showPrefill: boolean
-  buyerName: string
 }>()
 const emit = defineEmits<{ 'copy-from-above': [] }>()
 
-const usingMine = ref(false)
 const identityInput = ref<HTMLElement>()
 
 function set(key: string, value: unknown): void {
@@ -31,14 +28,6 @@ async function focusIdentity(): Promise<void> {
   el?.select()
 }
 
-async function togglePrefill(on: boolean): Promise<void> {
-  usingMine.value = on
-  if (on && props.identityKey) {
-    set(props.identityKey, props.buyerName)
-    await focusIdentity()
-  }
-}
-
 defineExpose({ focusIdentity })
 </script>
 
@@ -46,18 +35,8 @@ defineExpose({ focusIdentity })
   <div class="space-y-3 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
     <div class="flex items-center justify-between">
       <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Participant {{ index + 1 }}</p>
-      <label v-if="showPrefill" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-        <input
-          data-test="use-my-details"
-          type="checkbox"
-          :checked="usingMine"
-          class="min-h-tap min-w-tap"
-          @change="togglePrefill(($event.target as HTMLInputElement).checked)"
-        />
-        I'm attending — use my details
-      </label>
       <button
-        v-else
+        v-if="index > 0"
         data-test="copy-above"
         type="button"
         class="min-h-tap text-sm font-medium text-brand-500 hover:text-brand-600"

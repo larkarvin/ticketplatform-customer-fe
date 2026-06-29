@@ -10,8 +10,6 @@ const props = defineProps<{
   instanceNumber: number
   identityKey: string | null
   errors: Record<string, string>
-  showPrefill: boolean
-  buyerName: string
   forceExpandUid?: string | null
 }>()
 const emit = defineEmits<{ remove: [uid: string] }>()
@@ -119,8 +117,6 @@ function groupLabel(): string {
         :identity-key="identityKey"
         :errors="errors"
         :error-prefix="`${instance.uid}.${i}`"
-        :show-prefill="showPrefill && instanceNumber === 1 && i === 0"
-        :buyer-name="buyerName"
         @copy-from-above="copyInto(i)"
       />
 

@@ -30,8 +30,6 @@ const base = () => ({
   identityKey: 'name',
   errors: {},
   errorPrefix: '9-1.0',
-  showPrefill: true,
-  buyerName: 'Maria Santos',
 })
 
 describe('ParticipantCard', () => {
@@ -40,15 +38,8 @@ describe('ParticipantCard', () => {
     expect(w.text()).toContain('Runner name')
   })
 
-  it('prefill checkbox copies the buyer name into the identity field', async () => {
-    const props = base()
-    const w = mount(ParticipantCard, { props })
-    await w.get('[data-test=use-my-details]').setValue(true)
-    expect(props.participant.field_data['name']).toBe('Maria Santos')
-  })
-
   it('emits copy-from-above', async () => {
-    const w = mount(ParticipantCard, { props: { ...base(), showPrefill: false, index: 1 } })
+    const w = mount(ParticipantCard, { props: { ...base(), index: 1 } })
     await w.get('[data-test=copy-above]').trigger('click')
     expect(w.emitted('copy-from-above')).toBeTruthy()
   })

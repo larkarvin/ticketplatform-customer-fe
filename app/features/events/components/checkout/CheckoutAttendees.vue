@@ -9,7 +9,6 @@ const props = defineProps<{
   cart: CartTicket[]
   identityKeyFor: (ticketId: number) => string | null
   errors: Record<string, string>
-  buyerName: string
 }>()
 
 const emit = defineEmits<{ remove: [uid: string] }>()
@@ -43,15 +42,13 @@ const forceExpandUid = computed(() => Object.keys(props.errors)[0]?.split('.')[0
   <section v-if="hasAnyFields" class="space-y-6">
     <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Who's attending</h2>
     <ParticipantGroup
-      v-for="(entry, idx) in cartEntries"
+      v-for="entry in cartEntries"
       :key="entry.inst.uid"
       :ticket="entry.ticket"
       :instance="entry.inst"
       :instance-number="entry.instanceNumber"
       :identity-key="identityKeyFor(entry.inst.ticket_id)"
       :errors="errors"
-      :show-prefill="idx === 0"
-      :buyer-name="buyerName"
       :force-expand-uid="forceExpandUid"
       @remove="emit('remove', $event)"
     />

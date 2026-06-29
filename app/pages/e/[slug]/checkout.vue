@@ -80,7 +80,6 @@ function identityKeyFor(ticketId: number): string | null {
         :cart="cartStore.cart.value"
         :identity-key-for="identityKeyFor"
         :errors="c.fieldErrors.value"
-        :buyer-name="c.buyer.name"
         @remove="requestRemove"
       />
       <CheckoutBuyer :buyer="c.buyer" />

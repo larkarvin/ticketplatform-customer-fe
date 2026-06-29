@@ -88,7 +88,6 @@ describe('CheckoutAttendees', () => {
         cart: makeCart(['9-1']),
         identityKeyFor,
         errors: {},
-        buyerName: '',
       },
     })
     expect(w.findAllComponents({ name: 'ParticipantGroup' })).toHaveLength(1)
@@ -101,25 +100,9 @@ describe('CheckoutAttendees', () => {
         cart: makeCart(['9-1', '9-2']),
         identityKeyFor,
         errors: {},
-        buyerName: '',
       },
     })
     expect(w.findAllComponents({ name: 'ParticipantGroup' })).toHaveLength(2)
-  })
-
-  it('passes showPrefill=true only on the first instance overall', () => {
-    const w = mount(CheckoutAttendees, {
-      props: {
-        event,
-        cart: makeCart(['9-1', '9-2']),
-        identityKeyFor,
-        errors: {},
-        buyerName: '',
-      },
-    })
-    const groups = w.findAllComponents({ name: 'ParticipantGroup' })
-    expect(groups[0]?.props('showPrefill')).toBe(true)
-    expect(groups[1]?.props('showPrefill')).toBe(false)
   })
 
   it('forwards the remove event from a ParticipantGroup', async () => {
@@ -129,7 +112,6 @@ describe('CheckoutAttendees', () => {
         cart: makeCart(['9-1']),
         identityKeyFor,
         errors: {},
-        buyerName: '',
       },
     })
     await w.get('[data-test=remove-group]').trigger('click')
@@ -145,7 +127,6 @@ describe('CheckoutAttendees', () => {
         cart: makeCart(['9-1']),
         identityKeyFor,
         errors: {},
-        buyerName: '',
       },
     })
     expect(w.find('section').exists()).toBe(false)
@@ -158,7 +139,6 @@ describe('CheckoutAttendees', () => {
         cart: makeCart(['9-1', '9-2']),
         identityKeyFor,
         errors: {},
-        buyerName: '',
       },
     })
     const groups = w.findAllComponents({ name: 'ParticipantGroup' })

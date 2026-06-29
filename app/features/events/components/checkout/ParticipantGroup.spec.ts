@@ -44,8 +44,6 @@ const base = () => ({
   instanceNumber: 1,
   identityKey: 'name',
   errors: {},
-  showPrefill: true,
-  buyerName: 'B',
 })
 
 describe('ParticipantGroup', () => {
