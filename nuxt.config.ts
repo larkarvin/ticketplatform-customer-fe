@@ -47,5 +47,15 @@ export default defineNuxtConfig({
     },
   },
 
-  vite: { server: { allowedHosts: true } },
+  vite: {
+    server: {
+      allowedHosts: true,
+      // fe-core is consumed as a symlink to a sibling dir (../fe-core), which lives OUTSIDE this app's
+      // root, so Vite's filesystem allow-list must include its real path — otherwise serving the
+      // layer's assets (e.g. app/assets/css/main.css) is blocked with "outside of Vite serving allow list".
+      fs: {
+        allow: [fileURLToPath(new URL('./', import.meta.url)), fileURLToPath(new URL('../fe-core', import.meta.url))],
+      },
+    },
+  },
 })
