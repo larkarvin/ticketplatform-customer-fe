@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
 import type { Field } from '#core/field-engine/types'
+import { Copy, Trash2 } from '#icons'
 import { nextTick, ref } from 'vue'
 import type { CartParticipant } from '../../types'
 
@@ -11,8 +12,11 @@ const props = defineProps<{
   identityKey: string | null
   errors: Record<string, string>
   errorPrefix: string
+  title: string
+  canCopy: boolean
+  canRemove: boolean
 }>()
-const emit = defineEmits<{ 'copy-from-above': [] }>()
+const emit = defineEmits<{ 'copy-from-above': []; remove: [] }>()
 
 const identityInput = ref<HTMLElement>()
 
@@ -33,17 +37,30 @@ defineExpose({ focusIdentity })
 
 <template>
   <div class="space-y-3 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
-    <div class="flex items-center justify-between">
-      <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Participant {{ index + 1 }}</p>
-      <button
-        v-if="index > 0"
-        data-test="copy-above"
-        type="button"
-        class="min-h-tap text-sm font-medium text-brand-500 hover:text-brand-600"
-        @click="emit('copy-from-above')"
-      >
-        Copy from above
-      </button>
+    <div class="flex items-center justify-between gap-2">
+      <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ title }}</p>
+      <div class="flex items-center gap-1">
+        <button
+          v-if="canCopy"
+          data-test="copy-above"
+          type="button"
+          class="flex min-h-[44px] min-w-[44px] items-center gap-1 rounded px-2 text-sm font-medium text-brand-500 hover:text-brand-600"
+          @click="emit('copy-from-above')"
+        >
+          <Copy class="size-4 shrink-0" aria-hidden="true" />
+          Copy from above
+        </button>
+        <button
+          v-if="canRemove"
+          data-test="remove"
+          type="button"
+          class="flex min-h-[44px] min-w-[44px] items-center gap-1 rounded px-2 text-sm font-medium text-danger-500 hover:text-danger-600"
+          @click="emit('remove')"
+        >
+          <Trash2 class="size-4 shrink-0" aria-hidden="true" />
+          Remove
+        </button>
+      </div>
     </div>
     <div class="grid grid-cols-12 gap-4">
       <FieldCell

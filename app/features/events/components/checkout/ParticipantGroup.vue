@@ -117,6 +117,9 @@ function groupLabel(): string {
         :identity-key="identityKey"
         :errors="errors"
         :error-prefix="`${instance.uid}.${i}`"
+        :title="`Participant ${i + 1}`"
+        :can-copy="i > 0"
+        :can-remove="false"
         @copy-from-above="copyInto(i)"
       />
 
