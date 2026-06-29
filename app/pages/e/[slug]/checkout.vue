@@ -1,7 +1,8 @@
 <!-- customer-fe/app/pages/e/[slug]/checkout.vue -->
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
+import { hasData, parseSelection } from '~/features/events/cart'
 // Merch/donation add-ons deferred to a follow-up slice.
 import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAttendees.vue'
 import CheckoutBuyer from '~/features/events/components/checkout/CheckoutBuyer.vue'
@@ -9,37 +10,43 @@ import CheckoutSummary from '~/features/events/components/checkout/CheckoutSumma
 import CheckoutTickets from '~/features/events/components/checkout/CheckoutTickets.vue'
 import { useCart } from '~/features/events/composables/useCart'
 import { usePublicCheckout } from '~/features/events/composables/usePublicCheckout'
-import type { CheckoutSelection } from '~/features/events/types'
 
 const route = useRoute()
+const router = useRouter()
 const slug = computed(() => String(route.params.slug))
 const { event } = await usePublicEvent(slug.value)
 
-// Parse ?tickets=id:qty,id:qty (refresh-safe). Clamp to real, available tickets.
-const selection = computed<CheckoutSelection[]>(() =>
-  String(route.query.tickets ?? '')
-    .split(',')
-    .filter(Boolean)
-    .map((p) => {
-      const [id, q] = p.split(':')
-      return { ticket_id: Number(id), quantity: Number(q) }
-    })
-    .filter((s) => s.quantity > 0 && event.tickets.some((t) => t.id === s.ticket_id))
-)
-
-const cartStore = useCart(event, selection.value)
+const cartStore = useCart(event, parseSelection(route.query.tickets))
 // Pass the cart Ref so usePublicCheckout can build the calculate payload from instances.
 const c = usePublicCheckout(event, cartStore.cart)
 
-// Trigger an initial price preview once the cart is populated.
-if (cartStore.cart.value.length > 0) {
-  c.recalcTotals()
+// URL sync: keep ?tickets= in sync whenever the cart changes, then recalc totals.
+watch(
+  cartStore.cart,
+  () => {
+    router.replace({ query: { ...route.query, tickets: cartStore.serializeToQuery() } })
+    c.recalcTotals()
+  },
+  { deep: true }
+)
+
+// Trigger the initial price preview after hydration to avoid SSR double-fetch.
+onMounted(() => c.recalcTotals())
+
+// Confirm before removing an instance that has entered participant data.
+function requestRemove(uid: string): void {
+  if (
+    hasData(cartStore.cart.value, uid) &&
+    !window.confirm("Remove this ticket? You'll lose the names and add-ons entered.")
+  )
+    return
+  cartStore.removeTicket(uid)
 }
 
-// Remove the most-recently-added instance of a given ticket type.
+// Remove the most-recently-added instance of a given ticket type (stepper decrement).
 function onRemoveOne(ticketId: number): void {
   const last = [...cartStore.cart.value].reverse().find((inst) => inst.ticket_id === ticketId)
-  if (last) cartStore.removeTicket(last.uid)
+  if (last) requestRemove(last.uid)
 }
 
 // First required text-like field for the ticket, used as identity key in ParticipantGroup.
@@ -55,7 +62,7 @@ function identityKeyFor(ticketId: number): string | null {
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Checkout — {{ event.title }}</h1>
 
     <!-- Empty/invalid selection → send them back to pick tickets -->
-    <p v-if="selection.length === 0" class="text-gray-600 dark:text-gray-300">
+    <p v-if="cartStore.cart.value.length === 0" class="text-gray-600 dark:text-gray-300">
       No tickets selected.
       <NuxtLink :to="`/e/${slug}`" class="text-brand-500 underline">Choose tickets</NuxtLink>
     </p>
@@ -74,7 +81,7 @@ function identityKeyFor(ticketId: number): string | null {
         :identity-key-for="identityKeyFor"
         :errors="c.fieldErrors.value"
         :buyer-name="c.buyer.name"
-        @remove="cartStore.removeTicket"
+        @remove="requestRemove"
       />
       <CheckoutBuyer :buyer="c.buyer" />
       <CheckoutSummary :calculation="c.calculation.value" :status="c.totalsStatus.value" @retry="c.recalcTotals" />
