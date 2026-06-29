@@ -1,4 +1,5 @@
 // Public event DTOs (snake_case — the API contract shape) for the read-only event page.
+import type { Field } from '#core/field-engine/types'
 
 export interface EventMedia {
   id: number
@@ -27,6 +28,8 @@ export interface PublicTicket {
   min_per_order: number
   max_per_order: number
   sort_order: number
+  collect_details_later: boolean
+  participant_fields: Field[]
 }
 
 export interface PublicEvent {
@@ -50,6 +53,7 @@ export interface PublicEvent {
   has_capacity: boolean
   available_capacity: number | null
   tickets: PublicTicket[]
+  form_fields: Field[] | null
 }
 
 /** A buyer's chosen quantity per ticket, from the event card. */

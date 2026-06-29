@@ -26,6 +26,7 @@ function event(p: Partial<PublicEvent> = {}): PublicEvent {
     has_capacity: false,
     available_capacity: null,
     tickets: [],
+    form_fields: null,
     ...p,
   }
 }
