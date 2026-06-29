@@ -7,6 +7,7 @@ import type { Field } from '#core/field-engine/types'
 import { isCollecting, validateAll } from '#core/field-engine/validation'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import type { ReviewGroup } from '~/core/types/review'
 import { variantLabel } from '~/features/forms/productLabels'
 import { formsService } from '~/features/forms/services/forms.service'
 import type {
@@ -17,19 +18,6 @@ import type {
   SubmitAnswers,
   SubmitResult,
 } from '~/features/forms/types'
-
-/** One reviewed answer (a field's label + its value in plain words). */
-export interface ReviewItem {
-  fieldId: number
-  label: string
-  value: string
-}
-/** A reviewed section: its heading, the step to jump to when editing, and its answered items. */
-export interface ReviewGroup {
-  stepIndex: number
-  title: string
-  items: ReviewItem[]
-}
 
 interface Section {
   id: string
@@ -197,11 +185,11 @@ export async function usePublicForm(slug: string) {
   const reviewGroups = computed<ReviewGroup[]>(() =>
     sections.value
       .map((sec, i) => ({
-        stepIndex: i,
+        editTarget: i,
         title: sec.title || 'Your answers',
         items: sec.fields
           .filter((f) => isCollecting(f))
-          .map((f) => ({ fieldId: f.id, label: f.label, value: formatAnswer(f, answers[String(f.id)]) }))
+          .map((f) => ({ key: f.id, label: f.label, value: formatAnswer(f, answers[String(f.id)]) }))
           .filter((it) => it.value !== ''),
       }))
       .filter((g) => g.items.length > 0)

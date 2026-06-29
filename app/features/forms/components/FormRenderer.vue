@@ -2,8 +2,8 @@
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
 import { Check, CheckCircle, ChevronLeft, ChevronRight, Clock, CreditCard, Lock, Mail } from '#icons'
 import { computed, nextTick, ref } from 'vue'
+import ReviewSummary from '~/core/components/ReviewSummary.vue'
 import OrderSummary from '~/features/forms/components/OrderSummary.vue'
-import ReviewSummary from '~/features/forms/components/ReviewSummary.vue'
 import type { PublicFormState } from '~/features/forms/composables/usePublicForm'
 
 const props = defineProps<{ state: PublicFormState }>()
