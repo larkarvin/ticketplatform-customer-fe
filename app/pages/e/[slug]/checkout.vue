@@ -38,6 +38,11 @@ watch(
   { deep: true }
 )
 
+// Recalc totals whenever add-on / checkout-field answers change — priced add-ons
+// (merch, donations) are sent in the calc payload so the server returns updated line
+// items; without this watch the displayed Total stays stale after an answer change.
+watch(c.checkoutAnswers, () => c.recalcTotals(), { deep: true })
+
 // Autosave: debounced persist on any cart, answers, or buyer changes.
 watch(
   [cartStore.cart, c.checkoutAnswers, c.buyer],
