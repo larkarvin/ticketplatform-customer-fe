@@ -6,11 +6,21 @@ import EventTicketList from './EventTicketList.vue'
 
 function ticket(p: Partial<PublicTicket> = {}): PublicTicket {
   return {
-    id: 1, name: 'General', description: null,
-    price: 2500, price_formatted: '$25.00',
-    early_bird_price: null, early_bird_ends_at: null, currency: 'USD',
-    is_on_sale: true, is_available: true, available_quantity: null,
-    sales_start_at: null, sales_end_at: null, sort_order: 0, ...p,
+    id: 1,
+    name: 'General',
+    description: null,
+    price: 2500,
+    price_formatted: '$25.00',
+    early_bird_price: null,
+    early_bird_ends_at: null,
+    currency: 'USD',
+    is_on_sale: true,
+    is_available: true,
+    available_quantity: null,
+    sales_start_at: null,
+    sales_end_at: null,
+    sort_order: 0,
+    ...p,
   }
 }
 

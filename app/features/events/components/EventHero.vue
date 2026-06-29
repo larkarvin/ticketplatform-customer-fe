@@ -1,7 +1,7 @@
 <!-- customer-fe/app/features/events/components/EventHero.vue -->
 <script setup lang="ts">
-import { computed } from 'vue'
 import { Calendar, MapPin } from '#icons'
+import { computed } from 'vue'
 import { formatEventDate } from '../eventDate'
 import type { PublicEvent } from '../types'
 
@@ -12,12 +12,7 @@ const when = computed(() => formatEventDate(props.event.starts_at, props.event.e
 <template>
   <header class="space-y-4">
     <div class="overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
-      <img
-        v-if="event.cover"
-        :src="event.cover.url"
-        :alt="event.title"
-        class="h-full max-h-96 w-full object-cover"
-      />
+      <img v-if="event.cover" :src="event.cover.url" :alt="event.title" class="h-full max-h-96 w-full object-cover" />
       <div v-else class="flex h-48 items-center justify-center text-gray-400">
         <Calendar :size="48" />
       </div>
@@ -32,7 +27,10 @@ const when = computed(() => formatEventDate(props.event.starts_at, props.event.e
       </p>
       <p v-if="event.location" class="flex items-center gap-2">
         <MapPin :size="18" class="shrink-0 text-gray-400" />
-        <span>{{ event.location }}<template v-if="event.location_details"> · {{ event.location_details }}</template></span>
+        <span>
+          {{ event.location }}
+          <template v-if="event.location_details">· {{ event.location_details }}</template>
+        </span>
       </p>
     </div>
   </header>

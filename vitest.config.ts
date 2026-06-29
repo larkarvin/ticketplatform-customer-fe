@@ -12,7 +12,7 @@ export default defineConfig({
     alias: {
       '#core': fileURLToPath(new URL('./fe-core/app/core', import.meta.url)),
       '#icons': fileURLToPath(
-        new URL(`./fe-core/app/icons/${process.env.NUXT_PUBLIC_ICON_SET || 'lucide'}/index.ts`, import.meta.url),
+        new URL(`./fe-core/app/icons/${process.env.NUXT_PUBLIC_ICON_SET || 'lucide'}/index.ts`, import.meta.url)
       ),
       '~': fileURLToPath(new URL('./app', import.meta.url)),
       '@': fileURLToPath(new URL('./app', import.meta.url)),

@@ -1,9 +1,5 @@
 // Format an event's date/time in its own timezone (SSR-safe — pure Intl, no browser globals).
-export function formatEventDate(
-  startsAt: string,
-  endsAt: string | null,
-  timeZone: string | null,
-): string {
+export function formatEventDate(startsAt: string, endsAt: string | null, timeZone: string | null): string {
   const tz = timeZone ?? undefined
   const dateFmt = new Intl.DateTimeFormat('en-US', {
     weekday: 'long',

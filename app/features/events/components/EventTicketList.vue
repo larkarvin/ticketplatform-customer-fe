@@ -17,9 +17,7 @@ function availabilityLabel(t: PublicTicket): string {
   <section class="space-y-4">
     <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tickets</h2>
 
-    <p v-if="tickets.length === 0" class="text-gray-500 dark:text-gray-400">
-      Tickets aren't available yet.
-    </p>
+    <p v-if="tickets.length === 0" class="text-gray-500 dark:text-gray-400">Tickets aren't available yet.</p>
 
     <ul v-else class="space-y-3">
       <li
