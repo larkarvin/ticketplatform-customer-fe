@@ -42,4 +42,14 @@ describe('useCart', () => {
     const c = useCart(event(ticket({})), [{ ticket_id: 9, quantity: 2 }])
     expect(c.serializeToQuery()).toBe('9:2')
   })
+
+  it('drops phantom ids (stale/crafted) that match no real ticket at seed time', () => {
+    const c = useCart(event(ticket({})), [
+      { ticket_id: 9, quantity: 1 },
+      { ticket_id: 999, quantity: 2 },
+    ])
+    expect(c.cart.value).toHaveLength(1)
+    expect(c.cart.value.every((i) => i.ticket_id === 9)).toBe(true)
+    expect(c.quantityOf(999)).toBe(0)
+  })
 })

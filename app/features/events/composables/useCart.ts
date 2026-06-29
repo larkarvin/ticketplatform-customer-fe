@@ -16,7 +16,9 @@ export function useCart(event: PublicEvent, initial: CheckoutSelection[]) {
   }
 
   const cart: Ref<CartTicket[]> = ref(
-    initial.flatMap((s) => Array.from({ length: s.quantity }, () => makeInstance(s.ticket_id)))
+    initial
+      .filter((s) => ticketDef(s.ticket_id))
+      .flatMap((s) => Array.from({ length: s.quantity }, () => makeInstance(s.ticket_id)))
   )
 
   const ticketsFor = (id: number): CartTicket[] => cart.value.filter((c) => c.ticket_id === id)
