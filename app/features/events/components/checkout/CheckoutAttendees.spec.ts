@@ -42,6 +42,12 @@ const ga = {
   min_per_order: 1,
   max_per_order: 10,
   sort_order: 0,
+  participant_type: 'single' as const,
+  min_participants: 1,
+  max_participants: 1,
+  admits_per_ticket: 1,
+  ask_group_name: false,
+  group_name_label: '',
 }
 
 describe('CheckoutAttendees', () => {

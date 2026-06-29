@@ -30,6 +30,23 @@ export interface PublicTicket {
   sort_order: number
   collect_details_later: boolean
   participant_fields: Field[]
+  participant_type: 'single' | 'group'
+  min_participants: number
+  max_participants: number
+  admits_per_ticket: number
+  ask_group_name: boolean
+  group_name_label: string
+}
+
+export interface CartParticipant {
+  field_data: Record<string, unknown>
+}
+
+export interface CartTicket {
+  uid: string
+  ticket_id: number
+  group_name?: string
+  participants: CartParticipant[]
 }
 
 export interface PublicEvent {
