@@ -114,4 +114,22 @@ describe('buildReviewGroups', () => {
     const addons = groups.find((g) => g.editTarget === EDIT_ADDONS)
     expect(addons?.items[0]).toMatchObject({ label: 'Shirt', value: 'Large' })
   })
+
+  it('formats a product add-on with its variant label (never [object Object])', () => {
+    const productField: Field = {
+      ...nameField,
+      id: 3,
+      field_key: 'shirt',
+      label: 'Shirt',
+      type: 'product',
+      settings: {
+        product: { name: 'Shirt', variants: [{ id: 5, name: 'L', attribute_values: [{ value: 'Large' }] }] },
+      },
+    }
+    const groups = buildReviewGroups(event({ form_fields: [productField] }), cart, {
+      shirt: [{ variant_id: 5, quantity: 2 }],
+    })
+    const addons = groups.find((g) => g.editTarget === EDIT_ADDONS)
+    expect(addons?.items[0]?.value).toBe('2 × Shirt (Large)')
+  })
 })

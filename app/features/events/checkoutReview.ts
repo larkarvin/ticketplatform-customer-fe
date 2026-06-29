@@ -7,6 +7,8 @@
 import type { Field } from '#core/field-engine/types'
 import type { ReviewGroup } from '~/core/types/review'
 import type { CartTicket, PublicEvent } from '~/features/events/types'
+import { variantLabel } from '~/features/forms/productLabels'
+import type { ProductFieldInfo, ProductSelection } from '~/features/forms/types'
 
 export const EDIT_ATTENDEES = 0
 export const EDIT_ADDONS = 1
@@ -23,7 +25,25 @@ function formatAnswer(field: Field, value: unknown): string {
     const opt = field.options.find((o) => o.option_key === String(value))
     return opt?.label ?? String(value)
   }
-  return typeof value === 'string' ? value : String(value)
+  // Product (merch) add-on: an array of { variant_id, quantity }. Render "2 × Shirt (Large)" using
+  // the product metadata, matching how the form's review reads it back.
+  const product = field.settings.product as ProductFieldInfo | undefined
+  if (Array.isArray(value)) {
+    if (!product) return value.filter((v) => typeof v === 'string').join(', ')
+    return (value as ProductSelection[])
+      .map((sel) => {
+        const v = product.variants.find((vr) => vr.id === sel.variant_id)
+        if (!v) return null
+        const variant = variantLabel(v)
+        return product.name && variant !== product.name
+          ? `${sel.quantity} × ${product.name} (${variant})`
+          : `${sel.quantity} × ${variant}`
+      })
+      .filter((line): line is string => line !== null)
+      .join(', ')
+  }
+  // Never surface a raw object (e.g. "[object Object]"); only strings/numbers are meaningful here.
+  return typeof value === 'string' || typeof value === 'number' ? String(value) : ''
 }
 
 export function buildReviewGroups(
