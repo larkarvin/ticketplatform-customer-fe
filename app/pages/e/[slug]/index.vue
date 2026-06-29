@@ -1,16 +1,16 @@
-<!-- customer-fe/app/pages/e/[slug].vue -->
+<!-- customer-fe/app/pages/e/[slug]/index.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { toast } from 'vue-sonner'
+import type { CheckoutSelection } from '~/features/events'
 import { EventBanner, EventDetailsBody, EventHero, EventTicketList, usePublicEvent } from '~/features/events'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
 const { event } = await usePublicEvent(slug.value)
 
-function onBuy(_ticketId: number): void {
-  // The purchase flow (checkout → order → payment) is the next slice; this is the entry point.
-  toast.info('Ticket checkout is coming soon')
+function onCheckout(selection: CheckoutSelection[]): void {
+  const q = selection.map((s) => `${s.ticket_id}:${s.quantity}`).join(',')
+  void navigateTo(`/e/${slug.value}/checkout?tickets=${q}`)
 }
 </script>
 
@@ -29,7 +29,7 @@ function onBuy(_ticketId: number): void {
 
         <aside class="pb-8 lg:py-8">
           <div class="lg:sticky lg:top-6 lg:-mt-[60px]">
-            <EventTicketList :tickets="event.tickets" @buy="onBuy" />
+            <EventTicketList :tickets="event.tickets" @checkout="onCheckout" />
           </div>
         </aside>
       </div>

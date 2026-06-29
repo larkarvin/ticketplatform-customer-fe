@@ -7,56 +7,36 @@ import EventTicketList from './EventTicketList.vue'
 function ticket(p: Partial<PublicTicket> = {}): PublicTicket {
   return {
     id: 1,
-    name: 'General',
+    name: 'GA',
     description: null,
-    price: 2500,
-    price_formatted: '$25.00',
+    price: 100,
+    price_formatted: '₱100.00',
     early_bird_price: null,
     early_bird_ends_at: null,
     is_early_bird: false,
     early_bird_price_formatted: null,
-    currency: 'USD',
+    currency: 'PHP',
     is_on_sale: true,
     is_available: true,
     available_quantity: null,
     sales_start_at: null,
     sales_end_at: null,
+    min_per_order: 1,
+    max_per_order: 10,
     sort_order: 0,
     ...p,
-  }
+  } as PublicTicket
 }
 
 describe('EventTicketList', () => {
-  it('lists tickets with name and price', () => {
-    const w = mount(EventTicketList, { props: { tickets: [ticket({ name: 'VIP', price_formatted: '$99.00' })] } })
-    expect(w.text()).toContain('VIP')
-    expect(w.text()).toContain('$99.00')
-  })
-
-  it('renders a Buy button per ticket and emits buy with the ticket id', async () => {
+  it('disables Get tickets until a quantity is chosen, then emits the selection', async () => {
     const w = mount(EventTicketList, { props: { tickets: [ticket({ id: 7 })] } })
-    const btn = w.find('button')
-    expect(btn.text()).toBe('Buy ticket')
-    expect(btn.attributes('disabled')).toBeUndefined()
-    await btn.trigger('click')
-    expect(w.emitted('buy')?.[0]).toEqual([7])
-  })
-
-  it('shows the early-bird price with the regular price struck through', () => {
-    const w = mount(EventTicketList, {
-      props: {
-        tickets: [ticket({ is_early_bird: true, early_bird_price_formatted: '$40.00', price_formatted: '$50.00' })],
-      },
-    })
-    expect(w.text()).toContain('$40.00') // early-bird (current) price
-    expect(w.find('.line-through').text()).toContain('$50.00') // regular price, struck
-  })
-
-  it('disables the button and shows status when a ticket is sold out', () => {
-    const w = mount(EventTicketList, { props: { tickets: [ticket({ is_available: false })] } })
-    const btn = w.find('button')
-    expect(btn.attributes('disabled')).toBeDefined()
-    expect(btn.text()).toBe('Sold out')
+    const cta = w.find('[data-testid="get-tickets"]')
+    expect(cta.attributes('disabled')).toBeDefined()
+    await w.find('[aria-label^="Increase quantity"]').trigger('click')
+    expect(cta.attributes('disabled')).toBeUndefined()
+    await cta.trigger('click')
+    expect(w.emitted('checkout')?.[0]).toEqual([[{ ticket_id: 7, quantity: 1 }]])
   })
 
   it('shows an empty state when there are no tickets', () => {

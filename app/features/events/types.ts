@@ -24,6 +24,8 @@ export interface PublicTicket {
   available_quantity: number | null
   sales_start_at: string | null
   sales_end_at: string | null
+  min_per_order: number
+  max_per_order: number
   sort_order: number
 }
 
