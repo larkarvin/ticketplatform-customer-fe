@@ -273,7 +273,13 @@ async function startOver(): Promise<void> {
       </article>
 
       <!-- 3. Sticky bottom pay bar (fixed, always visible while scrolling) -->
-      <CheckoutPayBar :calculation="c.calculation.value" :status="c.totalsStatus.value" @retry="c.recalcTotals" />
+      <CheckoutPayBar
+        :calculation="c.calculation.value"
+        :status="c.totalsStatus.value"
+        mode="entry"
+        @retry="c.recalcTotals"
+        @continue="() => {}"
+      />
     </template>
   </div>
 </template>
