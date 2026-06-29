@@ -28,7 +28,8 @@ watch(
   () => props.forceExpandUid,
   (uid) => {
     if (uid === props.instance.uid) open.value = true
-  }
+  },
+  { immediate: true }
 )
 
 const fields = computed(() => props.ticket.participant_fields ?? [])
@@ -94,7 +95,7 @@ function removeParticipant(i: number): void {
         </span>
         <ChevronDown
           :size="18"
-          class="ml-auto shrink-0 text-gray-400 transition-transform duration-200"
+          class="ml-auto shrink-0 text-gray-400 transition-transform duration-200 motion-reduce:transition-none"
           :class="open ? '' : '-rotate-90'"
         />
       </button>

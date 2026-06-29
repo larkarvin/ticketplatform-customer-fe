@@ -181,6 +181,60 @@ describe('ParticipantGroup', () => {
     expect(participants[1]!.field_data['email']).toBeUndefined()
   })
 
+  it('copy excludes a non-email-keyed field whose type is email', async () => {
+    const t = ticket({
+      participant_type: 'group',
+      min_participants: 1,
+      max_participants: 3,
+      participant_fields: [
+        {
+          id: 1,
+          field_key: 'name',
+          type: 'text',
+          label: 'Name',
+          required: true,
+          col_span: 12,
+          options: [],
+          visibility: 'public',
+          field_group_id: null,
+          placeholder: null,
+          description: null,
+          min: null,
+          max: null,
+          allow_decimal: null,
+          settings: {},
+          sort_order: 0,
+        },
+        {
+          id: 2,
+          field_key: 'contact_email',
+          type: 'email',
+          label: 'Contact email',
+          required: false,
+          col_span: 12,
+          options: [],
+          visibility: 'public',
+          field_group_id: null,
+          placeholder: null,
+          description: null,
+          min: null,
+          max: null,
+          allow_decimal: null,
+          settings: {},
+          sort_order: 1,
+        },
+      ],
+    })
+    const participants = [{ field_data: { name: 'Bob', contact_email: 'bob@example.com' } }, { field_data: {} }]
+    const inst = { uid: '9-1', ticket_id: 9, participants }
+    const w = mount(ParticipantGroup, { props: { ...base(), ticket: t, instance: inst, defaultOpen: true } })
+    const copyButtons = w.findAll('[data-test=copy-above]')
+    expect(copyButtons.length).toBeGreaterThan(0)
+    await copyButtons[0]!.trigger('click')
+    expect(participants[1]!.field_data['name']).toBe('Bob')
+    expect(participants[1]!.field_data['contact_email']).toBeUndefined()
+  })
+
   it('collect_details_later renders collapsed summary with no participant cards', () => {
     const t = ticket({ collect_details_later: true })
     const w = mount(ParticipantGroup, { props: { ...base(), ticket: t, defaultOpen: true } })
