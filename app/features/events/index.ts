@@ -1,0 +1,6 @@
+export { default as EventBanner } from './components/EventBanner.vue'
+export { default as EventDetailsBody } from './components/EventDetailsBody.vue'
+export { default as EventHero } from './components/EventHero.vue'
+export { default as EventTicketList } from './components/EventTicketList.vue'
+export { usePublicEvent } from './composables/usePublicEvent'
+export type { EventMedia, PublicEvent, PublicTicket } from './types'
