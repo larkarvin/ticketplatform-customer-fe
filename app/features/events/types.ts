@@ -115,6 +115,25 @@ export interface PublicOrder {
   items: PublicOrderItem[]
 }
 
+export interface CalcLine {
+  kind: 'ticket' | 'addon'
+  label: string
+  quantity: number
+  unit_price: number
+  amount: number
+}
+
+export interface OrderCalculation {
+  currency: string
+  items: CalcLine[]
+  subtotal: number
+  fees: { label: string; amount: number }[]
+  fees_total: number
+  taxes: { label: string; amount: number }[]
+  taxes_total: number
+  total: number
+}
+
 /** Shape returned by the payment-status endpoint (raw JsonResponse, no data wrapper). */
 export interface PaymentStatusResponse {
   success: boolean
