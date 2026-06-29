@@ -28,7 +28,13 @@ const selection = computed<CheckoutSelection[]>(() =>
 )
 
 const cartStore = useCart(event, selection.value)
-const c = usePublicCheckout(event, selection.value)
+// Pass the cart Ref so usePublicCheckout can build the calculate payload from instances.
+const c = usePublicCheckout(event, cartStore.cart)
+
+// Trigger an initial price preview once the cart is populated.
+if (cartStore.cart.value.length > 0) {
+  c.recalcTotals()
+}
 
 // Remove the most-recently-added instance of a given ticket type.
 function onRemoveOne(ticketId: number): void {
@@ -71,14 +77,7 @@ function identityKeyFor(ticketId: number): string | null {
         @remove="cartStore.removeTicket"
       />
       <CheckoutBuyer :buyer="c.buyer" />
-      <CheckoutSummary
-        :event="event"
-        :selection="selection"
-        :total="c.total.value"
-        :can-pay="c.canPay.value"
-        :submitting="c.submitting.value"
-        @pay="c.pay"
-      />
+      <CheckoutSummary :calculation="c.calculation.value" :status="c.totalsStatus.value" @retry="c.recalcTotals" />
     </template>
   </article>
 </template>
