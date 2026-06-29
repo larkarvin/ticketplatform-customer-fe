@@ -3,30 +3,31 @@ import { describe, expect, it } from 'vitest'
 import type { CartTicket, PublicEvent, PublicTicket } from '../../types'
 import CheckoutAttendees from './CheckoutAttendees.vue'
 
+const nameField = {
+  id: 1,
+  field_key: 'full_name',
+  type: 'text',
+  label: 'Full name',
+  required: true,
+  col_span: 12,
+  options: [],
+  settings: {},
+  visibility: 'public' as const,
+  description: null,
+  placeholder: null,
+  min: null,
+  max: null,
+  allow_decimal: null,
+  field_group_id: null,
+  sort_order: 0,
+}
+
+/** Ticket with one participant field (qualifies for a group card). */
 const gaTicket: PublicTicket = {
   id: 9,
   name: 'GA',
   collect_details_later: false,
-  participant_fields: [
-    {
-      id: 1,
-      field_key: 'full_name',
-      type: 'text',
-      label: 'Full name',
-      required: true,
-      col_span: 12,
-      options: [],
-      settings: {},
-      visibility: 'public',
-      description: null,
-      placeholder: null,
-      min: null,
-      max: null,
-      allow_decimal: null,
-      field_group_id: null,
-      sort_order: 0,
-    },
-  ],
+  participant_fields: [nameField],
   description: null,
   price: 100,
   price_formatted: '₱100.00',
@@ -49,6 +50,34 @@ const gaTicket: PublicTicket = {
   admits_per_ticket: 1,
   ask_group_name: false,
   group_name_label: '',
+}
+
+/** Blank-field ticket — no fields, not collect_details_later → renders NO group card. */
+const blankTicket: PublicTicket = {
+  ...gaTicket,
+  id: 10,
+  name: 'Free',
+  participant_fields: [],
+  collect_details_later: false,
+}
+
+/** collect_details_later ticket — no fields, but should still render a (collapsed) group card. */
+const laterTicket: PublicTicket = {
+  ...gaTicket,
+  id: 11,
+  name: 'Later',
+  participant_fields: [],
+  collect_details_later: true,
+}
+
+/** Group ticket — has fields + add/remove participants. */
+const groupTicket: PublicTicket = {
+  ...gaTicket,
+  id: 12,
+  name: 'Group',
+  participant_type: 'group',
+  min_participants: 1,
+  max_participants: 5,
 }
 
 const event: PublicEvent = {
@@ -83,48 +112,60 @@ const identityKeyFor = () => 'full_name'
 describe('CheckoutAttendees', () => {
   it('renders one ParticipantGroup per cart instance', () => {
     const w = mount(CheckoutAttendees, {
-      props: {
-        event,
-        cart: makeCart(['9-1']),
-        identityKeyFor,
-        errors: {},
-      },
+      props: { event, cart: makeCart(['9-1']), identityKeyFor, errors: {} },
     })
     expect(w.findAllComponents({ name: 'ParticipantGroup' })).toHaveLength(1)
   })
 
   it('renders multiple ParticipantGroups for multiple cart instances', () => {
     const w = mount(CheckoutAttendees, {
-      props: {
-        event,
-        cart: makeCart(['9-1', '9-2']),
-        identityKeyFor,
-        errors: {},
-      },
+      props: { event, cart: makeCart(['9-1', '9-2']), identityKeyFor, errors: {} },
     })
     expect(w.findAllComponents({ name: 'ParticipantGroup' })).toHaveLength(2)
   })
 
   it('forwards the remove event from a ParticipantGroup', async () => {
     const w = mount(CheckoutAttendees, {
-      props: {
-        event,
-        cart: makeCart(['9-1']),
-        identityKeyFor,
-        errors: {},
-      },
+      props: { event, cart: makeCart(['9-1']), identityKeyFor, errors: {} },
     })
     await w.get('[data-test=remove-group]').trigger('click')
     expect(w.emitted('remove')?.[0]).toEqual(['9-1'])
   })
 
-  it('hides the section when all tickets are collect_details_later', () => {
-    const later: PublicTicket = { ...gaTicket, collect_details_later: true }
-    const laterEvent = { ...event, tickets: [later] }
+  it('numbers instances per ticket_id (two of same type)', () => {
+    const w = mount(CheckoutAttendees, {
+      props: { event, cart: makeCart(['9-1', '9-2']), identityKeyFor, errors: {} },
+    })
+    const groups = w.findAllComponents({ name: 'ParticipantGroup' })
+    expect(groups[0]?.props('instanceNumber')).toBe(1)
+    expect(groups[1]?.props('instanceNumber')).toBe(2)
+  })
+
+  // ── Blank-field filtering ──────────────────────────────────────────────────
+
+  it('renders NO ParticipantGroup for a blank-field ticket (no fields, not collect_details_later)', () => {
+    const blankEvent = { ...event, tickets: [blankTicket] }
     const w = mount(CheckoutAttendees, {
       props: {
-        event: laterEvent,
-        cart: makeCart(['9-1']),
+        event: blankEvent,
+        cart: [{ uid: '10-1', ticket_id: 10, participants: [{ field_data: {} }] }],
+        identityKeyFor,
+        errors: {},
+      },
+    })
+    expect(w.find('section').exists()).toBe(false)
+    expect(w.findAllComponents({ name: 'ParticipantGroup' })).toHaveLength(0)
+  })
+
+  it('hides the whole section when no ticket has fields or collect_details_later', () => {
+    const blankEvent = { ...event, tickets: [blankTicket] }
+    const w = mount(CheckoutAttendees, {
+      props: {
+        event: blankEvent,
+        cart: [
+          { uid: '10-1', ticket_id: 10, participants: [{ field_data: {} }] },
+          { uid: '10-2', ticket_id: 10, participants: [{ field_data: {} }] },
+        ],
         identityKeyFor,
         errors: {},
       },
@@ -132,17 +173,52 @@ describe('CheckoutAttendees', () => {
     expect(w.find('section').exists()).toBe(false)
   })
 
-  it('numbers instances per ticket_id (two of same type)', () => {
+  // ── collect_details_later ──────────────────────────────────────────────────
+
+  it('renders a ParticipantGroup for a collect_details_later ticket even with no fields', () => {
+    const laterEvent = { ...event, tickets: [laterTicket] }
     const w = mount(CheckoutAttendees, {
       props: {
-        event,
-        cart: makeCart(['9-1', '9-2']),
+        event: laterEvent,
+        cart: [{ uid: '11-1', ticket_id: 11, participants: [{ field_data: {} }] }],
         identityKeyFor,
         errors: {},
       },
     })
-    const groups = w.findAllComponents({ name: 'ParticipantGroup' })
-    expect(groups[0]?.props('instanceNumber')).toBe(1)
-    expect(groups[1]?.props('instanceNumber')).toBe(2)
+    expect(w.find('section').exists()).toBe(true)
+    expect(w.findAllComponents({ name: 'ParticipantGroup' })).toHaveLength(1)
+  })
+
+  // ── add-participant / remove-participant forwarding ────────────────────────
+
+  it('forwards add-participant from a ParticipantGroup', async () => {
+    const groupEvent = { ...event, tickets: [groupTicket] }
+    const w = mount(CheckoutAttendees, {
+      props: {
+        event: groupEvent,
+        cart: [{ uid: '12-1', ticket_id: 12, participants: [{ field_data: {} }] }],
+        identityKeyFor,
+        errors: {},
+      },
+    })
+    // Body is open (first entry; defaultOpen=true). Add button visible for group under max.
+    await w.get('[data-test=add-participant]').trigger('click')
+    expect(w.emitted('add-participant')?.[0]).toEqual(['12-1'])
+  })
+
+  it('forwards remove-participant from a ParticipantGroup', async () => {
+    const w = mount(CheckoutAttendees, {
+      props: {
+        event,
+        // Two participants → participants.length (2) > min_participants (1) → canRemove=true
+        cart: [{ uid: '9-1', ticket_id: 9, participants: [{ field_data: {} }, { field_data: {} }] }],
+        identityKeyFor,
+        errors: {},
+      },
+    })
+    // Body open (first/only entry). First ParticipantCard (index 0) has canRemove=true.
+    const removeButtons = w.findAll('[data-test=remove]')
+    await removeButtons[0]!.trigger('click')
+    expect(w.emitted('remove-participant')?.[0]).toEqual(['9-1', 0])
   })
 })
