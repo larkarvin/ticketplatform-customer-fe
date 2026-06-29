@@ -27,12 +27,22 @@ const { confirm } = useConfirm()
 const view = ref<'entry' | 'review'>('entry')
 const reviewGroups = computed(() => buildReviewGroups(event, cartStore.cart.value, c.checkoutAnswers))
 
+// An order is checkout-able with a ticket OR just an optional extra (e.g. a donation / merch), so the
+// buyer can check out with extras alone.
+const hasExtras = computed(() =>
+  Object.values(c.checkoutAnswers).some((v) =>
+    Array.isArray(v) ? v.length > 0 : v !== null && v !== undefined && v !== ''
+  )
+)
+const hasContent = computed(() => cartStore.cart.value.length > 0 || hasExtras.value)
+
 // Step swap modelled as a single pushed history state so phone/browser back returns to entry
 // (never the event page). On-screen Back and Edit also go through history.back() → popstate for one
 // consistent path. pendingScroll carries the Edit target so we can scroll after landing on entry.
 const pendingScroll = ref<number | null>(null)
 
 function goToReview(): void {
+  if (!hasContent.value) return // nothing to review yet (no tickets and no extras)
   if (!c.validate()) {
     scrollToFirstError()
     return
@@ -183,85 +193,84 @@ async function startOver(): Promise<void> {
 
 <template>
   <div class="mx-auto w-full max-w-3xl">
-    <!-- Empty/invalid selection → send them back to pick tickets -->
-    <p v-if="cartStore.cart.value.length === 0" class="px-4 py-8 text-gray-600 dark:text-gray-300">
-      No tickets selected.
-      <NuxtLink :to="`/e/${slug}`" class="text-brand-500 underline">Choose tickets</NuxtLink>
-    </p>
-
-    <template v-else>
-      <!-- ENTRY -->
-      <article v-if="view === 'entry'" class="space-y-8 px-4 pb-32 pt-8">
-        <header>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Checkout — {{ event.title }}</h1>
-          <p class="mt-2 text-base text-gray-500 dark:text-gray-400">
+    <!-- ENTRY — always renders the ticket picker (every ticket), even with an empty cart.
+         ?tickets= only pre-fills the quantities; selection happens right here. -->
+    <article v-if="view === 'entry'" class="space-y-8 px-4 pb-32 pt-8">
+      <header>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Checkout — {{ event.title }}</h1>
+        <p class="mt-2 text-base text-gray-500 dark:text-gray-400">
+          Choose your tickets and any optional extras below.
+          <span v-if="cartStore.cart.value.length > 0">
             Fields marked
             <span class="font-semibold text-danger-500">*</span>
             need an answer.
-          </p>
-        </header>
+          </span>
+        </p>
+      </header>
 
-        <div id="checkout-tickets">
-          <CheckoutTickets
-            :event="event"
-            :quantity-of="cartStore.quantityOf"
-            :max-for="cartStore.maxFor"
-            :on-add="cartStore.addTicket"
-            :on-remove-one="onRemoveOne"
-          />
-        </div>
-
-        <div id="checkout-attendees">
-          <CheckoutAttendees
-            :event="event"
-            :cart="cartStore.cart.value"
-            :identity-key-for="identityKeyFor"
-            :errors="c.fieldErrors.value"
-            @remove="requestRemove"
-            @add-participant="cartStore.addParticipant"
-            @remove-participant="(uid, i) => cartStore.removeParticipant(uid, i)"
-          />
-        </div>
-
-        <div id="checkout-addons">
-          <CheckoutAddOns
-            v-if="event.form_fields && event.form_fields.length > 0"
-            :fields="event.form_fields"
-            :answers="c.checkoutAnswers"
-            :errors="c.fieldErrors.value"
-          />
-        </div>
-
-        <div class="pt-2">
-          <button
-            type="button"
-            class="text-sm text-gray-500 underline hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            @click="startOver"
-          >
-            Start over
-          </button>
-        </div>
-      </article>
-
-      <!-- REVIEW -->
-      <article v-else class="px-4 pb-32 pt-8">
-        <CheckoutReview
-          :groups="reviewGroups"
-          :calculation="c.calculation.value"
-          :status="c.totalsStatus.value"
-          :buyer="c.buyer"
-          @edit="leaveReview"
+      <div id="checkout-tickets">
+        <CheckoutTickets
+          :event="event"
+          :quantity-of="cartStore.quantityOf"
+          :max-for="cartStore.maxFor"
+          :on-add="cartStore.addTicket"
+          :on-remove-one="onRemoveOne"
         />
-      </article>
+      </div>
 
-      <CheckoutPayBar
+      <!-- Self-hides when no purchased ticket collects attendee details. -->
+      <div id="checkout-attendees">
+        <CheckoutAttendees
+          :event="event"
+          :cart="cartStore.cart.value"
+          :identity-key-for="identityKeyFor"
+          :errors="c.fieldErrors.value"
+          @remove="requestRemove"
+          @add-participant="cartStore.addParticipant"
+          @remove-participant="(uid, i) => cartStore.removeParticipant(uid, i)"
+        />
+      </div>
+
+      <!-- Always available: the buyer can check out with just an optional extra (e.g. a donation). -->
+      <div id="checkout-addons">
+        <CheckoutAddOns
+          v-if="event.form_fields && event.form_fields.length > 0"
+          :fields="event.form_fields"
+          :answers="c.checkoutAnswers"
+          :errors="c.fieldErrors.value"
+        />
+      </div>
+
+      <div v-if="hasContent" class="pt-2">
+        <button
+          type="button"
+          class="text-sm text-gray-500 underline hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          @click="startOver"
+        >
+          Start over
+        </button>
+      </div>
+    </article>
+
+    <!-- REVIEW -->
+    <article v-else class="px-4 pb-32 pt-8">
+      <CheckoutReview
+        :groups="reviewGroups"
         :calculation="c.calculation.value"
         :status="c.totalsStatus.value"
-        :mode="view"
-        @retry="c.recalcTotals"
-        @continue="goToReview"
-        @back="leaveReview(null)"
+        :buyer="c.buyer"
+        @edit="leaveReview"
       />
-    </template>
+    </article>
+
+    <CheckoutPayBar
+      :calculation="c.calculation.value"
+      :status="c.totalsStatus.value"
+      :mode="view"
+      :continue-disabled="!hasContent"
+      @retry="c.recalcTotals"
+      @continue="goToReview"
+      @back="leaveReview(null)"
+    />
   </div>
 </template>

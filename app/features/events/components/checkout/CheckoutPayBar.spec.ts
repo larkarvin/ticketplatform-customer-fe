@@ -66,6 +66,13 @@ describe('CheckoutPayBar mode', () => {
     expect(w.emitted('continue')).toHaveLength(1)
   })
 
+  it('disables the entry Continue button when continueDisabled', () => {
+    const w = mount(CheckoutPayBar, {
+      props: { calculation: calc, status: 'idle', mode: 'entry', continueDisabled: true },
+    })
+    expect(w.get('[data-test="continue"]').attributes('disabled')).toBeDefined()
+  })
+
   it('emits back from the review bar', async () => {
     const w = mount(CheckoutPayBar, { props: { calculation: calc, status: 'idle', mode: 'review' } })
     await w.get('[data-test="back"]').trigger('click')

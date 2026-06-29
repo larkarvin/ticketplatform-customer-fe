@@ -10,6 +10,8 @@ const props = defineProps<{
   calculation: OrderCalculation | null
   status: 'idle' | 'updating' | 'error'
   mode: 'entry' | 'review'
+  /** Disable the entry "Continue to review" action (e.g. no tickets chosen yet). */
+  continueDisabled?: boolean
 }>()
 
 const emit = defineEmits<{ retry: []; continue: []; back: [] }>()
@@ -55,7 +57,9 @@ const totalText = computed(() =>
           v-if="mode === 'entry'"
           type="button"
           data-test="continue"
-          class="inline-flex min-h-tap cursor-pointer items-center gap-1.5 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600"
+          :disabled="continueDisabled"
+          class="inline-flex min-h-tap items-center gap-1.5 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand-500"
+          :class="continueDisabled ? '' : 'cursor-pointer'"
           @click="emit('continue')"
         >
           Continue to review
