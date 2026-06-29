@@ -28,6 +28,23 @@ const totalText = computed(() =>
   c.calculation.value ? `${c.calculation.value.currency} ${c.calculation.value.total.toFixed(2)}` : '—'
 )
 
+// Aggregate the server line items by (kind + label) for display, so the same ticket bought
+// twice shows as "Group × 2 — PHP 246" instead of two separate "Group — PHP 123" lines.
+const summaryItems = computed(() => {
+  const merged = new Map<string, { label: string; quantity: number; amount: number }>()
+  for (const item of c.calculation.value?.items ?? []) {
+    const key = `${item.kind}:${item.label}`
+    const existing = merged.get(key)
+    if (existing) {
+      existing.quantity += item.quantity
+      existing.amount += item.amount
+    } else {
+      merged.set(key, { label: item.label, quantity: item.quantity, amount: item.amount })
+    }
+  }
+  return [...merged.values()]
+})
+
 // URL sync: keep ?tickets= in sync whenever the cart changes, then recalc totals.
 watch(
   cartStore.cart,
@@ -148,15 +165,18 @@ function startOver(): void {
           <!-- Collapsible itemised breakdown -->
           <div v-show="summaryOpen" id="checkout-summary-panel" class="pb-3">
             <ul
-              v-if="c.calculation.value && c.calculation.value.items.length > 0"
+              v-if="c.calculation.value && summaryItems.length > 0"
               class="divide-y divide-gray-100 dark:divide-gray-800"
             >
               <li
-                v-for="(item, i) in c.calculation.value.items"
+                v-for="(item, i) in summaryItems"
                 :key="i"
                 class="flex items-center justify-between gap-3 py-2 text-sm first:pt-0"
               >
-                <span class="text-gray-700 dark:text-gray-300">{{ item.label }}</span>
+                <span class="text-gray-700 dark:text-gray-300">
+                  {{ item.label }}
+                  <span v-if="item.quantity > 1" class="text-gray-500">× {{ item.quantity }}</span>
+                </span>
                 <span class="font-medium tabular-nums text-gray-900 dark:text-white">
                   {{ c.calculation.value.currency }} {{ item.amount.toFixed(2) }}
                 </span>
