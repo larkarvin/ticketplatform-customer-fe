@@ -1,3 +1,4 @@
+import type { Field } from '#core/field-engine/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import type { CartTicket, PublicEvent } from '~/features/events/types'
@@ -140,5 +141,92 @@ describe('usePublicCheckout', () => {
     c.recalcTotals()
     await vi.runAllTimersAsync()
     expect(c.calculation.value?.total).toBe(200)
+  })
+})
+
+const nameField: Field = {
+  id: 1,
+  field_key: 'full_name',
+  type: 'text',
+  label: 'Full name',
+  required: true,
+  col_span: 12,
+  options: [],
+  settings: {},
+  visibility: 'public',
+  description: null,
+  placeholder: null,
+  min: null,
+  max: null,
+  allow_decimal: null,
+  field_group_id: null,
+  sort_order: 0,
+}
+const eventWithField = {
+  id: 1,
+  series_id: null,
+  type: null,
+  title: 'x',
+  slug: 'x',
+  year: null,
+  description: null,
+  details: null,
+  location: null,
+  location_details: null,
+  starts_at: '',
+  ends_at: null,
+  timezone: null,
+  currency: 'PHP',
+  is_featured: false,
+  visibility: 'public',
+  cover: null,
+  has_capacity: false,
+  available_capacity: null,
+  tickets: [
+    {
+      id: 9,
+      name: 'GA',
+      description: null,
+      price: 100,
+      price_formatted: '₱100',
+      early_bird_price: null,
+      early_bird_ends_at: null,
+      is_early_bird: false,
+      early_bird_price_formatted: null,
+      currency: 'PHP',
+      is_on_sale: true,
+      is_available: true,
+      available_quantity: null,
+      sales_start_at: null,
+      sales_end_at: null,
+      min_per_order: 1,
+      max_per_order: 10,
+      sort_order: 0,
+      participant_type: 'single' as const,
+      min_participants: 1,
+      max_participants: 1,
+      admits_per_ticket: 1,
+      ask_group_name: false,
+      group_name_label: '',
+      collect_details_later: false,
+      participant_fields: [nameField],
+    },
+  ],
+  form_fields: null,
+} as PublicEvent
+
+describe('usePublicCheckout.validate', () => {
+  it('returns false and records errors when required fields are empty', () => {
+    const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(eventWithField, cart)
+    expect(c.validate()).toBe(false)
+    expect(c.fieldErrors.value['u1.0.full_name']).toBeTruthy()
+  })
+
+  it('returns true and clears errors when valid', () => {
+    const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: { full_name: 'Juan' } }] }])
+    const c = usePublicCheckout(eventWithField, cart)
+    expect(c.validate()).toBe(true)
+    expect(Object.keys(c.fieldErrors.value)).toHaveLength(0)
   })
 })

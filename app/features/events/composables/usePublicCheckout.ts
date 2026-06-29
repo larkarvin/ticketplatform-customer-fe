@@ -2,6 +2,7 @@
 // and the server-side price preview via useCheckoutTotals.
 // Placement (pay / registerOrder) is deferred to a later slice — not wired to the UI here.
 import { reactive, ref, type Ref } from 'vue'
+import { validateCheckout } from '~/features/events/checkoutValidation'
 import type { CartTicket, PublicEvent, RegisterPayload } from '~/features/events/types'
 import { useCheckoutTotals } from './useCheckoutTotals'
 
@@ -24,5 +25,10 @@ export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
 
   const { calculation, status: totalsStatus, recalc: recalcTotals } = useCheckoutTotals(event.slug, buildCalcPayload)
 
-  return { buyer, checkoutAnswers, fieldErrors, calculation, totalsStatus, recalcTotals }
+  function validate(): boolean {
+    fieldErrors.value = validateCheckout(event, cart.value, checkoutAnswers)
+    return Object.keys(fieldErrors.value).length === 0
+  }
+
+  return { buyer, checkoutAnswers, fieldErrors, calculation, totalsStatus, recalcTotals, validate }
 }
