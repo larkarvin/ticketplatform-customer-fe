@@ -1,7 +1,21 @@
 // customer-fe/app/features/events/cart.spec.ts
 import { describe, expect, it } from 'vitest'
-import { hasData, parseSelection } from './cart'
+import { hasData, parseSelection, selectionKey } from './cart'
 import type { CartTicket } from './types'
+
+const inst = (ticket_id: number, uid: string): CartTicket => ({ uid, ticket_id, participants: [] })
+
+describe('selectionKey', () => {
+  it('counts instances per ticket id, order-independent', () => {
+    expect(selectionKey([inst(7, '7-1'), inst(9, '9-1'), inst(7, '7-2')])).toBe('7:2,9:1')
+    expect(selectionKey([inst(9, '9-1'), inst(7, '7-2'), inst(7, '7-1')])).toBe('7:2,9:1')
+  })
+
+  it('is empty string for an empty cart and differs from a non-empty one', () => {
+    expect(selectionKey([])).toBe('')
+    expect(selectionKey([inst(7, '7-1')])).not.toBe(selectionKey([]))
+  })
+})
 
 describe('parseSelection', () => {
   it('parses a valid "id:qty,id:qty" string', () => {

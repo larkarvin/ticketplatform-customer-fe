@@ -3,7 +3,7 @@
 import { ChevronDown } from '#icons'
 import { computed, onMounted, ref, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
-import { hasData, parseSelection } from '~/features/events/cart'
+import { hasData, parseSelection, selectionKey } from '~/features/events/cart'
 import CheckoutAddOns from '~/features/events/components/checkout/CheckoutAddOns.vue'
 import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAttendees.vue'
 import CheckoutBuyer from '~/features/events/components/checkout/CheckoutBuyer.vue'
@@ -52,10 +52,17 @@ watch(
 )
 
 // Restore from localStorage draft on mount (SSR-safe: localStorage is client-only).
+// The URL ?tickets= selection always wins for WHICH tickets — only restore the draft's
+// cart (with filled participant details) when it matches the current selection, i.e. a
+// refresh-resume. A new/different selection from the event page is never clobbered by a
+// stale draft. Add-on answers + email are selection-independent, so always restore them.
 onMounted(() => {
   const draft = persistence.restore()
   if (draft) {
-    cartStore.cart.value = draft.tickets.filter((t) => cartStore.ticketDef(t.ticket_id) !== undefined)
+    const draftTickets = draft.tickets.filter((t) => cartStore.ticketDef(t.ticket_id) !== undefined)
+    if (selectionKey(draftTickets) === selectionKey(cartStore.cart.value)) {
+      cartStore.cart.value = draftTickets
+    }
     for (const key of Object.keys(c.checkoutAnswers)) {
       Reflect.deleteProperty(c.checkoutAnswers, key)
     }
