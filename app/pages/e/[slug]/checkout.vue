@@ -82,7 +82,10 @@ function leaveReview(scrollTarget: number | null): void {
 }
 
 function onPopState(): void {
+  // Back from review → entry; Forward back into the review marker → restore review. Keeps the on-screen
+  // view in sync with the history entry in both directions.
   if (view.value === 'review') applyLeaveReview()
+  else if (window.history.state?.checkoutView === 'review') view.value = 'review'
 }
 
 function scrollToFirstError(): void {
