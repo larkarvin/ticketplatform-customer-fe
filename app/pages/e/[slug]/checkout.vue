@@ -163,20 +163,21 @@ function identityKeyFor(ticketId: number): string | null {
   return f?.field_key ?? t?.participant_fields?.[0]?.field_key ?? null
 }
 
-// Clear the draft and reload to re-seed from the URL ?tickets= param.
+// Start over = discard this whole checkout (saved progress, entered details, and the ticket
+// selection) and go back to the event page to choose tickets again — a clean, full reset.
 async function startOver(): Promise<void> {
   const hasEnteredData =
     cartStore.cart.value.some((inst) => hasData(cartStore.cart.value, inst.uid)) || c.buyer.email !== ''
   if (hasEnteredData) {
     const ok = await confirm({
       title: 'Start over?',
-      message: 'This will clear all the details you have entered so far.',
+      message: 'This clears your tickets and everything you have entered, and takes you back to choose tickets.',
       confirmLabel: 'Start over',
     })
     if (!ok) return
   }
   persistence.clear()
-  window.location.reload()
+  await navigateTo(`/e/${slug.value}`)
 }
 </script>
 
