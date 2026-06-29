@@ -42,13 +42,14 @@ const forceExpandUid = computed(() => Object.keys(props.errors)[0]?.split('.')[0
   <section v-if="hasAnyFields" class="space-y-6">
     <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Who's attending</h2>
     <ParticipantGroup
-      v-for="entry in cartEntries"
+      v-for="(entry, i) in cartEntries"
       :key="entry.inst.uid"
       :ticket="entry.ticket"
       :instance="entry.inst"
       :instance-number="entry.instanceNumber"
       :identity-key="identityKeyFor(entry.inst.ticket_id)"
       :errors="errors"
+      :default-open="i === 0"
       :force-expand-uid="forceExpandUid"
       @remove="emit('remove', $event)"
     />
