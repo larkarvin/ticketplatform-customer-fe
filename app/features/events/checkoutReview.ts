@@ -1,6 +1,9 @@
 // app/features/events/checkoutReview.ts
 // Pure builder: turns the cart + add-on answers into read-back groups for the review step.
-// Names only per attendee (the identity field's value). Empty groups are omitted.
+// Names only per attendee (the identity field's value). Tickets that collect no details (no
+// participant fields and not collect_details_later) contribute nothing — mirroring the entry page —
+// so "Who's coming" is omitted entirely when nothing the buyer purchased asks for attendee details.
+// Empty groups are omitted.
 import type { Field } from '#core/field-engine/types'
 import type { ReviewGroup } from '~/core/types/review'
 import type { CartTicket, PublicEvent } from '~/features/events/types'
@@ -35,6 +38,10 @@ export function buildReviewGroups(
     if (!ticket) return []
     const n = (counts.get(inst.ticket_id) ?? 0) + 1
     counts.set(inst.ticket_id, n)
+    // Skip tickets that collect no attendee details (no fields and not deferred) — same rule the
+    // entry page uses to decide which tickets show a participant card.
+    const hasFields = (ticket.participant_fields?.length ?? 0) > 0
+    if (!ticket.collect_details_later && !hasFields) return []
     if (ticket.collect_details_later) {
       return [
         {

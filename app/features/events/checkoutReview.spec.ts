@@ -88,6 +88,13 @@ describe('buildReviewGroups', () => {
     expect(groups[0]?.items[0]?.value).toBe('Juan dela Cruz')
   })
 
+  it("omits Who's coming when no purchased ticket collects attendee details", () => {
+    const bareTicket = { ...ticket, participant_fields: [] as Field[], collect_details_later: false }
+    const ev = event({ tickets: [bareTicket] })
+    const groups = buildReviewGroups(ev, cart, {})
+    expect(groups.find((g) => g.editTarget === EDIT_ATTENDEES)).toBeUndefined()
+  })
+
   it('omits the add-ons group when nothing is answered', () => {
     const addon: Field = { ...nameField, id: 2, field_key: 'shirt', label: 'Shirt' }
     const groups = buildReviewGroups(event({ form_fields: [addon] }), cart, {})
