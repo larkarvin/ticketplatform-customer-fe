@@ -1,7 +1,7 @@
-<!-- Checkout section: receipt email + optional name for the buyer. -->
+<!-- Checkout section: receipt email for the buyer (email only, no name). -->
 <script setup lang="ts">
 const props = defineProps<{
-  buyer: { email: string; name: string; phone?: string }
+  buyer: { email: string; name?: string; phone?: string }
 }>()
 
 // buyer is a reactive object owned by the composable; mutate via local ref to satisfy
@@ -10,11 +10,6 @@ function setEmail(value: string): void {
   const buyer = props.buyer
   buyer.email = value
 }
-
-function setName(value: string): void {
-  const buyer = props.buyer
-  buyer.name = value
-}
 </script>
 
 <template>
@@ -22,39 +17,21 @@ function setName(value: string): void {
     <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Your details</h2>
     <p class="text-sm text-gray-500 dark:text-gray-400">We'll send your order confirmation to this email address.</p>
 
-    <div class="space-y-3">
-      <div>
-        <label for="buyer-email" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-          Email address
-          <span class="text-danger-500">*</span>
-        </label>
-        <input
-          id="buyer-email"
-          :value="buyer.email"
-          type="email"
-          autocomplete="email"
-          required
-          placeholder="you@example.com"
-          class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-          @input="setEmail(($event.target as HTMLInputElement).value)"
-        />
-      </div>
-
-      <div>
-        <label for="buyer-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-          Name
-          <span class="text-xs text-gray-400">(optional)</span>
-        </label>
-        <input
-          id="buyer-name"
-          :value="buyer.name"
-          type="text"
-          autocomplete="name"
-          placeholder="Your full name"
-          class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-          @input="setName(($event.target as HTMLInputElement).value)"
-        />
-      </div>
+    <div>
+      <label for="buyer-email" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+        Email address
+        <span class="text-danger-500">*</span>
+      </label>
+      <input
+        id="buyer-email"
+        :value="buyer.email"
+        type="email"
+        autocomplete="email"
+        required
+        placeholder="you@example.com"
+        class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+        @input="setEmail(($event.target as HTMLInputElement).value)"
+      />
     </div>
   </section>
 </template>
