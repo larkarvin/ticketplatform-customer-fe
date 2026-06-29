@@ -1,71 +1,144 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PublicEvent } from '~/features/events/types'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ref } from 'vue'
+import type { CartTicket, PublicEvent } from '~/features/events/types'
 import { usePublicCheckout } from './usePublicCheckout'
-const { registerOrder, initiatePayment } = vi.hoisted(() => ({ registerOrder: vi.fn(), initiatePayment: vi.fn() }))
-vi.mock('~/features/events/services/events.service', () => ({ eventsService: { registerOrder } }))
-vi.mock('~/features/events/services/orders.service', () => ({ ordersService: { initiatePayment } }))
-const navigateTo = vi.fn()
-beforeEach(() => {
-  registerOrder.mockReset()
-  initiatePayment.mockReset()
-  navigateTo.mockReset()
-  vi.stubGlobal('navigateTo', navigateTo)
-})
 
-function event() {
+const { calculateOrder } = vi.hoisted(() => ({ calculateOrder: vi.fn() }))
+vi.mock('~/features/events/services/events.service', () => ({ eventsService: { calculateOrder } }))
+
+function event(): PublicEvent {
   return {
+    id: 1,
+    series_id: null,
+    type: null,
+    title: 'Gala',
     slug: 'gala',
+    year: null,
+    description: null,
+    details: null,
+    location: null,
+    location_details: null,
+    starts_at: '2026-01-01T00:00:00Z',
+    ends_at: null,
+    timezone: null,
     currency: 'PHP',
+    is_featured: false,
+    visibility: 'public',
+    cover: null,
+    has_capacity: false,
+    available_capacity: null,
+    form_fields: null,
     tickets: [
       {
         id: 1,
         name: 'GA',
+        description: null,
         price: 100,
         price_formatted: '₱100',
+        early_bird_price: null,
+        early_bird_ends_at: null,
         is_early_bird: false,
         early_bird_price_formatted: null,
+        currency: 'PHP',
+        is_on_sale: true,
+        is_available: true,
+        available_quantity: null,
+        sales_start_at: null,
+        sales_end_at: null,
+        min_per_order: 1,
+        max_per_order: 10,
+        sort_order: 0,
+        collect_details_later: false,
+        participant_fields: [],
+        participant_type: 'single' as const,
+        min_participants: 1,
+        max_participants: 1,
+        admits_per_ticket: 1,
+        ask_group_name: false,
+        group_name_label: 'Group name',
       },
     ],
-  } as PublicEvent
+  }
+}
+
+function mockCalcResult() {
+  return {
+    currency: 'PHP',
+    items: [],
+    subtotal: 200,
+    fees: [],
+    fees_total: 0,
+    taxes: [],
+    taxes_total: 0,
+    total: 200,
+  }
 }
 
 describe('usePublicCheckout', () => {
-  it('builds the payload (one participant per admit) and submits', async () => {
-    registerOrder.mockResolvedValue({
-      order_number: 'A1',
-      requires_payment: false,
-      payment_total: 200,
-      currency: 'PHP',
-    })
-    const c = usePublicCheckout(event(), [{ ticket_id: 1, quantity: 2 }])
-    c.buyer.email = 'b@e.co'
-    await c.pay()
-    expect(registerOrder).toHaveBeenCalledWith(
-      'gala',
-      expect.objectContaining({
-        buyer: { email: 'b@e.co', name: undefined, phone: undefined },
-        tickets: [
-          expect.objectContaining({
-            ticket_id: 1,
-            quantity: 2,
-            participants: [{ field_data: {} }, { field_data: {} }],
-          }),
-        ],
-        checkout: {},
-      })
-    )
-    expect(navigateTo).toHaveBeenCalledWith('/orders/A1') // free order → straight to the order page
+  beforeEach(() => {
+    calculateOrder.mockReset()
+    vi.useFakeTimers()
   })
 
-  it('redirects to the gateway for a paid order', async () => {
-    registerOrder.mockResolvedValue({ order_number: 'A1', requires_payment: true, payment_total: 200, currency: 'PHP' })
-    initiatePayment.mockResolvedValue({ redirect_url: 'https://pay/x' })
-    const loc = { href: '' }
-    vi.stubGlobal('window', { location: loc, origin: 'https://app' } as never)
-    const c = usePublicCheckout(event(), [{ ticket_id: 1, quantity: 1 }])
-    c.buyer.email = 'b@e.co'
-    await c.pay()
-    expect(initiatePayment).toHaveBeenCalledWith('A1', 'https://app/orders/A1')
-    expect(loc.href).toBe('https://pay/x')
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('buildCalcPayload emits one entry per cart instance carrying group_name', async () => {
+    calculateOrder.mockResolvedValue(mockCalcResult())
+
+    const cart = ref<CartTicket[]>([
+      {
+        uid: 'a',
+        ticket_id: 1,
+        group_name: 'Table A',
+        participants: [{ field_data: { name: 'Alice' } }],
+      },
+      {
+        uid: 'b',
+        ticket_id: 1,
+        group_name: 'Table B',
+        participants: [{ field_data: { name: 'Bob' } }],
+      },
+    ])
+
+    const c = usePublicCheckout(event(), cart)
+    c.recalcTotals()
+    await vi.runAllTimersAsync()
+
+    expect(calculateOrder).toHaveBeenCalledWith(
+      'gala',
+      expect.objectContaining({
+        tickets: [
+          { ticket_id: 1, quantity: 1, group_name: 'Table A', participants: [{ field_data: { name: 'Alice' } }] },
+          { ticket_id: 1, quantity: 1, group_name: 'Table B', participants: [{ field_data: { name: 'Bob' } }] },
+        ],
+      })
+    )
+  })
+
+  it('omits group_name when undefined on the instance', async () => {
+    calculateOrder.mockResolvedValue(mockCalcResult())
+
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+
+    const c = usePublicCheckout(event(), cart)
+    c.recalcTotals()
+    await vi.runAllTimersAsync()
+
+    const [, payload] = calculateOrder.mock.calls[0] as [string, { tickets: Array<{ group_name?: string }> }]
+    expect(payload.tickets[0]?.group_name).toBeUndefined()
+  })
+
+  it('exposes calculation after a successful recalc', async () => {
+    calculateOrder.mockResolvedValue(mockCalcResult())
+
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [] }])
+    const c = usePublicCheckout(event(), cart)
+
+    expect(c.calculation.value).toBeNull()
+    c.recalcTotals()
+    await vi.runAllTimersAsync()
+    expect(c.calculation.value?.total).toBe(200)
   })
 })

@@ -30,6 +30,23 @@ export interface PublicTicket {
   sort_order: number
   collect_details_later: boolean
   participant_fields: Field[]
+  participant_type: 'single' | 'group'
+  min_participants: number
+  max_participants: number
+  admits_per_ticket: number
+  ask_group_name: boolean
+  group_name_label: string
+}
+
+export interface CartParticipant {
+  field_data: Record<string, unknown>
+}
+
+export interface CartTicket {
+  uid: string
+  ticket_id: number
+  group_name?: string
+  participants: CartParticipant[]
 }
 
 export interface PublicEvent {
@@ -96,6 +113,25 @@ export interface PublicOrder {
   payment_status: string
   can_be_paid: boolean
   items: PublicOrderItem[]
+}
+
+export interface CalcLine {
+  kind: 'ticket' | 'addon'
+  label: string
+  quantity: number
+  unit_price: number
+  amount: number
+}
+
+export interface OrderCalculation {
+  currency: string
+  items: CalcLine[]
+  subtotal: number
+  fees: { label: string; amount: number }[]
+  fees_total: number
+  taxes: { label: string; amount: number }[]
+  taxes_total: number
+  total: number
 }
 
 /** Shape returned by the payment-status endpoint (raw JsonResponse, no data wrapper). */

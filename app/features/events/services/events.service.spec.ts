@@ -35,4 +35,25 @@ describe('eventsService', () => {
     })
     expect(r.order_number).toBe('A1')
   })
+
+  it('calculateOrder posts to /calculate + unwraps', async () => {
+    post.mockResolvedValue({
+      data: {
+        currency: 'PHP',
+        items: [],
+        subtotal: 150,
+        fees: [],
+        fees_total: 0,
+        taxes: [],
+        taxes_total: 0,
+        total: 150,
+      },
+    })
+    const r = await eventsService.calculateOrder('gala', { tickets: [], checkout: {} })
+    expect(post).toHaveBeenCalledWith('/events/public/gala/calculate', {
+      tickets: [],
+      checkout: {},
+    })
+    expect(r.total).toBe(150)
+  })
 })
