@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Trash2 } from '#icons'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { CartTicket, PublicTicket } from '../../types'
 import ParticipantCard from './ParticipantCard.vue'
 
@@ -12,11 +12,20 @@ const props = defineProps<{
   errors: Record<string, string>
   showPrefill: boolean
   buyerName: string
+  forceExpandUid?: string | null
 }>()
 const emit = defineEmits<{ remove: [uid: string] }>()
 
 const cards = ref<Array<InstanceType<typeof ParticipantCard> | null>>([])
 const collapsed = ref(props.ticket.collect_details_later)
+
+watch(
+  () => props.forceExpandUid,
+  (uid) => {
+    if (uid === props.instance.uid) collapsed.value = false
+  },
+  { immediate: true }
+)
 const fields = computed(() => props.ticket.participant_fields ?? [])
 
 const names = computed(() =>

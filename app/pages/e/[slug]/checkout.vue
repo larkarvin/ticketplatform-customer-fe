@@ -7,6 +7,7 @@ import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAtt
 import CheckoutBuyer from '~/features/events/components/checkout/CheckoutBuyer.vue'
 import CheckoutSummary from '~/features/events/components/checkout/CheckoutSummary.vue'
 import CheckoutTickets from '~/features/events/components/checkout/CheckoutTickets.vue'
+import { useCart } from '~/features/events/composables/useCart'
 import { usePublicCheckout } from '~/features/events/composables/usePublicCheckout'
 import type { CheckoutSelection } from '~/features/events/types'
 
@@ -26,7 +27,21 @@ const selection = computed<CheckoutSelection[]>(() =>
     .filter((s) => s.quantity > 0 && event.tickets.some((t) => t.id === s.ticket_id))
 )
 
+const cartStore = useCart(event, selection.value)
 const c = usePublicCheckout(event, selection.value)
+
+// Remove the most-recently-added instance of a given ticket type.
+function onRemoveOne(ticketId: number): void {
+  const last = [...cartStore.cart.value].reverse().find((inst) => inst.ticket_id === ticketId)
+  if (last) cartStore.removeTicket(last.uid)
+}
+
+// First required text-like field for the ticket, used as identity key in ParticipantGroup.
+function identityKeyFor(ticketId: number): string | null {
+  const t = event.tickets.find((x) => x.id === ticketId)
+  const f = (t?.participant_fields ?? []).find((x) => x.required && ['text', 'name'].includes(x.type))
+  return f?.field_key ?? t?.participant_fields?.[0]?.field_key ?? null
+}
 </script>
 
 <template>
@@ -40,12 +55,20 @@ const c = usePublicCheckout(event, selection.value)
     </p>
 
     <template v-else>
-      <CheckoutTickets :event="event" :selection="selection" />
+      <CheckoutTickets
+        :event="event"
+        :quantity-of="cartStore.quantityOf"
+        :max-for="cartStore.maxFor"
+        :on-add="cartStore.addTicket"
+        :on-remove-one="onRemoveOne"
+      />
       <CheckoutAttendees
-        :tickets="event.tickets"
-        :selection="selection"
-        :answers="c.attendeeAnswers"
+        :event="event"
+        :cart="cartStore.cart.value"
+        :identity-key-for="identityKeyFor"
         :errors="c.fieldErrors.value"
+        :buyer-name="c.buyer.name"
+        @remove="cartStore.removeTicket"
       />
       <CheckoutBuyer :buyer="c.buyer" />
       <CheckoutSummary

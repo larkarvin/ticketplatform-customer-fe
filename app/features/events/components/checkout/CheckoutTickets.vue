@@ -1,51 +1,40 @@
-<!-- Read-only summary of the buyer's chosen tickets: name × qty, line totals. -->
+<!-- Editable ticket quantities: one QuantityStepper per ticket type. -->
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { CheckoutSelection, PublicEvent } from '../../types'
+import QuantityStepper from '../../../forms/components/controls/QuantityStepper.vue'
+import type { PublicEvent } from '../../types'
 
-const props = defineProps<{
+defineProps<{
   event: PublicEvent
-  selection: CheckoutSelection[]
+  quantityOf: (ticketId: number) => number
+  maxFor: (ticketId: number) => number
+  onAdd: (ticketId: number) => void
+  onRemoveOne: (ticketId: number) => void
 }>()
-
-interface LineItem {
-  name: string
-  quantity: number
-  unit_price: string
-  subtotal: string
-}
-
-const lines = computed<LineItem[]>(() =>
-  props.selection.map((sel) => {
-    const ticket = props.event.tickets.find((t) => t.id === sel.ticket_id)
-    const price = ticket?.price ?? 0
-    const formatted = ticket?.price_formatted ?? ''
-    const subtotal = (price * sel.quantity).toFixed(2)
-    return {
-      name: ticket?.name ?? 'Ticket',
-      quantity: sel.quantity,
-      unit_price: formatted,
-      subtotal: `${props.event.currency} ${subtotal}`,
-    }
-  })
-)
 </script>
 
 <template>
   <section class="space-y-3 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
     <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Your tickets</h2>
-    <ul class="divide-y divide-gray-100 dark:divide-gray-800">
-      <li
-        v-for="(line, i) in lines"
-        :key="i"
+    <div class="divide-y divide-gray-100 dark:divide-gray-800">
+      <div
+        v-for="t in event.tickets"
+        :key="t.id"
         class="flex items-center justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0"
       >
         <div>
-          <p class="font-medium text-gray-900 dark:text-white">{{ line.name }}</p>
-          <p class="text-gray-500 dark:text-gray-400">{{ line.unit_price }} × {{ line.quantity }}</p>
+          <p class="font-medium text-gray-900 dark:text-white">{{ t.name }}</p>
+          <p class="text-gray-500 dark:text-gray-400">{{ t.price_formatted }}</p>
         </div>
-        <span class="font-semibold text-gray-900 dark:text-white">{{ line.subtotal }}</span>
-      </li>
-    </ul>
+        <QuantityStepper
+          :value="quantityOf(t.id)"
+          :input-id="`qty-${t.id}`"
+          :label="t.name"
+          :can-decrement="quantityOf(t.id) > 0"
+          :can-increment="quantityOf(t.id) < maxFor(t.id)"
+          @decrement="onRemoveOne(t.id)"
+          @increment="onAdd(t.id)"
+        />
+      </div>
+    </div>
   </section>
 </template>
