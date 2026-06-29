@@ -28,7 +28,7 @@ function onBuy(_ticketId: number): void {
         </div>
 
         <aside class="pb-8 lg:py-8">
-          <div class="lg:sticky lg:top-6 lg:-mt-28">
+          <div class="lg:sticky lg:top-6 lg:-mt-[60px]">
             <EventTicketList :tickets="event.tickets" @buy="onBuy" />
           </div>
         </aside>
