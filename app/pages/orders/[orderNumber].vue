@@ -7,11 +7,10 @@ import type { PublicOrder } from '~/features/events/types'
 
 const route = useRoute()
 const orderNumber = computed(() => String(route.params.orderNumber))
+useSeoMeta({ title: () => `Order ${orderNumber.value}` })
 
 // Fetch order synchronously (SSR-safe) before any await in this script block.
 const { data } = await useAsyncData(`order:${orderNumber.value}`, () => ordersService.getOrder(orderNumber.value))
-
-useSeoMeta({ title: () => `Order ${orderNumber.value}` })
 
 const order = ref<PublicOrder | null>(data.value ?? null)
 // Seed status from the full order object; the poll will overwrite it on the client.
