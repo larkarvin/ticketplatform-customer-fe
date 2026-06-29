@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { PublicEvent } from '~/features/events/types'
 import { usePublicCheckout } from './usePublicCheckout'
 const { registerOrder, initiatePayment } = vi.hoisted(() => ({ registerOrder: vi.fn(), initiatePayment: vi.fn() }))
 vi.mock('~/features/events/services/events.service', () => ({ eventsService: { registerOrder } }))
@@ -25,7 +26,7 @@ function event() {
         early_bird_price_formatted: null,
       },
     ],
-  } as never
+  } as PublicEvent
 }
 
 describe('usePublicCheckout', () => {
@@ -42,7 +43,7 @@ describe('usePublicCheckout', () => {
     expect(registerOrder).toHaveBeenCalledWith(
       'gala',
       expect.objectContaining({
-        buyer: { email: 'b@e.co', name: '', phone: '' },
+        buyer: { email: 'b@e.co', name: undefined, phone: undefined },
         tickets: [
           expect.objectContaining({
             ticket_id: 1,

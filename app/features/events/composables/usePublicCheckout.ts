@@ -2,6 +2,7 @@
 // the running total, and the submit → pay handoff. No transport beyond the services.
 import { isValidationError } from '#core/errors'
 import { computed, reactive, ref } from 'vue'
+import { toast } from 'vue-sonner'
 import { eventsService } from '~/features/events/services/events.service'
 import { ordersService } from '~/features/events/services/orders.service'
 import type { CheckoutSelection, PublicEvent, RegisterPayload } from '~/features/events/types'
@@ -28,7 +29,7 @@ export function usePublicCheckout(event: PublicEvent, selection: CheckoutSelecti
 
   function buildPayload(): RegisterPayload {
     return {
-      buyer: { email: buyer.email.trim(), name: buyer.name, phone: buyer.phone },
+      buyer: { email: buyer.email.trim(), name: buyer.name || undefined, phone: buyer.phone || undefined },
       tickets: selection.map((sel) => ({
         ticket_id: sel.ticket_id,
         quantity: sel.quantity,
@@ -53,7 +54,12 @@ export function usePublicCheckout(event: PublicEvent, selection: CheckoutSelecti
       }
     } catch (e: unknown) {
       // 422 → field errors keyed by field_key (reuse the core validation-error shape).
-      if (isValidationError(e)) fieldErrors.value = e.fields
+      if (isValidationError(e)) {
+        fieldErrors.value = e.fields
+      } else {
+        toast.error("Couldn't complete your order. Please try again.")
+      }
+    } finally {
       submitting.value = false
     }
   }
