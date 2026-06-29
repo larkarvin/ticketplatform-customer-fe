@@ -1,5 +1,8 @@
 <!-- Checkout section: receipt email for the buyer (email only, no name). -->
 <script setup lang="ts">
+import { borderClass, controlClass } from '#core/field-engine/components/controls/inputClass'
+import { Mail } from '#icons'
+
 const props = defineProps<{
   buyer: { email: string; name?: string; phone?: string }
 }>()
@@ -22,16 +25,23 @@ function setEmail(value: string): void {
         Email address
         <span class="text-danger-500">*</span>
       </label>
-      <input
-        id="buyer-email"
-        :value="buyer.email"
-        type="email"
-        autocomplete="email"
-        required
-        placeholder="you@example.com"
-        class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-        @input="setEmail(($event.target as HTMLInputElement).value)"
-      />
+      <div class="relative">
+        <input
+          id="buyer-email"
+          :value="buyer.email"
+          type="email"
+          autocomplete="email"
+          required
+          placeholder="you@example.com"
+          :class="[controlClass, borderClass(false), 'pl-14']"
+          @input="setEmail(($event.target as HTMLInputElement).value)"
+        />
+        <span
+          class="pointer-events-none absolute inset-y-0 left-0 flex items-center border-r border-gray-300 px-4 text-gray-500 dark:border-gray-700 dark:text-gray-400"
+        >
+          <Mail :size="20" />
+        </span>
+      </div>
     </div>
   </section>
 </template>

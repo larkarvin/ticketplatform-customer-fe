@@ -1,5 +1,6 @@
 <!-- customer-fe/app/pages/e/[slug]/checkout.vue -->
 <script setup lang="ts">
+import { useConfirm } from '#core/composables/useConfirm'
 import { ChevronDown } from '#icons'
 import { computed, onMounted, ref, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
@@ -21,6 +22,7 @@ const { event } = await usePublicEvent(slug.value)
 const cartStore = useCart(event, parseSelection(route.query.tickets))
 const c = usePublicCheckout(event, cartStore.cart)
 const persistence = useCheckoutPersistence(slug.value)
+const { confirm } = useConfirm()
 
 const summaryOpen = ref(true)
 
@@ -78,19 +80,22 @@ onMounted(() => {
 })
 
 // Confirm before removing an instance that has entered participant data.
-function requestRemove(uid: string): void {
-  if (
-    hasData(cartStore.cart.value, uid) &&
-    !window.confirm("Remove this ticket? You'll lose the names and add-ons entered.")
-  )
-    return
+async function requestRemove(uid: string): Promise<void> {
+  if (hasData(cartStore.cart.value, uid)) {
+    const ok = await confirm({
+      title: 'Remove this ticket?',
+      message: "You'll lose the names and add-ons entered for it.",
+      confirmLabel: 'Remove ticket',
+    })
+    if (!ok) return
+  }
   cartStore.removeTicket(uid)
 }
 
 // Remove the most-recently-added instance of a given ticket type (stepper decrement).
 function onRemoveOne(ticketId: number): void {
   const last = [...cartStore.cart.value].reverse().find((inst) => inst.ticket_id === ticketId)
-  if (last) requestRemove(last.uid)
+  if (last) void requestRemove(last.uid)
 }
 
 // First required text-like field for the ticket, used as identity key in ParticipantGroup.
@@ -101,10 +106,17 @@ function identityKeyFor(ticketId: number): string | null {
 }
 
 // Clear the draft and reload to re-seed from the URL ?tickets= param.
-function startOver(): void {
+async function startOver(): Promise<void> {
   const hasEnteredData =
     cartStore.cart.value.some((inst) => hasData(cartStore.cart.value, inst.uid)) || c.buyer.email !== ''
-  if (hasEnteredData && !window.confirm('Start over? This will clear all your entered details.')) return
+  if (hasEnteredData) {
+    const ok = await confirm({
+      title: 'Start over?',
+      message: 'This will clear all the details you have entered so far.',
+      confirmLabel: 'Start over',
+    })
+    if (!ok) return
+  }
   persistence.clear()
   window.location.reload()
 }
@@ -219,7 +231,14 @@ function startOver(): void {
 
       <!-- 2. Page sections (pb-32 reserves space for the fixed bottom bar) -->
       <article class="space-y-8 px-4 pb-32 pt-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Checkout — {{ event.title }}</h1>
+        <header>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Checkout — {{ event.title }}</h1>
+          <p class="mt-2 text-base text-gray-500 dark:text-gray-400">
+            Fields marked
+            <span class="font-semibold text-danger-500">*</span>
+            need an answer.
+          </p>
+        </header>
 
         <!-- Your tickets -->
         <CheckoutTickets
