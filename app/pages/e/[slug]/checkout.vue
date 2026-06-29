@@ -4,7 +4,7 @@ import { useConfirm } from '#core/composables/useConfirm'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
 import { hasData, parseSelection, selectionKey } from '~/features/events/cart'
-import { EDIT_ADDONS, EDIT_ATTENDEES, buildReviewGroups } from '~/features/events/checkoutReview'
+import { EDIT_ADDONS, EDIT_ATTENDEES, EDIT_TICKETS, buildReviewGroups } from '~/features/events/checkoutReview'
 import CheckoutAddOns from '~/features/events/components/checkout/CheckoutAddOns.vue'
 import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAttendees.vue'
 import CheckoutPayBar from '~/features/events/components/checkout/CheckoutPayBar.vue'
@@ -50,7 +50,14 @@ function applyLeaveReview(): void {
   const target = pendingScroll.value
   pendingScroll.value = null
   if (target === null) return
-  const id = target === EDIT_ATTENDEES ? 'checkout-attendees' : target === EDIT_ADDONS ? 'checkout-addons' : null
+  const id =
+    target === EDIT_TICKETS
+      ? 'checkout-tickets'
+      : target === EDIT_ATTENDEES
+        ? 'checkout-attendees'
+        : target === EDIT_ADDONS
+          ? 'checkout-addons'
+          : null
   if (!id) return
   void nextTick(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
 }
@@ -193,13 +200,15 @@ async function startOver(): Promise<void> {
           </p>
         </header>
 
-        <CheckoutTickets
-          :event="event"
-          :quantity-of="cartStore.quantityOf"
-          :max-for="cartStore.maxFor"
-          :on-add="cartStore.addTicket"
-          :on-remove-one="onRemoveOne"
-        />
+        <div id="checkout-tickets">
+          <CheckoutTickets
+            :event="event"
+            :quantity-of="cartStore.quantityOf"
+            :max-for="cartStore.maxFor"
+            :on-add="cartStore.addTicket"
+            :on-remove-one="onRemoveOne"
+          />
+        </div>
 
         <div id="checkout-attendees">
           <CheckoutAttendees

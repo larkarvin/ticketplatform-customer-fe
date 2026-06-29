@@ -7,6 +7,7 @@ import { Mail } from '#icons'
 import { nextTick, ref } from 'vue'
 import ReviewSummary from '~/core/components/ReviewSummary.vue'
 import type { ReviewGroup } from '~/core/types/review'
+import { EDIT_TICKETS } from '../../checkoutReview'
 import type { OrderCalculation } from '../../types'
 import OrderBreakdown from './OrderBreakdown.vue'
 
@@ -38,7 +39,7 @@ function setEmail(value: string): void {
 
     <ReviewSummary :groups="groups" @edit="emit('edit', $event)" />
 
-    <OrderBreakdown :calculation="calculation" :status="status" />
+    <OrderBreakdown :calculation="calculation" :status="status" editable @edit="emit('edit', EDIT_TICKETS)" />
 
     <section class="space-y-2">
       <h2 class="text-base font-semibold text-gray-900 dark:text-white">

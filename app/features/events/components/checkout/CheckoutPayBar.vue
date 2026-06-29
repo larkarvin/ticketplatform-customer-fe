@@ -3,6 +3,7 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight } from '#icons'
 import { computed } from 'vue'
+import { formatMoney } from '../../money'
 import type { OrderCalculation } from '../../types'
 
 const props = defineProps<{
@@ -14,7 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{ retry: []; continue: []; back: [] }>()
 
 const totalText = computed(() =>
-  props.calculation ? `${props.calculation.currency} ${props.calculation.total.toFixed(2)}` : '—'
+  props.calculation ? formatMoney(props.calculation.total, props.calculation.currency) : '—'
 )
 </script>
 

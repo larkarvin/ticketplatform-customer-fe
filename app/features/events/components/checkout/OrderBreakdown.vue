@@ -1,20 +1,37 @@
 <!-- Non-collapsible order breakdown for the review step: items + fees + taxes + grand total. -->
 <script setup lang="ts">
+import { Pencil } from '#icons'
 import { computed } from 'vue'
+import { formatMoney } from '../../money'
 import type { OrderCalculation } from '../../types'
 
 const props = defineProps<{
   calculation: OrderCalculation | null
   status: 'idle' | 'updating' | 'error'
+  /** Show an Edit link in the header (review step → back to the tickets section). */
+  editable?: boolean
 }>()
+const emit = defineEmits<{ edit: [] }>()
 
-const money = (amount: number, currency: string): string => `${currency} ${amount.toFixed(2)}`
+const money = (amount: number, currency: string): string => formatMoney(amount, currency)
 const totalText = computed(() => (props.calculation ? money(props.calculation.total, props.calculation.currency) : '—'))
 </script>
 
 <template>
   <section class="rounded-xl border border-gray-200 p-4 sm:p-5 dark:border-gray-700">
-    <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">Order summary</h3>
+    <div class="mb-3 flex items-center justify-between gap-3">
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white">Order summary</h3>
+      <button
+        v-if="editable"
+        type="button"
+        data-test="edit-order"
+        class="inline-flex min-h-tap items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline dark:text-gray-300"
+        @click="emit('edit')"
+      >
+        <Pencil :size="15" />
+        Edit
+      </button>
+    </div>
     <template v-if="calculation">
       <ul class="space-y-2 text-sm">
         <li v-for="(item, i) in calculation.items" :key="`i${i}`" class="flex justify-between gap-3">

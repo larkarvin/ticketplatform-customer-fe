@@ -10,6 +10,7 @@ import type { CartTicket, PublicEvent } from '~/features/events/types'
 
 export const EDIT_ATTENDEES = 0
 export const EDIT_ADDONS = 1
+export const EDIT_TICKETS = 2
 
 function identityKey(fields: Field[]): string | null {
   const f = fields.find((x) => x.required && ['text', 'name'].includes(x.type))

@@ -27,4 +27,15 @@ describe('OrderBreakdown', () => {
     const w = mount(OrderBreakdown, { props: { calculation: null, status: 'idle' } })
     expect(w.text()).toContain('No items yet')
   })
+
+  it('shows no Edit link by default', () => {
+    const w = mount(OrderBreakdown, { props: { calculation: calc, status: 'idle' } })
+    expect(w.find('[data-test="edit-order"]').exists()).toBe(false)
+  })
+
+  it('emits edit from the Edit link when editable', async () => {
+    const w = mount(OrderBreakdown, { props: { calculation: calc, status: 'idle', editable: true } })
+    await w.get('[data-test="edit-order"]').trigger('click')
+    expect(w.emitted('edit')).toHaveLength(1)
+  })
 })
