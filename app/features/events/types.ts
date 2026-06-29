@@ -49,3 +49,54 @@ export interface PublicEvent {
   available_capacity: number | null
   tickets: PublicTicket[]
 }
+
+/** A buyer's chosen quantity per ticket, from the event card. */
+export interface CheckoutSelection {
+  ticket_id: number
+  quantity: number
+}
+
+/** The register request body (matches the API TicketOrderService payload). */
+export interface RegisterPayload {
+  buyer: { email: string; name?: string; phone?: string }
+  tickets: Array<{
+    ticket_id: number
+    quantity: number
+    group_name?: string
+    participants: Array<{ field_data: Record<string, unknown> }>
+  }>
+  checkout: Record<string, unknown>
+}
+
+export interface EventOrderResponse {
+  order_number: string
+  requires_payment: boolean
+  payment_total: number
+  currency: string
+}
+
+export interface PublicOrderItem {
+  type: string
+  name: string
+  quantity: number
+  unit_price: string
+  subtotal: string
+}
+
+export interface PublicOrder {
+  order_number: string
+  currency: string
+  total: string
+  payment_status: string
+  can_be_paid: boolean
+  items: PublicOrderItem[]
+}
+
+/** Shape returned by the payment-status endpoint (raw JsonResponse, no data wrapper). */
+export interface PaymentStatusResponse {
+  success: boolean
+  status: string
+  order_number?: string
+  paid_at?: string
+  message?: string
+}
