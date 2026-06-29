@@ -9,9 +9,9 @@ export const ordersService = {
       .then((r) => r.data),
 
   // PaymentInitiationResource is a JsonResource, so the response is wrapped under `data`.
-  initiatePayment: (orderNumber: string, redirectUrl: string): Promise<{ redirect_url: string }> =>
+  initiatePayment: (orderNumber: string, redirectUrl: string): Promise<{ redirect_url?: string }> =>
     useApiClient()
-      .post<{ data: { redirect_url: string } }>(`/orders/${orderNumber}/pay`, { redirect_url: redirectUrl })
+      .post<{ data: { redirect_url?: string } }>(`/orders/${orderNumber}/pay`, { redirect_url: redirectUrl })
       .then((r) => r.data),
 
   // The payment-status endpoint returns a raw JsonResponse (not a JsonResource),

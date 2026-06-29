@@ -17,7 +17,7 @@ function dec(t: PublicTicket) {
 }
 function inc(t: PublicTicket) {
   const current = qty[t.id]
-  qty[t.id] = current ? Math.min(maxFor(t), current + 1) : t.min_per_order
+  qty[t.id] = current ? Math.min(maxFor(t), current + 1) : Math.min(maxFor(t), t.min_per_order)
 }
 const canIncrement = (t: PublicTicket) => t.is_available && t.is_on_sale && (qty[t.id] ?? 0) < maxFor(t)
 

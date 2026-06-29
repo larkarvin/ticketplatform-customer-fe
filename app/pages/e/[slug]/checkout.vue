@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { usePublicEvent } from '~/features/events'
-import CheckoutAddOns from '~/features/events/components/checkout/CheckoutAddOns.vue'
+// Merch/donation add-ons deferred to a follow-up slice.
 import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAttendees.vue'
 import CheckoutBuyer from '~/features/events/components/checkout/CheckoutBuyer.vue'
 import CheckoutSummary from '~/features/events/components/checkout/CheckoutSummary.vue'
@@ -47,7 +47,6 @@ const c = usePublicCheckout(event, selection.value)
         :answers="c.attendeeAnswers"
         :errors="c.fieldErrors.value"
       />
-      <CheckoutAddOns :fields="event.form_fields ?? []" :answers="c.checkoutAnswers" :errors="c.fieldErrors.value" />
       <CheckoutBuyer :buyer="c.buyer" />
       <CheckoutSummary
         :event="event"

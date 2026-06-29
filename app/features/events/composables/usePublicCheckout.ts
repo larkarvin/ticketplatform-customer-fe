@@ -48,7 +48,11 @@ export function usePublicCheckout(event: PublicEvent, selection: CheckoutSelecti
       if (res.requires_payment) {
         const back = `${window.origin}/orders/${res.order_number}`
         const { redirect_url } = await ordersService.initiatePayment(res.order_number, back)
-        window.location.href = redirect_url
+        if (redirect_url) {
+          window.location.href = redirect_url
+        } else {
+          await navigateTo(`/orders/${res.order_number}`)
+        }
       } else {
         await navigateTo(`/orders/${res.order_number}`)
       }
