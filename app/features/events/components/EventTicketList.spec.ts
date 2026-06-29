@@ -43,4 +43,21 @@ describe('EventTicketList', () => {
     const w = mount(EventTicketList, { props: { tickets: [] } })
     expect(w.text()).toContain("aren't available yet")
   })
+
+  it('first increment on a min_per_order:2 ticket jumps to 2', async () => {
+    const w = mount(EventTicketList, { props: { tickets: [ticket({ id: 3, min_per_order: 2 })] } })
+    await w.find('[aria-label^="Increase quantity"]').trigger('click')
+    const cta = w.find('[data-testid="get-tickets"]')
+    await cta.trigger('click')
+    expect(w.emitted('checkout')?.[0]).toEqual([[{ ticket_id: 3, quantity: 2 }]])
+  })
+
+  it('sold-out ticket: increment is disabled, "Sold out" label shows, CTA stays disabled', () => {
+    const w = mount(EventTicketList, { props: { tickets: [ticket({ id: 5, is_available: false })] } })
+    const incBtn = w.find('[aria-label^="Increase quantity"]')
+    expect(incBtn.attributes('disabled')).toBeDefined()
+    expect(w.text()).toContain('Sold out')
+    const cta = w.find('[data-testid="get-tickets"]')
+    expect(cta.attributes('disabled')).toBeDefined()
+  })
 })
