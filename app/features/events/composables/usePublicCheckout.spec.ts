@@ -1,3 +1,4 @@
+import { ValidationError } from '#core/errors'
 import type { Field } from '#core/field-engine/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
@@ -6,6 +7,14 @@ import { usePublicCheckout } from './usePublicCheckout'
 
 const { calculateOrder } = vi.hoisted(() => ({ calculateOrder: vi.fn() }))
 vi.mock('~/features/events/services/events.service', () => ({ eventsService: { calculateOrder } }))
+
+const { registerOrder, initiatePayment } = vi.hoisted(() => ({
+  registerOrder: vi.fn(),
+  initiatePayment: vi.fn(),
+}))
+vi.mock('~/features/events/services/orders.service', () => ({
+  ordersService: { registerOrder, initiatePayment },
+}))
 
 function event(): PublicEvent {
   return {
@@ -228,5 +237,117 @@ describe('usePublicCheckout.validate', () => {
     const c = usePublicCheckout(eventWithField, cart)
     expect(c.validate()).toBe(true)
     expect(Object.keys(c.fieldErrors.value)).toHaveLength(0)
+  })
+})
+
+const navigateTo = vi.fn()
+
+describe('usePublicCheckout.placeAndPay', () => {
+  let assignSpy: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    registerOrder.mockReset()
+    initiatePayment.mockReset()
+    navigateTo.mockReset()
+    vi.stubGlobal('navigateTo', navigateTo)
+    // happy-dom: stub window.location so origin + assign are controllable
+    assignSpy = vi.fn()
+    Object.defineProperty(window, 'location', {
+      value: { origin: 'http://localhost', assign: assignSpy },
+      writable: true,
+      configurable: true,
+    })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('calls registerOrder with buyer in payload, then initiatePayment, then assigns redirect_url', async () => {
+    registerOrder.mockResolvedValue({
+      order_number: 'ORD-001',
+      requires_payment: true,
+      payment_total: 100,
+      currency: 'PHP',
+    })
+    initiatePayment.mockResolvedValue({ redirect_url: 'https://pay.example.com/xyz' })
+
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(event(), cart)
+    // Fill buyer so validate passes (event() has no required participant fields)
+    c.buyer.email = 'buyer@example.com'
+    c.buyer.name = 'Buyer'
+
+    await c.placeAndPay()
+
+    expect(registerOrder).toHaveBeenCalledOnce()
+    const [slug, payload] = registerOrder.mock.calls[0] as [
+      string,
+      { buyer: { email: string; name: string }; tickets: unknown[]; checkout: unknown },
+    ]
+    expect(slug).toBe('gala')
+    expect(payload.buyer).toEqual({ email: 'buyer@example.com', name: 'Buyer', phone: '' })
+    expect(payload.tickets).toHaveLength(1)
+
+    expect(initiatePayment).toHaveBeenCalledWith('ORD-001', 'http://localhost/orders/ORD-001')
+    expect(assignSpy).toHaveBeenCalledWith('https://pay.example.com/xyz')
+    expect(navigateTo).not.toHaveBeenCalled()
+  })
+
+  it('calls navigateTo when redirect_url is absent (free / already-paid path)', async () => {
+    registerOrder.mockResolvedValue({
+      order_number: 'ORD-002',
+      requires_payment: false,
+      payment_total: 0,
+      currency: 'PHP',
+    })
+    initiatePayment.mockResolvedValue({ redirect_url: undefined })
+
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(event(), cart)
+    c.buyer.email = 'buyer@example.com'
+
+    await c.placeAndPay()
+
+    expect(navigateTo).toHaveBeenCalledWith('/orders/ORD-002')
+    expect(assignSpy).not.toHaveBeenCalled()
+  })
+
+  it('does not call services and keeps submitting false when validation fails', async () => {
+    const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(eventWithField, cart)
+    // Do NOT fill in required full_name — validate() returns false
+
+    await c.placeAndPay()
+
+    expect(registerOrder).not.toHaveBeenCalled()
+    expect(initiatePayment).not.toHaveBeenCalled()
+    expect(c.submitting.value).toBe(false)
+  })
+
+  it('maps a 422 ValidationError to fieldErrors and resets submitting', async () => {
+    registerOrder.mockRejectedValue(new ValidationError({ 'buyer.email': 'Invalid email' }))
+
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(event(), cart)
+    c.buyer.email = 'buyer@example.com'
+
+    await c.placeAndPay()
+
+    expect(c.fieldErrors.value['buyer.email']).toBe('Invalid email')
+    expect(c.submitting.value).toBe(false)
+  })
+
+  it('sets submitError and resets submitting on a non-422 error', async () => {
+    registerOrder.mockRejectedValue(new Error('Network failure'))
+
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(event(), cart)
+    c.buyer.email = 'buyer@example.com'
+
+    await c.placeAndPay()
+
+    expect(c.submitError.value).toBeTruthy()
+    expect(c.submitting.value).toBe(false)
   })
 })
