@@ -1,7 +1,7 @@
 import { ValidationError } from '#core/errors'
 import type { Field } from '#core/field-engine/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import type { CartTicket, PublicEvent } from '~/features/events/types'
 import { usePublicCheckout } from './usePublicCheckout'
 
@@ -349,6 +349,60 @@ describe('usePublicCheckout.placeAndPay', () => {
 
     expect(c.submitError.value).toBeTruthy()
     expect(c.submitting.value).toBe(false)
+  })
+
+  it('retry after a post-register failure reuses the order: registerOrder once, initiatePayment twice', async () => {
+    registerOrder.mockResolvedValue({
+      order_number: 'ORD-777',
+      requires_payment: true,
+      payment_total: 100,
+      currency: 'PHP',
+    })
+    // First initiatePayment throws (e.g. gateway hiccup); second succeeds.
+    initiatePayment.mockRejectedValueOnce(new Error('gateway down'))
+    initiatePayment.mockResolvedValueOnce({ redirect_url: 'https://pay.example.com/abc' })
+
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(event(), cart)
+    c.buyer.email = 'buyer@example.com'
+
+    // First attempt: registers, then initiatePayment throws → submitError set, submitting reset.
+    await c.placeAndPay()
+    expect(c.submitError.value).toBeTruthy()
+    expect(c.submitting.value).toBe(false)
+
+    // Retry: must NOT register again — reuses ORD-777 and re-initiates payment.
+    await c.placeAndPay()
+
+    expect(registerOrder).toHaveBeenCalledOnce()
+    expect(initiatePayment).toHaveBeenCalledTimes(2)
+    expect(initiatePayment).toHaveBeenLastCalledWith('ORD-777', 'http://localhost/orders/ORD-777')
+    expect(assignSpy).toHaveBeenCalledWith('https://pay.example.com/abc')
+  })
+
+  it('clears the cached order when the cart selection changes (edit forces a fresh order)', async () => {
+    registerOrder.mockResolvedValue({
+      order_number: 'ORD-A',
+      requires_payment: true,
+      payment_total: 100,
+      currency: 'PHP',
+    })
+    initiatePayment.mockRejectedValueOnce(new Error('gateway down'))
+    initiatePayment.mockResolvedValue({ redirect_url: 'https://pay.example.com/x' })
+
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(event(), cart)
+    c.buyer.email = 'buyer@example.com'
+
+    await c.placeAndPay() // registers ORD-A, payment fails
+    expect(registerOrder).toHaveBeenCalledOnce()
+
+    // Edit the cart → the watcher resets the cached order.
+    cart.value = [...cart.value, { uid: 'b', ticket_id: 1, participants: [{ field_data: {} }] }]
+    await nextTick() // let the watcher flush so the cached order is reset
+
+    await c.placeAndPay()
+    expect(registerOrder).toHaveBeenCalledTimes(2)
   })
 
   it('reentrancy guard: a second call while one is in-flight does not fire registerOrder again', async () => {

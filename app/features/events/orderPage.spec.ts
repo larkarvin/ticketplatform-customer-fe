@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { buildRebuildDraft, formatCountdown } from './orderPage'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { parseSelection } from './cart'
+import { useOrderStatus } from './composables/useOrderStatus'
+import { buildTicketsQuery, formatCountdown, seedStatus } from './orderPage'
+import { ordersService } from './services/orders.service'
 import type { PublicOrder } from './types'
 
 describe('formatCountdown', () => {
@@ -39,7 +42,7 @@ describe('formatCountdown', () => {
 })
 
 // ---------------------------------------------------------------------------
-// buildRebuildDraft
+// buildTicketsQuery
 // ---------------------------------------------------------------------------
 
 function makeOrder(overrides: Partial<PublicOrder> = {}): PublicOrder {
@@ -56,63 +59,97 @@ function makeOrder(overrides: Partial<PublicOrder> = {}): PublicOrder {
   }
 }
 
-describe('buildRebuildDraft', () => {
+describe('buildTicketsQuery', () => {
   it('returns null when event_slug is null', () => {
     const order = makeOrder({ event_slug: null })
-    expect(buildRebuildDraft(order)).toBeNull()
+    expect(buildTicketsQuery(order)).toBeNull()
   })
 
   it('returns null when there are no ticket lines', () => {
     const order = makeOrder({
       items: [{ type: 'addon', name: 'T-shirt', quantity: 1, unit_price: '10.00', subtotal: '10.00', ticket_id: null }],
     })
-    expect(buildRebuildDraft(order)).toBeNull()
+    expect(buildTicketsQuery(order)).toBeNull()
   })
 
-  it('builds a draft with one CartTicket per ticket-line quantity', () => {
+  it('builds id:qty pairs from ticket lines (ids 12 qty2, 15 qty1), skipping non-ticket lines', () => {
     const order = makeOrder({
       event_slug: 'summer-fest',
       items: [
-        { type: 'ticket', name: 'General', quantity: 2, unit_price: '20.00', subtotal: '40.00', ticket_id: 7 },
-        { type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 9 },
+        { type: 'ticket', name: 'General', quantity: 2, unit_price: '20.00', subtotal: '40.00', ticket_id: 12 },
+        { type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 },
         { type: 'addon', name: 'Merch', quantity: 1, unit_price: '10.00', subtotal: '10.00', ticket_id: null },
       ],
     })
-    const draft = buildRebuildDraft(order)
-    expect(draft).not.toBeNull()
-    // 2 × ticket 7 + 1 × ticket 9 = 3 CartTicket instances
-    expect(draft!.tickets).toHaveLength(3)
-    expect(draft!.tickets.filter((t) => t.ticket_id === 7)).toHaveLength(2)
-    expect(draft!.tickets.filter((t) => t.ticket_id === 9)).toHaveLength(1)
+    expect(buildTicketsQuery(order)).toBe('12:2,15:1')
   })
 
-  it('each CartTicket has a uid string and empty participants', () => {
+  it('produces a string the checkout parser (parseSelection) round-trips exactly', () => {
     const order = makeOrder({
-      items: [{ type: 'ticket', name: 'GA', quantity: 2, unit_price: '10.00', subtotal: '20.00', ticket_id: 3 }],
+      items: [
+        { type: 'ticket', name: 'General', quantity: 2, unit_price: '20.00', subtotal: '40.00', ticket_id: 12 },
+        { type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 },
+      ],
     })
-    const draft = buildRebuildDraft(order)!
-    for (const ticket of draft.tickets) {
-      expect(typeof ticket.uid).toBe('string')
-      expect(ticket.uid.length).toBeGreaterThan(0)
-      expect(ticket.participants).toEqual([])
-    }
+    const query = buildTicketsQuery(order)!
+    expect(parseSelection(query)).toEqual([
+      { ticket_id: 12, quantity: 2 },
+      { ticket_id: 15, quantity: 1 },
+    ])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// seedStatus
+// ---------------------------------------------------------------------------
+
+describe('seedStatus', () => {
+  it('returns processing when returning from a successful gateway on a pending order', () => {
+    expect(seedStatus('pending', 'success')).toBe('processing')
   })
 
-  it('generates distinct uids for each ticket instance', () => {
-    const order = makeOrder({
-      items: [{ type: 'ticket', name: 'GA', quantity: 3, unit_price: '10.00', subtotal: '30.00', ticket_id: 5 }],
-    })
-    const draft = buildRebuildDraft(order)!
-    const uids = draft.tickets.map((t) => t.uid)
-    expect(new Set(uids).size).toBe(3)
+  it('does not override a paid order even with status=success', () => {
+    expect(seedStatus('paid', 'success')).toBe('paid')
   })
 
-  it('sets checkoutAnswers to empty object and email to empty string', () => {
-    const order = makeOrder({
-      items: [{ type: 'ticket', name: 'GA', quantity: 1, unit_price: '10.00', subtotal: '10.00', ticket_id: 1 }],
+  it('passes the payment status through on the normal (no return status) path', () => {
+    expect(seedStatus('pending', undefined)).toBe('pending')
+    expect(seedStatus('failed', undefined)).toBe('failed')
+  })
+
+  it('ignores non-success return statuses', () => {
+    expect(seedStatus('pending', 'cancelled')).toBe('pending')
+    expect(seedStatus('pending', 'failed')).toBe('pending')
+  })
+})
+
+// seedStatus feeds useOrderStatus — verify the end-to-end UI seed + poll transition.
+vi.mock('./services/orders.service', () => ({
+  ordersService: { paymentStatus: vi.fn() },
+}))
+
+describe('order page status seed (gateway return) + poll transition', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  it('returning with status=success + pending order starts processing, then transitions on poll', async () => {
+    vi.mocked(ordersService.paymentStatus).mockResolvedValue({ success: true, status: 'paid' })
+
+    const { state } = useOrderStatus('ORD-RET', {
+      status: seedStatus('pending', 'success'),
+      expires_at: null,
     })
-    const draft = buildRebuildDraft(order)!
-    expect(draft.checkoutAnswers).toEqual({})
-    expect(draft.email).toBe('')
+
+    // Seeded as processing — NOT awaiting — so no "Resume payment" + countdown is shown.
+    expect(state.value).toBe('processing')
+
+    // First poll resolves the real outcome.
+    await vi.advanceTimersByTimeAsync(2_100)
+    expect(state.value).toBe('paid')
   })
 })

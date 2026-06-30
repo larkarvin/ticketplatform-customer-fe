@@ -2,9 +2,9 @@
 <script setup lang="ts">
 import { AlertCircle, CheckCircle, Clock, Loader2, Timer } from '#icons'
 import { computed, ref } from 'vue'
-import { useCheckoutPersistence } from '~/features/events/composables/useCheckoutPersistence'
 import { useOrderStatus } from '~/features/events/composables/useOrderStatus'
-import { buildRebuildDraft, formatCountdown } from '~/features/events/orderPage'
+import { formatMoney } from '~/features/events/money'
+import { buildTicketsQuery, formatCountdown, seedStatus } from '~/features/events/orderPage'
 import { ordersService } from '~/features/events/services/orders.service'
 import type { PublicOrder } from '~/features/events/types'
 
@@ -17,9 +17,13 @@ const { data } = await useAsyncData(`order:${orderNumber.value}`, () => ordersSe
 
 const order = ref<PublicOrder | null>(data.value ?? null)
 
+// Seed `processing` (not "reserved / Resume payment") when returning from a successful
+// gateway redirect on a not-yet-paid order, so the buyer is never invited to pay twice.
+const returnStatus = Array.isArray(route.query.status) ? route.query.status[0] : route.query.status
+
 // Replace ad-hoc poll loop with the composable (SSR-safe timers, terminal-state guards).
 const { state, secondsLeft, refresh } = useOrderStatus(orderNumber.value, {
-  status: order.value?.payment_status ?? 'pending',
+  status: seedStatus(order.value?.payment_status ?? 'pending', returnStatus ?? undefined),
   expires_at: order.value?.expires_at ?? null,
 })
 
@@ -43,23 +47,22 @@ async function handleResume(): Promise<void> {
   }
 }
 
-// Rebuild my order — re-seeds the checkout draft from the order's ticket lines and
-// navigates to the event checkout. Falls back to / when the order has no event slug
-// or no ticket lines (non-ticket orders).
+// Rebuild my order — re-seeds the event checkout from the order's ticket lines via the
+// authoritative `?tickets=` URL channel (the checkout page parses it and seeds the cart,
+// including per-instance min_participants). Falls back to / when the order has no event
+// slug or no ticket lines (non-ticket orders).
 function handleRebuild(): void {
   const currentOrder = order.value
   if (!currentOrder) {
     void navigateTo('/')
     return
   }
-  const draft = buildRebuildDraft(currentOrder)
-  if (draft === null || currentOrder.event_slug === null) {
+  const query = buildTicketsQuery(currentOrder)
+  if (query === null || currentOrder.event_slug === null) {
     void navigateTo('/')
     return
   }
-  const persistence = useCheckoutPersistence(currentOrder.event_slug)
-  persistence.save(draft)
-  void navigateTo(`/e/${currentOrder.event_slug}/checkout`)
+  void navigateTo(`/e/${currentOrder.event_slug}/checkout?tickets=${query}`)
 }
 
 const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
@@ -168,12 +171,12 @@ const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
         class="flex justify-between py-3 text-sm text-gray-700 dark:text-gray-300"
       >
         <span>{{ item.name }} × {{ item.quantity }}</span>
-        <span>{{ item.subtotal }}</span>
+        <span>{{ formatMoney(Number(item.subtotal), order.currency) }}</span>
       </li>
     </ul>
 
     <p v-if="order" class="mt-4 text-right text-lg font-semibold text-gray-900 dark:text-white">
-      Total: {{ order.currency }} {{ order.total }}
+      Total: {{ formatMoney(Number(order.total), order.currency) }}
     </p>
   </article>
 </template>

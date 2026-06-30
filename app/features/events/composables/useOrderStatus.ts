@@ -2,13 +2,15 @@
  * useOrderStatus — polls payment status + derives UI state + holds expiry countdown.
  *
  * State mapping (server status → UI state):
- *   paid        → 'paid'       (terminal)
- *   failed      → 'failed'     (terminal)
- *   cancelled   → 'failed'     (terminal — treated as failed for UI purposes)
- *   expired     → 'expired'    (terminal)
- *   processing  → 'processing' (non-terminal, polls until terminal)
- *   pending     → 'awaiting'   (non-terminal, polls until terminal)
- *   <unknown>   → 'awaiting'   (safe fallback, keeps polling)
+ *   paid                              → 'paid'       (terminal)
+ *   failed | declined | error |       → 'failed'     (terminal — treated as failed for UI
+ *     canceled | cancelled                            purposes; canceled/cancelled = both spellings)
+ *   expired                           → 'expired'    (terminal)
+ *   processing                        → 'processing' (non-terminal, polls until terminal)
+ *   pending | abandoned |             → 'awaiting'   (non-terminal, still resumable, keeps polling)
+ *     no_payment_attempt |
+ *     missing_transaction_reference |
+ *     <unknown>
  *
  * Terminal states stop polling. A future expires_at ticks secondsLeft down each second;
  * reaching 0 while in a non-terminal state flips to 'expired' and stops everything.
@@ -31,6 +33,9 @@ function mapStatus(serverStatus: string): OrderStatusState {
     case 'paid':
       return 'paid'
     case 'failed':
+    case 'declined':
+    case 'error':
+    case 'canceled':
     case 'cancelled':
       return 'failed'
     case 'expired':

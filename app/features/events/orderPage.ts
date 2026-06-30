@@ -3,8 +3,7 @@
  * unit-testable without mounting the page.
  */
 
-import type { CheckoutDraft } from './composables/useCheckoutPersistence'
-import type { CartTicket, PublicOrder } from './types'
+import type { PublicOrder } from './types'
 
 /**
  * Formats a seconds countdown as mm:ss.
@@ -18,39 +17,40 @@ export function formatCountdown(seconds: number | null): string {
 }
 
 /**
- * Build a CheckoutDraft from an existing order so the buyer can restart checkout
- * with the same ticket selection pre-loaded.
+ * Choose the status to seed `useOrderStatus` with on the order page.
+ *
+ * Returning from a successful gateway redirect, the order is still `pending` on the server
+ * until the first poll confirms. Seeding the UI from that raw `pending` would flash the
+ * "reserved / Resume payment" state with a live countdown — inviting a double payment. So
+ * when the return URL carries `?status=success` and the order isn't already `paid`, seed
+ * `processing` ("Confirming your payment…") until the first poll resolves.
+ *
+ * The normal (no `?status`) path is untouched: it returns the order's own payment_status.
+ */
+export function seedStatus(paymentStatus: string, returnStatus: string | undefined): string {
+  if (returnStatus === 'success' && paymentStatus !== 'paid') return 'processing'
+  return paymentStatus
+}
+
+/**
+ * Build a `?tickets=` query string from an existing order's ticket lines so the buyer can
+ * restart checkout with the same ticket selection pre-filled.
+ *
+ * The URL `?tickets=` selection is the authoritative cart channel (the checkout page parses
+ * it via `parseSelection` into `id:qty,id:qty` pairs and seeds the cart — including the
+ * per-instance `min_participants`). Returning the order to checkout through this channel,
+ * rather than a persisted draft, is what makes the rebuild land on a populated cart.
  *
  * Returns null when:
  * - `order.event_slug` is null (no event context → no checkout URL to navigate to)
  * - the order has no ticket lines (nothing to re-seed)
- *
- * Fidelity limitation: participant fields are seeded as empty (`participants: []`)
- * because the order resource does not carry the event's ticket config (min_participants,
- * participant_fields). The checkout page will re-validate and prompt for details.
  */
-export function buildRebuildDraft(order: PublicOrder): CheckoutDraft | null {
+export function buildTicketsQuery(order: PublicOrder): string | null {
   if (order.event_slug === null) return null
 
   const ticketLines = order.items.filter((item) => item.ticket_id !== null)
   if (ticketLines.length === 0) return null
 
-  const tickets: CartTicket[] = []
-  for (const line of ticketLines) {
-    // ticket_id is non-null here (filtered above), but TypeScript needs the assertion.
-    const ticketId = line.ticket_id as number
-    for (let i = 0; i < line.quantity; i++) {
-      tickets.push({
-        uid: crypto.randomUUID(),
-        ticket_id: ticketId,
-        participants: [],
-      })
-    }
-  }
-
-  return {
-    tickets,
-    checkoutAnswers: {},
-    email: '',
-  }
+  // Format must match `parseSelection` in cart.ts: comma-joined `${ticket_id}:${quantity}`.
+  return ticketLines.map((line) => `${line.ticket_id}:${line.quantity}`).join(',')
 }

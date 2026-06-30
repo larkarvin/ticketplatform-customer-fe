@@ -54,6 +54,17 @@ describe('useOrderStatus', () => {
     expect(c.value).toBe('failed')
   })
 
+  it('maps declined + error + canceled (American single-l) → failed', () => {
+    const { state: d } = useOrderStatus('ORD-004a', { status: 'declined', expires_at: null })
+    expect(d.value).toBe('failed')
+
+    const { state: e } = useOrderStatus('ORD-004b', { status: 'error', expires_at: null })
+    expect(e.value).toBe('failed')
+
+    const { state: c } = useOrderStatus('ORD-004c', { status: 'canceled', expires_at: null })
+    expect(c.value).toBe('failed')
+  })
+
   it('maps expired → expired immediately', () => {
     const { state } = useOrderStatus('ORD-006', { status: 'expired', expires_at: null })
     expect(state.value).toBe('expired')

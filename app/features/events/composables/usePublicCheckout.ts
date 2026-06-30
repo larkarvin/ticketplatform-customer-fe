@@ -2,10 +2,11 @@
 // and the server-side price preview via useCheckoutTotals.
 // placeAndPay orchestrates registration + payment initiation.
 import { isValidationError } from '#core/errors'
-import { reactive, ref, type Ref } from 'vue'
+import { reactive, ref, watch, type Ref } from 'vue'
 import { validateCheckout } from '~/features/events/checkoutValidation'
 import { ordersService } from '~/features/events/services/orders.service'
 import type { CartTicket, PublicEvent, RegisterPayload } from '~/features/events/types'
+import { useCheckoutPersistence } from './useCheckoutPersistence'
 import { useCheckoutTotals } from './useCheckoutTotals'
 
 export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
@@ -14,6 +15,21 @@ export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
   const fieldErrors = ref<Record<string, string>>({})
   const submitting = ref(false)
   const submitError = ref<string | null>(null)
+  // Caches the order number once registerOrder succeeds, so a retry after a post-register
+  // failure (e.g. initiatePayment throws) reuses the same order instead of placing a
+  // duplicate reservation. Cleared when the cart selection changes (editing the cart must
+  // force a fresh order).
+  const placedOrderNumber = ref<string | null>(null)
+
+  // Reset the cached order whenever the cart selection changes — a different cart is a
+  // different order. Deep watch so quantity/instance edits are caught.
+  watch(
+    cart,
+    () => {
+      placedOrderNumber.value = null
+    },
+    { deep: true }
+  )
 
   function buildCalcPayload(): Pick<RegisterPayload, 'tickets' | 'checkout'> {
     return {
@@ -51,13 +67,20 @@ export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
     submitting.value = true
     submitError.value = null
     try {
-      const { order_number } = await ordersService.registerOrder(event.slug, buildRegisterPayload())
-      const redirectUrl = `${window.location.origin}/orders/${order_number}`
-      const { redirect_url } = await ordersService.initiatePayment(order_number, redirectUrl)
+      // Reuse the already-placed order on retry; only register when none exists yet.
+      if (placedOrderNumber.value === null) {
+        const { order_number } = await ordersService.registerOrder(event.slug, buildRegisterPayload())
+        placedOrderNumber.value = order_number
+      }
+      const orderNumber = placedOrderNumber.value
+      const redirectUrl = `${window.location.origin}/orders/${orderNumber}`
+      const { redirect_url } = await ordersService.initiatePayment(orderNumber, redirectUrl)
+      // Success — clear the persisted draft so a stale draft can't resurface on a later visit.
+      useCheckoutPersistence(event.slug).clear()
       if (redirect_url) {
         window.location.assign(redirect_url)
       } else {
-        await navigateTo(`/orders/${order_number}`)
+        await navigateTo(`/orders/${orderNumber}`)
       }
     } catch (e) {
       submitting.value = false
