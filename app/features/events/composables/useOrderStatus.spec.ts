@@ -148,4 +148,54 @@ describe('useOrderStatus', () => {
     await vi.advanceTimersByTimeAsync(POLL_MS * 5)
     expect(mockPaymentStatus).not.toHaveBeenCalled()
   })
+
+  it('late in-flight poll does not clobber expired state (race guard)', async () => {
+    // Hold the poll response until we manually resolve it to simulate a slow network call.
+    let resolveDeferred!: (value: { success: boolean; status: string }) => void
+    const deferred = new Promise<{ success: boolean; status: string }>((res) => {
+      resolveDeferred = res
+    })
+    mockPaymentStatus.mockReturnValue(deferred)
+
+    // expires 5s out — enough headroom to trigger a poll (t=2s) before the countdown (t=5s).
+    const { state } = useOrderStatus('ORD-013', {
+      status: 'pending',
+      expires_at: expiresAt(5),
+    })
+
+    expect(state.value).toBe('awaiting')
+
+    // Advance past the first poll interval (t=2s) so doPoll() is in-flight.
+    // Countdown has only ticked twice (secondsLeft ~3); state still 'awaiting'.
+    await vi.advanceTimersByTimeAsync(POLL_MS + 100)
+    expect(state.value).toBe('awaiting') // poll hasn't resolved yet
+
+    // Advance the remaining ~3 s so the countdown reaches 0 → state flips to 'expired'.
+    await vi.advanceTimersByTimeAsync(4 * TICK_MS)
+    expect(state.value).toBe('expired')
+
+    // NOW let the stale in-flight poll resolve with 'pending' (would map to 'awaiting').
+    resolveDeferred({ success: true, status: 'pending' })
+    await Promise.resolve() // flush the microtask queue
+
+    // The terminal guard must discard the late response — state stays 'expired'.
+    expect(state.value).toBe('expired')
+  })
+
+  it('refresh() after terminal state does not change state', async () => {
+    mockPaymentStatus.mockResolvedValue({ success: true, status: 'pending' })
+
+    const { state, refresh } = useOrderStatus('ORD-014', {
+      status: 'paid',
+      expires_at: null,
+    })
+
+    expect(state.value).toBe('paid')
+
+    // refresh() calls doPoll() but the terminal guard should discard the response
+    await refresh()
+
+    expect(state.value).toBe('paid')
+    expect(mockPaymentStatus).toHaveBeenCalledTimes(1)
+  })
 })
