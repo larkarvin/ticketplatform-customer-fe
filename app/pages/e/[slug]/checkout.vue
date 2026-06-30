@@ -4,7 +4,13 @@ import { useConfirm } from '#core/composables/useConfirm'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
 import { hasData, parseSelection, selectionKey } from '~/features/events/cart'
-import { EDIT_ADDONS, EDIT_ATTENDEES, EDIT_TICKETS, buildReviewGroups } from '~/features/events/checkoutReview'
+import {
+  EDIT_ADDONS,
+  EDIT_ATTENDEES,
+  EDIT_TICKETS,
+  buildReviewGroups,
+  firstOrderEmail,
+} from '~/features/events/checkoutReview'
 import CheckoutAddOns from '~/features/events/components/checkout/CheckoutAddOns.vue'
 import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAttendees.vue'
 import CheckoutPayBar from '~/features/events/components/checkout/CheckoutPayBar.vue'
@@ -48,6 +54,9 @@ function goToReview(): void {
     scrollToFirstError()
     return
   }
+  // Pre-fill the receipt email from the first email already entered in the order (typically the buyer's
+  // on Participant 1). Only when still blank, so a typed-in or restored value is never overwritten.
+  if (c.buyer.email === '') c.buyer.email = firstOrderEmail(event, cartStore.cart.value, c.checkoutAnswers)
   // Merge our marker into Vue Router's existing history.state rather than replacing it, so the
   // router's own nav metadata (position index, scroll restoration) survives the back/forward round-trip.
   if (typeof window !== 'undefined')
