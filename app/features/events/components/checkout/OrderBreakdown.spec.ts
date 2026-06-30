@@ -38,4 +38,37 @@ describe('OrderBreakdown', () => {
     await w.get('[data-test="edit-order"]').trigger('click')
     expect(w.emitted('edit')).toHaveLength(1)
   })
+
+  it('renders a Platform fee row with the formatted amount when the server includes it', () => {
+    const calcWithPlatformFee: OrderCalculation = {
+      currency: 'PHP',
+      items: [{ kind: 'ticket', label: 'GA', quantity: 1, unit_price: 100, amount: 100 }],
+      subtotal: 100,
+      fees: [{ label: 'Platform fee', amount: 5 }],
+      fees_total: 5,
+      taxes: [],
+      taxes_total: 0,
+      total: 105,
+    }
+    const w = mount(OrderBreakdown, { props: { calculation: calcWithPlatformFee, status: 'idle' } })
+    expect(w.text()).toContain('Platform fee')
+    expect(w.text()).toContain('PHP 5.00')
+  })
+
+  it('renders no fee rows when fees is empty', () => {
+    const calcNoFees: OrderCalculation = {
+      currency: 'PHP',
+      items: [{ kind: 'ticket', label: 'GA', quantity: 1, unit_price: 100, amount: 100 }],
+      subtotal: 100,
+      fees: [],
+      fees_total: 0,
+      taxes: [],
+      taxes_total: 0,
+      total: 100,
+    }
+    const w = mount(OrderBreakdown, { props: { calculation: calcNoFees, status: 'idle' } })
+    // No fee label text present beyond items
+    expect(w.text()).not.toContain('fee')
+    expect(w.text()).toContain('PHP 100.00')
+  })
 })
