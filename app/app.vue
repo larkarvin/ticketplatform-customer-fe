@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConfirmModal from '#core/components/ui/ConfirmModal.vue'
 import { Toaster } from 'vue-sonner'
 
 const { branding } = useTenant()
@@ -17,4 +18,5 @@ useHead(() => ({
     <NuxtPage />
   </NuxtLayout>
   <Toaster position="top-center" :rich-colors="true" />
+  <ConfirmModal />
 </template>

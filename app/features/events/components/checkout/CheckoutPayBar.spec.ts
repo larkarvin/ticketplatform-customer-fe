@@ -20,30 +20,30 @@ function makeCalc(overrides: Partial<OrderCalculation> = {}): OrderCalculation {
 describe('CheckoutPayBar', () => {
   it('renders the total amount when idle', () => {
     const calc = makeCalc({ total: 250 })
-    const w = mount(CheckoutPayBar, { props: { calculation: calc, status: 'idle' } })
+    const w = mount(CheckoutPayBar, { props: { calculation: calc, status: 'idle', mode: 'review' } })
     expect(w.text()).toContain('PHP 250.00')
   })
 
   it('shows a dash when calculation is null and status is idle', () => {
-    const w = mount(CheckoutPayBar, { props: { calculation: null, status: 'idle' } })
+    const w = mount(CheckoutPayBar, { props: { calculation: null, status: 'idle', mode: 'review' } })
     expect(w.text()).toContain('—')
   })
 
   it('shows "Payment coming soon" button that is always disabled', () => {
-    const w = mount(CheckoutPayBar, { props: { calculation: makeCalc(), status: 'idle' } })
-    const btn = w.get('button[type=button]:not([data-retry])')
+    const w = mount(CheckoutPayBar, { props: { calculation: makeCalc(), status: 'idle', mode: 'review' } })
+    const btn = w.get('button[type=button][disabled]')
     expect(btn.text()).toContain('Payment coming soon')
     expect(btn.attributes('disabled')).toBeDefined()
   })
 
   it('shows "Updating…" when status is updating', () => {
-    const w = mount(CheckoutPayBar, { props: { calculation: null, status: 'updating' } })
+    const w = mount(CheckoutPayBar, { props: { calculation: null, status: 'updating', mode: 'review' } })
     expect(w.text()).toContain('Updating…')
     expect(w.text()).not.toContain('—')
   })
 
   it('shows error message and emits retry on click', async () => {
-    const w = mount(CheckoutPayBar, { props: { calculation: makeCalc(), status: 'error' } })
+    const w = mount(CheckoutPayBar, { props: { calculation: makeCalc(), status: 'error', mode: 'review' } })
     expect(w.text()).toContain("Couldn't update total")
     const retryBtn = w.get('[data-retry]')
     await retryBtn.trigger('click')
@@ -51,8 +51,31 @@ describe('CheckoutPayBar', () => {
   })
 
   it('hides error message when status is idle', () => {
-    const w = mount(CheckoutPayBar, { props: { calculation: makeCalc(), status: 'idle' } })
+    const w = mount(CheckoutPayBar, { props: { calculation: makeCalc(), status: 'idle', mode: 'review' } })
     expect(w.text()).not.toContain("Couldn't update total")
     expect(w.find('[data-retry]').exists()).toBe(false)
+  })
+})
+
+describe('CheckoutPayBar mode', () => {
+  const calc = { currency: 'PHP', items: [], subtotal: 0, fees: [], fees_total: 0, taxes: [], taxes_total: 0, total: 0 }
+
+  it('emits continue from the entry CTA', async () => {
+    const w = mount(CheckoutPayBar, { props: { calculation: calc, status: 'idle', mode: 'entry' } })
+    await w.get('[data-test="continue"]').trigger('click')
+    expect(w.emitted('continue')).toHaveLength(1)
+  })
+
+  it('disables the entry Continue button when continueDisabled', () => {
+    const w = mount(CheckoutPayBar, {
+      props: { calculation: calc, status: 'idle', mode: 'entry', continueDisabled: true },
+    })
+    expect(w.get('[data-test="continue"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('emits back from the review bar', async () => {
+    const w = mount(CheckoutPayBar, { props: { calculation: calc, status: 'idle', mode: 'review' } })
+    await w.get('[data-test="back"]').trigger('click')
+    expect(w.emitted('back')).toHaveLength(1)
   })
 })
