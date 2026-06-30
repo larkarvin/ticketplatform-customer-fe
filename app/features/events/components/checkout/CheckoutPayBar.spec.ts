@@ -29,11 +29,33 @@ describe('CheckoutPayBar', () => {
     expect(w.text()).toContain('—')
   })
 
-  it('shows "Payment coming soon" button that is always disabled', () => {
+  it('review mode with a calculation renders Pay <total> button', () => {
+    const w = mount(CheckoutPayBar, {
+      props: { calculation: makeCalc({ total: 100 }), status: 'idle', mode: 'review' },
+    })
+    const btn = w.get('[data-test="pay"]')
+    expect(btn.text()).toContain('Pay PHP 100.00')
+    expect(btn.attributes('disabled')).toBeUndefined()
+  })
+
+  it('clicking the Pay button emits pay', async () => {
     const w = mount(CheckoutPayBar, { props: { calculation: makeCalc(), status: 'idle', mode: 'review' } })
-    const btn = w.get('button[type=button][disabled]')
-    expect(btn.text()).toContain('Payment coming soon')
+    await w.get('[data-test="pay"]').trigger('click')
+    expect(w.emitted('pay')).toHaveLength(1)
+  })
+
+  it('submitting=true disables the Pay button and shows loading label', () => {
+    const w = mount(CheckoutPayBar, {
+      props: { calculation: makeCalc(), status: 'idle', mode: 'review', submitting: true },
+    })
+    const btn = w.get('[data-test="pay"]')
     expect(btn.attributes('disabled')).toBeDefined()
+    expect(btn.text()).toContain('Taking you to secure payment…')
+  })
+
+  it('status===updating disables the Pay button', () => {
+    const w = mount(CheckoutPayBar, { props: { calculation: makeCalc(), status: 'updating', mode: 'review' } })
+    expect(w.get('[data-test="pay"]').attributes('disabled')).toBeDefined()
   })
 
   it('shows "Updating…" when status is updating', () => {
