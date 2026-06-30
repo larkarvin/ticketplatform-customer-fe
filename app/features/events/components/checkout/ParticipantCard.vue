@@ -3,7 +3,7 @@ import FieldCell from '#core/field-engine/components/FieldCell.vue'
 import type { Field } from '#core/field-engine/types'
 import { Check, ChevronDown, Copy, Trash2 } from '#icons'
 import { computed, nextTick, ref, watch } from 'vue'
-import { participantFieldErrors, participantMissingCount } from '../../checkoutValidation'
+import { participantFieldErrors } from '../../checkoutValidation'
 import type { CartParticipant } from '../../types'
 
 const props = defineProps<{
@@ -25,15 +25,16 @@ const identityInput = ref<HTMLElement>()
 // so a long group form isn't a wall of fields. Auto-open if this person has submit errors.
 const open = ref(props.index === 0)
 
-// Live completion, computed from the shared validator so the pill agrees with the Continue gate
-// exactly (a non-empty but invalid value counts as incomplete, never "done").
-const missingCount = computed(() => participantMissingCount(props.fields, props.participant))
+// Live completion + per-field errors from the shared validator, so the pill agrees with the Continue
+// gate exactly (a non-empty but invalid value counts as incomplete, never "done"). missingCount derives
+// from liveErrors rather than re-validating, so each keystroke validates the participant once, not twice.
+const liveErrors = computed(() => participantFieldErrors(props.fields, props.participant))
+const missingCount = computed(() => Object.keys(liveErrors.value).length)
 const complete = computed(() => missingCount.value === 0 && props.fields.length > 0)
 
 // On-leave inline validation: a field's error shows once the buyer has finished that person (focus left
 // the card) or after a submit attempt — never mid-typing. Submit errors (from the parent) always show.
 const revealed = ref(false)
-const liveErrors = computed(() => participantFieldErrors(props.fields, props.participant))
 function errorFor(f: Field): string | undefined {
   const submitError = props.errors[`${props.errorPrefix}.${f.field_key}`]
   if (submitError) return submitError
