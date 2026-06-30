@@ -71,7 +71,7 @@ describe('ParticipantGroup', () => {
     expect(w.get('[data-test=body]').attributes('style') ?? '').toContain('display: none')
   })
 
-  it('badge shows M/N count and turns success when M === N', () => {
+  it('badge reads as plain-language readiness and turns success when everyone is valid', () => {
     const w1 = mount(ParticipantGroup, {
       props: {
         ...base(),
@@ -80,7 +80,7 @@ describe('ParticipantGroup', () => {
       },
     })
     const badge1 = w1.get('[data-test=badge]')
-    expect(badge1.text()).toBe('0/1')
+    expect(badge1.text()).toBe('Needs details')
     expect(badge1.classes()).not.toContain('bg-success-100')
 
     const w2 = mount(ParticipantGroup, {
@@ -91,9 +91,16 @@ describe('ParticipantGroup', () => {
       },
     })
     const badge2 = w2.get('[data-test=badge]')
-    expect(badge2.text()).toBe('1/1')
+    expect(badge2.text()).toBe('Ready')
     expect(badge2.classes()).toContain('bg-success-100')
     expect(badge2.classes()).toContain('text-success-700')
+  })
+
+  it('multi-person badge counts how many are ready', () => {
+    const t = ticket({ participant_type: 'group', min_participants: 1, max_participants: 3 })
+    const inst = { uid: '9-1', ticket_id: 9, participants: [{ field_data: { name: 'Alice' } }, { field_data: {} }] }
+    const w = mount(ParticipantGroup, { props: { ...base(), ticket: t, instance: inst, defaultOpen: true } })
+    expect(w.get('[data-test=badge]').text()).toBe('1 of 2 ready')
   })
 
   it('shows Add Participant button for group ticket under max; emits add-participant with uid', async () => {
@@ -127,7 +134,7 @@ describe('ParticipantGroup', () => {
     expect(w.emitted('remove-participant')?.[0]).toEqual(['9-1', 0])
   })
 
-  it('copy copies all fields per-key except email-type and email-keyed fields', async () => {
+  it('copy copies every field, including email', async () => {
     const t = ticket({
       participant_type: 'group',
       min_participants: 1,
@@ -178,10 +185,10 @@ describe('ParticipantGroup', () => {
     expect(copyButtons.length).toBeGreaterThan(0)
     await copyButtons[0]!.trigger('click')
     expect(participants[1]!.field_data['name']).toBe('Alice')
-    expect(participants[1]!.field_data['email']).toBeUndefined()
+    expect(participants[1]!.field_data['email']).toBe('alice@example.com')
   })
 
-  it('copy excludes a non-email-keyed field whose type is email', async () => {
+  it('copy includes a non-email-keyed field whose type is email', async () => {
     const t = ticket({
       participant_type: 'group',
       min_participants: 1,
@@ -232,7 +239,7 @@ describe('ParticipantGroup', () => {
     expect(copyButtons.length).toBeGreaterThan(0)
     await copyButtons[0]!.trigger('click')
     expect(participants[1]!.field_data['name']).toBe('Bob')
-    expect(participants[1]!.field_data['contact_email']).toBeUndefined()
+    expect(participants[1]!.field_data['contact_email']).toBe('bob@example.com')
   })
 
   it('collect_details_later renders collapsed summary with no participant cards', () => {

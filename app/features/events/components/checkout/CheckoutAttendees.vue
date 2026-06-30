@@ -42,13 +42,29 @@ const qualifyingEntries = computed(() =>
 
 const hasAnyFields = computed(() => qualifyingEntries.value.length > 0)
 
-// The uid prefix of the first errored instance — ParticipantGroup watches this to auto-expand.
-const forceExpandUid = computed(() => Object.keys(props.errors)[0]?.split('.')[0] ?? null)
+// Every instance uid that has a submit error — each ParticipantGroup watches this to auto-expand, so
+// fixing one group then pressing Continue no longer hides errors still pending in another group.
+const forceExpandUids = computed(() => [...new Set(Object.keys(props.errors).map((k) => k.split('.')[0]!))])
+
+// How many distinct people (uid.index) still have unmet required fields — drives the summary banner.
+const peopleWithErrors = computed(
+  () => new Set(Object.keys(props.errors).map((k) => k.split('.').slice(0, 2).join('.'))).size
+)
 </script>
 
 <template>
   <section v-if="hasAnyFields" class="space-y-6">
     <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Who's attending</h2>
+    <p
+      v-if="peopleWithErrors > 0"
+      role="alert"
+      aria-live="polite"
+      class="rounded-lg bg-danger-50 px-4 py-3 text-sm font-medium text-danger-700 dark:bg-danger-950 dark:text-danger-300"
+    >
+      Please finish the required details for
+      {{ peopleWithErrors === 1 ? '1 person' : `${peopleWithErrors} people` }}
+      below.
+    </p>
     <ParticipantGroup
       v-for="(entry, i) in qualifyingEntries"
       :key="entry.inst.uid"
@@ -58,7 +74,7 @@ const forceExpandUid = computed(() => Object.keys(props.errors)[0]?.split('.')[0
       :identity-key="identityKeyFor(entry.inst.ticket_id)"
       :errors="errors"
       :default-open="i === 0"
-      :force-expand-uid="forceExpandUid"
+      :force-expand-uids="forceExpandUids"
       @remove="emit('remove', $event)"
       @add-participant="emit('add-participant', $event)"
       @remove-participant="(uid, index) => emit('remove-participant', uid, index)"

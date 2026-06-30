@@ -221,4 +221,30 @@ describe('CheckoutAttendees', () => {
     await removeButtons[0]!.trigger('click')
     expect(w.emitted('remove-participant')?.[0]).toEqual(['9-1', 0])
   })
+
+  // ── Error summary banner ───────────────────────────────────────────────────
+
+  it('shows no summary banner when there are no errors', () => {
+    const w = mount(CheckoutAttendees, {
+      props: { event, cart: makeCart(['9-1']), identityKeyFor, errors: {} },
+    })
+    expect(w.find('[role=alert]').exists()).toBe(false)
+  })
+
+  it('summarises how many people still need details (singular vs plural)', () => {
+    const one = mount(CheckoutAttendees, {
+      props: { event, cart: makeCart(['9-1']), identityKeyFor, errors: { '9-1.0.full_name': 'x' } },
+    })
+    expect(one.get('[role=alert]').text()).toContain('1 person')
+
+    const many = mount(CheckoutAttendees, {
+      props: {
+        event,
+        cart: makeCart(['9-1', '9-2']),
+        identityKeyFor,
+        errors: { '9-1.0.full_name': 'x', '9-2.0.full_name': 'x' },
+      },
+    })
+    expect(many.get('[role=alert]').text()).toContain('2 people')
+  })
 })
