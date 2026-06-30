@@ -56,6 +56,23 @@ describe('CheckoutReview', () => {
     expect(alert.text()).toContain('Please enter your email so we can send your receipt.')
   })
 
+  it('keeps the email input open after blur when emailError is set and email is non-empty', async () => {
+    const buyer = reactive({ email: 'bad-email' })
+    const w = mount(CheckoutReview, {
+      props: {
+        groups,
+        calculation: calc,
+        status: 'idle',
+        buyer,
+        emailError: 'Please enter a valid email address.',
+      },
+    })
+    // Blur the input — without the fix this would collapse it to confirmed-text
+    await w.get('input[type="email"]').trigger('blur')
+    expect(w.find('input[type="email"]').exists()).toBe(true)
+    expect(w.find('[data-test="change-email"]').exists()).toBe(false)
+  })
+
   it('sets aria-invalid on the input when emailError is set', () => {
     const buyer = reactive({ email: '' })
     const w = mount(CheckoutReview, {

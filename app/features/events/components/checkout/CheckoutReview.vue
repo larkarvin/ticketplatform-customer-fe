@@ -84,7 +84,7 @@ function setEmail(value: string): void {
           :aria-invalid="emailError ? 'true' : 'false'"
           :class="[controlClass, borderClass(!!emailError), 'pl-14']"
           @input="setEmail(($event.target as HTMLInputElement).value)"
-          @blur="editingEmail = buyer.email === ''"
+          @blur="editingEmail = buyer.email === '' || !!emailError"
         />
         <span
           class="pointer-events-none absolute inset-y-0 left-0 flex items-center border-r border-gray-300 px-4 text-gray-500 dark:border-gray-700 dark:text-gray-400"
@@ -92,7 +92,7 @@ function setEmail(value: string): void {
           <Mail :size="20" />
         </span>
       </div>
-      <p v-if="emailError" role="alert" aria-live="polite" class="mt-1 text-sm text-danger-600 dark:text-danger-400">
+      <p v-if="emailError" role="alert" class="mt-1 text-sm text-danger-600 dark:text-danger-400">
         {{ emailError }}
       </p>
     </section>
