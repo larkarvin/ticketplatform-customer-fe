@@ -1,8 +1,13 @@
 // app/features/events/checkoutValidation.spec.ts
 import type { Field } from '#core/field-engine/types'
 import { describe, expect, it } from 'vitest'
-import { validateCheckout } from './checkoutValidation'
-import type { CartTicket, PublicEvent } from './types'
+import {
+  isParticipantComplete,
+  participantFieldErrors,
+  participantMissingCount,
+  validateCheckout,
+} from './checkoutValidation'
+import type { CartParticipant, CartTicket, PublicEvent } from './types'
 
 const nameField: Field = {
   id: 1,
@@ -98,5 +103,29 @@ describe('validateCheckout', () => {
     const addon: Field = { ...nameField, id: 2, field_key: 'shirt', label: 'Shirt size' }
     const ev = event({ form_fields: [addon] })
     expect(validateCheckout(ev, cart({ full_name: 'Juan' }))).toEqual({})
+  })
+})
+
+const emailField: Field = { ...nameField, id: 2, field_key: 'email', type: 'email', label: 'Email' }
+const person = (fd: Record<string, unknown>): CartParticipant => ({ field_data: fd })
+
+describe('per-participant completion helpers', () => {
+  it('participantFieldErrors keys by field_key and flags required-empty', () => {
+    expect(participantFieldErrors([nameField], person({}))).toHaveProperty('full_name')
+    expect(participantFieldErrors([nameField], person({ full_name: 'Juan' }))).toEqual({})
+  })
+
+  it('treats a malformed value as incomplete — completion means VALID, not just non-empty', () => {
+    // The badge bug this fixes: a non-empty but invalid email must NOT count as complete.
+    const fields = [emailField]
+    expect(isParticipantComplete(fields, person({ email: 'bob@' }))).toBe(false)
+    expect(participantMissingCount(fields, person({ email: 'bob@' }))).toBe(1)
+    expect(isParticipantComplete(fields, person({ email: 'bob@example.com' }))).toBe(true)
+    expect(participantMissingCount(fields, person({ email: 'bob@example.com' }))).toBe(0)
+  })
+
+  it('participantMissingCount counts every unmet field', () => {
+    expect(participantMissingCount([nameField, emailField], person({}))).toBe(2)
+    expect(participantMissingCount([nameField, emailField], person({ full_name: 'Juan' }))).toBe(1)
   })
 })

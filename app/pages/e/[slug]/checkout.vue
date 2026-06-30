@@ -3,8 +3,15 @@
 import { useConfirm } from '#core/composables/useConfirm'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
+import { hasAnswer } from '~/features/events/answers'
 import { hasData, parseSelection, selectionKey } from '~/features/events/cart'
-import { EDIT_ADDONS, EDIT_ATTENDEES, EDIT_TICKETS, buildReviewGroups } from '~/features/events/checkoutReview'
+import {
+  EDIT_ADDONS,
+  EDIT_ATTENDEES,
+  EDIT_TICKETS,
+  buildReviewGroups,
+  firstOrderEmail,
+} from '~/features/events/checkoutReview'
 import CheckoutAddOns from '~/features/events/components/checkout/CheckoutAddOns.vue'
 import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAttendees.vue'
 import CheckoutPayBar from '~/features/events/components/checkout/CheckoutPayBar.vue'
@@ -30,11 +37,7 @@ const reviewGroups = computed(() => buildReviewGroups(event, cartStore.cart.valu
 
 // An order is checkout-able with a ticket OR just an optional extra (e.g. a donation / merch), so the
 // buyer can check out with extras alone.
-const hasExtras = computed(() =>
-  Object.values(c.checkoutAnswers).some((v) =>
-    Array.isArray(v) ? v.length > 0 : v !== null && v !== undefined && v !== ''
-  )
-)
+const hasExtras = computed(() => Object.values(c.checkoutAnswers).some(hasAnswer))
 const hasContent = computed(() => cartStore.cart.value.length > 0 || hasExtras.value)
 
 // Step swap modelled as a single pushed history state so phone/browser back returns to entry
@@ -48,6 +51,9 @@ function goToReview(): void {
     scrollToFirstError()
     return
   }
+  // Pre-fill the receipt email from the first email already entered in the order (typically the buyer's
+  // on Participant 1). Only when still blank, so a typed-in or restored value is never overwritten.
+  if (c.buyer.email === '') c.buyer.email = firstOrderEmail(event, cartStore.cart.value, c.checkoutAnswers)
   // Merge our marker into Vue Router's existing history.state rather than replacing it, so the
   // router's own nav metadata (position index, scroll restoration) survives the back/forward round-trip.
   if (typeof window !== 'undefined')

@@ -1,7 +1,7 @@
 // app/features/events/checkoutReview.spec.ts
 import type { Field } from '#core/field-engine/types'
 import { describe, expect, it } from 'vitest'
-import { EDIT_ADDONS, EDIT_ATTENDEES, buildReviewGroups } from './checkoutReview'
+import { EDIT_ADDONS, EDIT_ATTENDEES, buildReviewGroups, firstOrderEmail } from './checkoutReview'
 import type { CartTicket, PublicEvent } from './types'
 
 const nameField: Field = {
@@ -131,5 +131,35 @@ describe('buildReviewGroups', () => {
     })
     const addons = groups.find((g) => g.editTarget === EDIT_ADDONS)
     expect(addons?.items[0]?.value).toBe('2 × Shirt (Large)')
+  })
+})
+
+const emailField: Field = { ...nameField, id: 7, field_key: 'email', type: 'email', label: 'Email', required: false }
+
+describe('firstOrderEmail', () => {
+  const ticketWithEmail = { ...ticket, participant_fields: [nameField, emailField] }
+
+  it('returns the first participant email entered, in reading order', () => {
+    const ev = event({ tickets: [ticketWithEmail] })
+    const c: CartTicket[] = [
+      {
+        uid: 'u1',
+        ticket_id: 9,
+        participants: [{ field_data: {} }, { field_data: { email: 'parent@example.com' } }],
+      },
+    ]
+    expect(firstOrderEmail(ev, c, {})).toBe('parent@example.com')
+  })
+
+  it('falls back to an order-level email extra when no participant has one', () => {
+    const ev = event({ tickets: [ticketWithEmail], form_fields: [{ ...emailField, field_key: 'contact' }] })
+    const c: CartTicket[] = [{ uid: 'u1', ticket_id: 9, participants: [{ field_data: {} }] }]
+    expect(firstOrderEmail(ev, c, { contact: 'buyer@example.com' })).toBe('buyer@example.com')
+  })
+
+  it('returns empty string when no email has been entered anywhere', () => {
+    const ev = event({ tickets: [ticketWithEmail] })
+    const c: CartTicket[] = [{ uid: 'u1', ticket_id: 9, participants: [{ field_data: {} }] }]
+    expect(firstOrderEmail(ev, c, {})).toBe('')
   })
 })

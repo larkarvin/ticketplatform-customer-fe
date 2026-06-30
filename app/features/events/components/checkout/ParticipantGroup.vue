@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ChevronDown, Plus, Trash2 } from '#icons'
+import { Check, ChevronDown, Plus, Trash2 } from '#icons'
 import { computed, ref, watch } from 'vue'
+import { isParticipantComplete } from '../../checkoutValidation'
 import type { CartTicket, PublicTicket } from '../../types'
 import ParticipantCard from './ParticipantCard.vue'
 
@@ -11,7 +12,7 @@ const props = defineProps<{
   identityKey: string | null
   errors: Record<string, string>
   defaultOpen: boolean
-  forceExpandUid?: string | null
+  forceExpandUids?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -25,24 +26,30 @@ const cards = ref<Array<InstanceType<typeof ParticipantCard> | null>>([])
 const open = ref(props.ticket.collect_details_later ? false : props.defaultOpen)
 
 watch(
-  () => props.forceExpandUid,
-  (uid) => {
-    if (uid === props.instance.uid) open.value = true
+  () => props.forceExpandUids,
+  (uids) => {
+    if (uids?.includes(props.instance.uid)) open.value = true
   },
   { immediate: true }
 )
 
 const fields = computed(() => props.ticket.participant_fields ?? [])
 
-const requiredKeys = computed(() => fields.value.filter((f) => f.required).map((f) => f.field_key))
-
+// Completion via the shared validator so the badge agrees with the Continue gate (valid, not just filled).
 const completedCount = computed(
-  () =>
-    props.instance.participants.filter((p) => requiredKeys.value.every((k) => `${p.field_data[k] ?? ''}`.trim() !== ''))
-      .length
+  () => props.instance.participants.filter((p) => isParticipantComplete(fields.value, p)).length
 )
 
 const totalCount = computed(() => props.instance.participants.length)
+
+const allComplete = computed(() => totalCount.value > 0 && completedCount.value === totalCount.value)
+
+// Plain-language readiness for the group header — explicit ("1 of 2 ready") rather than a bare "1/2".
+const badgeText = computed(() => {
+  if (allComplete.value) return totalCount.value === 1 ? 'Ready' : 'All ready'
+  if (totalCount.value === 1) return 'Needs details'
+  return `${completedCount.value} of ${totalCount.value} ready`
+})
 
 function setGroupName(value: string): void {
   const inst = props.instance
@@ -55,8 +62,6 @@ function copyInto(i: number): void {
   const target = props.instance.participants[i]
   if (!target) return
   for (const k of Object.keys(src)) {
-    const field = fields.value.find((f) => f.field_key === k)
-    if (k === 'email' || field?.type === 'email') continue
     target.field_data[k] = src[k]
   }
   cards.value[i]?.focusIdentity()
@@ -84,14 +89,15 @@ function removeParticipant(i: number): void {
         </span>
         <span
           data-test="badge"
-          class="rounded-full px-2 py-0.5 text-xs font-medium ml-2"
+          class="ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
           :class="
-            completedCount === totalCount
+            allComplete
               ? 'bg-success-100 text-success-700'
               : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
           "
         >
-          {{ completedCount }}/{{ totalCount }}
+          <Check v-if="allComplete" :size="13" class="shrink-0" aria-hidden="true" />
+          {{ badgeText }}
         </span>
         <ChevronDown
           :size="18"

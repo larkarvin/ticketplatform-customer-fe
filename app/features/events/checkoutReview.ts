@@ -42,6 +42,33 @@ function formatAnswer(field: Field, value: unknown): string {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : ''
 }
 
+/** First email a participant (then an order-level extra) has already entered, used to pre-fill the
+ *  receipt email — a parent buying for the group has typically just typed it on Participant 1. Scans in
+ *  reading order (instances → participants → fields, then extras) and returns the first non-empty value. */
+export function firstOrderEmail(
+  event: PublicEvent,
+  cart: CartTicket[],
+  checkoutAnswers: Record<string, unknown>
+): string {
+  for (const inst of cart) {
+    const ticket = event.tickets.find((t) => t.id === inst.ticket_id)
+    if (!ticket) continue
+    const emailFields = (ticket.participant_fields ?? []).filter((f) => f.type === 'email')
+    for (const p of inst.participants) {
+      for (const f of emailFields) {
+        const v = p.field_data[f.field_key]
+        if (typeof v === 'string' && v.trim() !== '') return v.trim()
+      }
+    }
+  }
+  for (const f of event.form_fields ?? []) {
+    if (f.type !== 'email') continue
+    const v = checkoutAnswers[f.field_key]
+    if (typeof v === 'string' && v.trim() !== '') return v.trim()
+  }
+  return ''
+}
+
 export function buildReviewGroups(
   event: PublicEvent,
   cart: CartTicket[],
