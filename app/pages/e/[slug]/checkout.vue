@@ -5,7 +5,6 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
 import { hasData, parseSelection, selectionKey } from '~/features/events/cart'
 import { EDIT_ADDONS, EDIT_ATTENDEES, EDIT_TICKETS, buildReviewGroups } from '~/features/events/checkoutReview'
-import { identityKey } from '~/features/events/identityKey'
 import CheckoutAddOns from '~/features/events/components/checkout/CheckoutAddOns.vue'
 import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAttendees.vue'
 import CheckoutPayBar from '~/features/events/components/checkout/CheckoutPayBar.vue'
@@ -14,6 +13,7 @@ import CheckoutTickets from '~/features/events/components/checkout/CheckoutTicke
 import { useCart } from '~/features/events/composables/useCart'
 import { useCheckoutPersistence } from '~/features/events/composables/useCheckoutPersistence'
 import { usePublicCheckout } from '~/features/events/composables/usePublicCheckout'
+import { identityKey } from '~/features/events/identityKey'
 
 const route = useRoute()
 const router = useRouter()

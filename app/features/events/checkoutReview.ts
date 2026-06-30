@@ -5,10 +5,10 @@
 // so "Who's coming" is omitted entirely when nothing the buyer purchased asks for attendee details.
 // Empty groups are omitted.
 import type { Field } from '#core/field-engine/types'
-import type { ReviewGroup } from '~/core/types/review'
-import type { CartTicket, PublicEvent } from '~/features/events/types'
 import { variantLabel } from '~/core/product/variantLabel'
 import type { ProductFieldInfo, ProductSelection } from '~/core/types/product'
+import type { ReviewGroup } from '~/core/types/review'
+import type { CartTicket, PublicEvent } from '~/features/events/types'
 import { identityKey } from './identityKey'
 
 export const EDIT_ATTENDEES = 0
