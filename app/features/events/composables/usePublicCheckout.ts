@@ -46,6 +46,7 @@ export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
   }
 
   async function placeAndPay(): Promise<void> {
+    if (submitting.value) return
     if (!validate()) return
     submitting.value = true
     submitError.value = null

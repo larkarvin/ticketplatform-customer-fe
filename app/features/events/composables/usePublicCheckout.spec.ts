@@ -350,4 +350,36 @@ describe('usePublicCheckout.placeAndPay', () => {
     expect(c.submitError.value).toBeTruthy()
     expect(c.submitting.value).toBe(false)
   })
+
+  it('reentrancy guard: a second call while one is in-flight does not fire registerOrder again', async () => {
+    // Deferred promise — stays pending so the first placeAndPay never resolves during this test.
+    type OrderResult = {
+      order_number: string
+      requires_payment: boolean
+      payment_total: number
+      currency: string
+    }
+    let resolveOrder!: (v: OrderResult) => void
+    const pendingOrder = new Promise<OrderResult>((res) => {
+      resolveOrder = res
+    })
+    registerOrder.mockReturnValue(pendingOrder)
+
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(event(), cart)
+    c.buyer.email = 'buyer@example.com'
+
+    // First call — starts but does not await (stays in-flight).
+    const first = c.placeAndPay()
+
+    // Second call while first is in-flight — must be a no-op.
+    await c.placeAndPay()
+
+    // Resolve the pending order so the first call can complete cleanly.
+    resolveOrder({ order_number: 'ORD-999', requires_payment: false, payment_total: 0, currency: 'PHP' })
+    initiatePayment.mockResolvedValue({ redirect_url: undefined })
+    await first
+
+    expect(registerOrder).toHaveBeenCalledOnce()
+  })
 })
