@@ -5,6 +5,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
 import { hasData, parseSelection, selectionKey } from '~/features/events/cart'
 import { EDIT_ADDONS, EDIT_ATTENDEES, EDIT_TICKETS, buildReviewGroups } from '~/features/events/checkoutReview'
+import { identityKey } from '~/features/events/identityKey'
 import CheckoutAddOns from '~/features/events/components/checkout/CheckoutAddOns.vue'
 import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAttendees.vue'
 import CheckoutPayBar from '~/features/events/components/checkout/CheckoutPayBar.vue'
@@ -169,11 +170,10 @@ function onRemoveOne(ticketId: number): void {
   if (last) void requestRemove(last.uid)
 }
 
-// First required text-like field for the ticket, used as identity key in ParticipantGroup.
+// Resolves the ticket then delegates to the shared identityKey helper.
 function identityKeyFor(ticketId: number): string | null {
   const t = event.tickets.find((x) => x.id === ticketId)
-  const f = (t?.participant_fields ?? []).find((x) => x.required && ['text', 'name'].includes(x.type))
-  return f?.field_key ?? t?.participant_fields?.[0]?.field_key ?? null
+  return identityKey(t?.participant_fields ?? [])
 }
 
 // Start over = discard this whole checkout (saved progress, entered details, and the ticket

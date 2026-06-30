@@ -9,15 +9,11 @@ import type { ReviewGroup } from '~/core/types/review'
 import type { CartTicket, PublicEvent } from '~/features/events/types'
 import { variantLabel } from '~/core/product/variantLabel'
 import type { ProductFieldInfo, ProductSelection } from '~/core/types/product'
+import { identityKey } from './identityKey'
 
 export const EDIT_ATTENDEES = 0
 export const EDIT_ADDONS = 1
 export const EDIT_TICKETS = 2
-
-function identityKey(fields: Field[]): string | null {
-  const f = fields.find((x) => x.required && ['text', 'name'].includes(x.type))
-  return f?.field_key ?? fields[0]?.field_key ?? null
-}
 
 function formatAnswer(field: Field, value: unknown): string {
   if (value === null || value === undefined || value === '') return ''
