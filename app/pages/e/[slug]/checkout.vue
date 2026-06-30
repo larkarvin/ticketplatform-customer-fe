@@ -3,6 +3,7 @@
 import { useConfirm } from '#core/composables/useConfirm'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
+import { hasAnswer } from '~/features/events/answers'
 import { hasData, parseSelection, selectionKey } from '~/features/events/cart'
 import {
   EDIT_ADDONS,
@@ -36,11 +37,7 @@ const reviewGroups = computed(() => buildReviewGroups(event, cartStore.cart.valu
 
 // An order is checkout-able with a ticket OR just an optional extra (e.g. a donation / merch), so the
 // buyer can check out with extras alone.
-const hasExtras = computed(() =>
-  Object.values(c.checkoutAnswers).some((v) =>
-    Array.isArray(v) ? v.length > 0 : v !== null && v !== undefined && v !== ''
-  )
-)
+const hasExtras = computed(() => Object.values(c.checkoutAnswers).some(hasAnswer))
 const hasContent = computed(() => cartStore.cart.value.length > 0 || hasExtras.value)
 
 // Step swap modelled as a single pushed history state so phone/browser back returns to entry

@@ -1,12 +1,9 @@
 import { ref, type Ref } from 'vue'
+import { hasAnswer } from '../answers'
 import { eventsService } from '../services/events.service'
 import type { OrderCalculation, RegisterPayload } from '../types'
 
 type CalcPayload = Pick<RegisterPayload, 'tickets' | 'checkout'>
-
-function hasAnswer(v: unknown): boolean {
-  return Array.isArray(v) ? v.length > 0 : v !== null && v !== undefined && v !== ''
-}
 
 /** An order with no tickets and no answered extras has nothing to price — its total is simply zero. */
 function isEmptyPayload(p: CalcPayload): boolean {

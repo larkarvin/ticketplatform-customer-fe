@@ -54,6 +54,17 @@ describe('useCheckoutTotals', () => {
     expect(calc).not.toHaveBeenCalled()
   })
 
+  it('treats a cartless order whose only extras are false/0 as empty (no 422)', async () => {
+    // Regression: false (unchecked box) and 0 (zero donation) must not count as answered extras, or the
+    // empty-order guard is defeated and an empty tickets list hits the backend 422.
+    const t = useCheckoutTotals('hearts-run', 'USD', () => ({ tickets: [], checkout: { consent: false, tip: 0 } }))
+    t.recalc()
+    expect(t.calculation.value?.total).toBe(0)
+    expect(t.status.value).toBe('idle')
+    await vi.runAllTimersAsync()
+    expect(calc).not.toHaveBeenCalled()
+  })
+
   it('clearing the cart resets a stale total to zero and clears the error state', async () => {
     // Reproduces the bug: a prior total of 50, then everything removed → must show 0, not "error" + 50.
     calc.mockRejectedValue(new Error('422'))
