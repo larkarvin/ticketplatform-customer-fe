@@ -33,4 +33,11 @@ describe('ordersService', () => {
     expect(r.status).toBe('paid')
     expect(get).toHaveBeenCalledWith('/orders/A1/payment-status')
   })
+
+  it('registerOrder posts the cart and returns the order number', async () => {
+    post.mockResolvedValue({ data: { order_number: 'A1B2' } })
+    const r = await ordersService.registerOrder('spring-fair', { tickets: [], checkout: {}, buyer: { email: 'a@b.com', name: 'A' } })
+    expect(post).toHaveBeenCalledWith('/events/public/spring-fair/register', expect.any(Object))
+    expect(r.order_number).toBe('A1B2')
+  })
 })
