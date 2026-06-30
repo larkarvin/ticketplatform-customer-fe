@@ -232,36 +232,20 @@ describe('usePublicCheckout.validate', () => {
     expect(c.fieldErrors.value['u1.0.full_name']).toBeTruthy()
   })
 
-  it('returns true and clears errors when valid', () => {
+  it('returns true and clears errors when all participant fields are valid', () => {
     const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: { full_name: 'Juan' } }] }])
     const c = usePublicCheckout(eventWithField, cart)
-    c.buyer.email = 'juan@example.com'
+    // email is NOT checked by validate() — only participant fields
     expect(c.validate()).toBe(true)
     expect(Object.keys(c.fieldErrors.value)).toHaveLength(0)
   })
 
-  it('returns false and sets fieldErrors["buyer.email"] when email is empty', () => {
+  it('does NOT fail when email is empty (email is checked only in placeAndPay)', () => {
     const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: { full_name: 'Juan' } }] }])
     const c = usePublicCheckout(eventWithField, cart)
-    // email starts as '' by default
-    expect(c.validate()).toBe(false)
-    expect(c.fieldErrors.value['buyer.email']).toBe('Please enter your email so we can send your receipt.')
-  })
-
-  it('returns false and sets fieldErrors["buyer.email"] for an invalid email format', () => {
-    const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: { full_name: 'Juan' } }] }])
-    const c = usePublicCheckout(eventWithField, cart)
-    c.buyer.email = 'notanemail'
-    expect(c.validate()).toBe(false)
-    expect(c.fieldErrors.value['buyer.email']).toBe('Please enter a valid email address.')
-  })
-
-  it('returns true when all participant fields and email are valid', () => {
-    const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: { full_name: 'Juan' } }] }])
-    const c = usePublicCheckout(eventWithField, cart)
-    c.buyer.email = 'juan@example.com'
+    // email starts as '' by default; validate() must not produce a buyer.email error
     expect(c.validate()).toBe(true)
-    expect(c.fieldErrors.value).toEqual({})
+    expect(c.fieldErrors.value['buyer.email']).toBeUndefined()
   })
 })
 
@@ -438,7 +422,19 @@ describe('usePublicCheckout.placeAndPay', () => {
     await c.placeAndPay()
 
     expect(registerOrder).not.toHaveBeenCalled()
-    expect(c.fieldErrors.value['buyer.email']).toBeTruthy()
+    expect(c.fieldErrors.value['buyer.email']).toBe('Please enter your email so we can send your receipt.')
+    expect(c.submitting.value).toBe(false)
+  })
+
+  it('does not call registerOrder and sets buyer.email error when email format is invalid', async () => {
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(event(), cart)
+    c.buyer.email = 'notanemail'
+
+    await c.placeAndPay()
+
+    expect(registerOrder).not.toHaveBeenCalled()
+    expect(c.fieldErrors.value['buyer.email']).toBe('Please enter a valid email address.')
     expect(c.submitting.value).toBe(false)
   })
 

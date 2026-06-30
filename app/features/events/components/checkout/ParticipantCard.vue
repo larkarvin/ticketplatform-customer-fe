@@ -79,7 +79,11 @@ defineExpose({ focusIdentity })
 </script>
 
 <template>
-  <div class="rounded-xl border border-gray-200 dark:border-gray-700" @focusout="onCardFocusOut">
+  <div
+    :id="`attendee-${errorPrefix.replaceAll('.', '-')}`"
+    class="rounded-xl border border-gray-200 dark:border-gray-700"
+    @focusout="onCardFocusOut"
+  >
     <div class="flex items-center gap-2 px-4 pt-4 pb-3">
       <button
         data-test="card-toggle"

@@ -56,21 +56,26 @@ export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
     recalc: recalcTotals,
   } = useCheckoutTotals(event.slug, event.currency, buildCalcPayload)
 
+  function buyerEmailError(email: string): string | null {
+    const trimmed = email.trim()
+    if (!trimmed) return 'Please enter your email so we can send your receipt.'
+    if (!/.+@.+\..+/.test(trimmed)) return 'Please enter a valid email address.'
+    return null
+  }
+
   function validate(): boolean {
-    const errors: Record<string, string> = validateCheckout(event, cart.value)
-    const email = buyer.email.trim()
-    if (!email) {
-      errors['buyer.email'] = 'Please enter your email so we can send your receipt.'
-    } else if (!/.+@.+\..+/.test(email)) {
-      errors['buyer.email'] = 'Please enter a valid email address.'
-    }
-    fieldErrors.value = errors
-    return Object.keys(errors).length === 0
+    fieldErrors.value = validateCheckout(event, cart.value)
+    return Object.keys(fieldErrors.value).length === 0
   }
 
   async function placeAndPay(): Promise<void> {
     if (submitting.value) return
     if (!validate()) return
+    const emailError = buyerEmailError(buyer.email)
+    if (emailError) {
+      fieldErrors.value = { ...fieldErrors.value, 'buyer.email': emailError }
+      return
+    }
     submitting.value = true
     submitError.value = null
     try {

@@ -98,11 +98,15 @@ function onPopState(): void {
 }
 
 function scrollToFirstError(): void {
-  // validateCheckout only produces attendee errors (uid.index.field_key keys), so
-  // 'checkout-attendees' is always the right target — the 'checkout-addons' branch was unreachable.
-  void nextTick(() =>
-    document.getElementById('checkout-attendees')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  )
+  // Find the first participant error key (exclude buyer.email, which is only set on the review step)
+  // then scroll to that specific attendee's card. Falls back to the section header if no card id found.
+  const key = Object.keys(c.fieldErrors.value).find((k) => k !== 'buyer.email')
+  void nextTick(() => {
+    const cardId = key ? `attendee-${key.split('.').slice(0, 2).join('-')}` : null
+    const cardEl = cardId ? document.getElementById(cardId) : null
+    const el = cardEl ?? document.getElementById('checkout-attendees')
+    el?.scrollIntoView({ behavior: 'smooth', block: cardEl ? 'center' : 'start' })
+  })
 }
 
 // URL sync: keep ?tickets= in sync whenever the cart changes, then recalc totals.
