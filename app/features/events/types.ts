@@ -106,13 +106,7 @@ export interface PublicOrderItem {
   subtotal: string
 }
 
-export type PaymentStatus =
-  | 'pending'
-  | 'paid'
-  | 'failed'
-  | 'cancelled'
-  | 'expired'
-  | 'refunded'
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired' | 'refunded'
 
 export interface PublicOrder {
   order_number: string
