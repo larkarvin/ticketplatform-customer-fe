@@ -90,11 +90,10 @@ function onPopState(): void {
 }
 
 function scrollToFirstError(): void {
-  const firstUid = Object.keys(c.fieldErrors.value)[0]?.split('.')[0] ?? null
+  // validateCheckout only produces attendee errors (uid.index.field_key keys), so
+  // 'checkout-attendees' is always the right target — the 'checkout-addons' branch was unreachable.
   void nextTick(() =>
-    document
-      .getElementById(firstUid ? 'checkout-attendees' : 'checkout-addons')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById('checkout-attendees')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   )
 }
 
