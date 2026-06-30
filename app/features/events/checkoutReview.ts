@@ -7,8 +7,8 @@
 import type { Field } from '#core/field-engine/types'
 import type { ReviewGroup } from '~/core/types/review'
 import type { CartTicket, PublicEvent } from '~/features/events/types'
-import { variantLabel } from '~/features/forms/productLabels'
-import type { ProductFieldInfo, ProductSelection } from '~/features/forms/types'
+import { variantLabel } from '~/core/product/variantLabel'
+import type { ProductFieldInfo, ProductSelection } from '~/core/types/product'
 
 export const EDIT_ATTENDEES = 0
 export const EDIT_ADDONS = 1
