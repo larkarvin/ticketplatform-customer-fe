@@ -5,19 +5,15 @@
 // so "Who's coming" is omitted entirely when nothing the buyer purchased asks for attendee details.
 // Empty groups are omitted.
 import type { Field } from '#core/field-engine/types'
+import { variantLabel } from '~/core/product/variantLabel'
+import type { ProductFieldInfo, ProductSelection } from '~/core/types/product'
 import type { ReviewGroup } from '~/core/types/review'
 import type { CartTicket, PublicEvent } from '~/features/events/types'
-import { variantLabel } from '~/features/forms/productLabels'
-import type { ProductFieldInfo, ProductSelection } from '~/features/forms/types'
+import { identityKey } from './identityKey'
 
 export const EDIT_ATTENDEES = 0
 export const EDIT_ADDONS = 1
 export const EDIT_TICKETS = 2
-
-function identityKey(fields: Field[]): string | null {
-  const f = fields.find((x) => x.required && ['text', 'name'].includes(x.type))
-  return f?.field_key ?? fields[0]?.field_key ?? null
-}
 
 function formatAnswer(field: Field, value: unknown): string {
   if (value === null || value === undefined || value === '') return ''

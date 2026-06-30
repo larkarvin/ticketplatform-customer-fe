@@ -2,43 +2,16 @@
 // (Field/FieldGroup/FieldOption) live in the shared engine: #core/field-engine/types.
 import type { Field, FieldGroup } from '#core/field-engine/types'
 
-// Product field: the catalog data is embedded in the field's `settings.product` (no separate fetch).
-// "product" is domain vocabulary, so these types + the ProductField control stay in the feature, not core.
-export interface ProductVariantPrice {
-  currency: string
-  price: string
-}
-/** Subset of the backend ProductImageResource the renderer uses. */
-export interface ProductImageMedia {
-  id: number
-  url: string
-  thumb_url: string | null
-  alt_text: string | null
-}
-export interface ProductAttributeValue {
-  attribute: string | null
-  value: string
-}
-export interface ProductVariant {
-  id: number
-  name: string
-  sku: string | null
-  is_active: boolean
-  image: ProductImageMedia | null
-  attribute_values: ProductAttributeValue[]
-  prices: ProductVariantPrice[]
-}
-export interface ProductFieldInfo {
-  id: number
-  name: string
-  image: ProductImageMedia | null
-  variants: ProductVariant[]
-}
-/** The submit value of a product field: an array of variant selections (total qty ≤ max_quantity). */
-export interface ProductSelection {
-  variant_id: number
-  quantity: number
-}
+// Product-catalog types are shared with the events feature — they live in app/core and are
+// re-exported here so forms-internal imports keep working without any churn.
+export type {
+  ProductAttributeValue,
+  ProductFieldInfo,
+  ProductImageMedia,
+  ProductSelection,
+  ProductVariant,
+  ProductVariantPrice,
+} from '~/core/types/product'
 
 export interface Form {
   id: number

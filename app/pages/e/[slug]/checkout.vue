@@ -13,6 +13,7 @@ import CheckoutTickets from '~/features/events/components/checkout/CheckoutTicke
 import { useCart } from '~/features/events/composables/useCart'
 import { useCheckoutPersistence } from '~/features/events/composables/useCheckoutPersistence'
 import { usePublicCheckout } from '~/features/events/composables/usePublicCheckout'
+import { identityKey } from '~/features/events/identityKey'
 
 const route = useRoute()
 const router = useRouter()
@@ -89,11 +90,10 @@ function onPopState(): void {
 }
 
 function scrollToFirstError(): void {
-  const firstUid = Object.keys(c.fieldErrors.value)[0]?.split('.')[0] ?? null
+  // validateCheckout only produces attendee errors (uid.index.field_key keys), so
+  // 'checkout-attendees' is always the right target — the 'checkout-addons' branch was unreachable.
   void nextTick(() =>
-    document
-      .getElementById(firstUid ? 'checkout-attendees' : 'checkout-addons')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById('checkout-attendees')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   )
 }
 
@@ -169,11 +169,10 @@ function onRemoveOne(ticketId: number): void {
   if (last) void requestRemove(last.uid)
 }
 
-// First required text-like field for the ticket, used as identity key in ParticipantGroup.
+// Resolves the ticket then delegates to the shared identityKey helper.
 function identityKeyFor(ticketId: number): string | null {
   const t = event.tickets.find((x) => x.id === ticketId)
-  const f = (t?.participant_fields ?? []).find((x) => x.required && ['text', 'name'].includes(x.type))
-  return f?.field_key ?? t?.participant_fields?.[0]?.field_key ?? null
+  return identityKey(t?.participant_fields ?? [])
 }
 
 // Start over = discard this whole checkout (saved progress, entered details, and the ticket
