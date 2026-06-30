@@ -235,8 +235,33 @@ describe('usePublicCheckout.validate', () => {
   it('returns true and clears errors when valid', () => {
     const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: { full_name: 'Juan' } }] }])
     const c = usePublicCheckout(eventWithField, cart)
+    c.buyer.email = 'juan@example.com'
     expect(c.validate()).toBe(true)
     expect(Object.keys(c.fieldErrors.value)).toHaveLength(0)
+  })
+
+  it('returns false and sets fieldErrors["buyer.email"] when email is empty', () => {
+    const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: { full_name: 'Juan' } }] }])
+    const c = usePublicCheckout(eventWithField, cart)
+    // email starts as '' by default
+    expect(c.validate()).toBe(false)
+    expect(c.fieldErrors.value['buyer.email']).toBe('Please enter your email so we can send your receipt.')
+  })
+
+  it('returns false and sets fieldErrors["buyer.email"] for an invalid email format', () => {
+    const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: { full_name: 'Juan' } }] }])
+    const c = usePublicCheckout(eventWithField, cart)
+    c.buyer.email = 'notanemail'
+    expect(c.validate()).toBe(false)
+    expect(c.fieldErrors.value['buyer.email']).toBe('Please enter a valid email address.')
+  })
+
+  it('returns true when all participant fields and email are valid', () => {
+    const cart = ref<CartTicket[]>([{ uid: 'u1', ticket_id: 9, participants: [{ field_data: { full_name: 'Juan' } }] }])
+    const c = usePublicCheckout(eventWithField, cart)
+    c.buyer.email = 'juan@example.com'
+    expect(c.validate()).toBe(true)
+    expect(c.fieldErrors.value).toEqual({})
   })
 })
 
@@ -403,6 +428,18 @@ describe('usePublicCheckout.placeAndPay', () => {
 
     await c.placeAndPay()
     expect(registerOrder).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not call registerOrder when buyer email is missing', async () => {
+    const cart = ref<CartTicket[]>([{ uid: 'a', ticket_id: 1, participants: [{ field_data: {} }] }])
+    const c = usePublicCheckout(event(), cart)
+    // email is '' by default — do NOT set it
+
+    await c.placeAndPay()
+
+    expect(registerOrder).not.toHaveBeenCalled()
+    expect(c.fieldErrors.value['buyer.email']).toBeTruthy()
+    expect(c.submitting.value).toBe(false)
   })
 
   it('reentrancy guard: a second call while one is in-flight does not fire registerOrder again', async () => {

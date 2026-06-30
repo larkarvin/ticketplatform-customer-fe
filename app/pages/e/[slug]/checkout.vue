@@ -269,6 +269,7 @@ async function startOver(): Promise<void> {
         :calculation="c.calculation.value"
         :status="c.totalsStatus.value"
         :buyer="c.buyer"
+        :email-error="c.fieldErrors.value['buyer.email']"
         @edit="leaveReview"
       />
     </article>
