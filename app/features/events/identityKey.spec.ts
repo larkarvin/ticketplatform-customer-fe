@@ -26,7 +26,7 @@ describe('identityKey', () => {
     expect(identityKey([])).toBeNull()
   })
 
-  it('returns the first required text field key', () => {
+  it('skips required non-text/name fields to find the first required text-or-name field', () => {
     const fields: Field[] = [
       { ...base, field_key: 'email', type: 'email', required: true },
       { ...base, field_key: 'full_name', type: 'text', required: true },
