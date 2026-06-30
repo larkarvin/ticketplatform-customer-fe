@@ -104,6 +104,7 @@ export interface PublicOrderItem {
   quantity: number
   unit_price: string
   subtotal: string
+  ticket_id: number | null
 }
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired' | 'refunded'
@@ -115,6 +116,7 @@ export interface PublicOrder {
   payment_status: PaymentStatus
   expires_at: string | null
   can_be_paid: boolean
+  event_slug: string | null
   items: PublicOrderItem[]
 }
 

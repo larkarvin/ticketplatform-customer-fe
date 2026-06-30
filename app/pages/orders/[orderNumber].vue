@@ -2,8 +2,9 @@
 <script setup lang="ts">
 import { AlertCircle, CheckCircle, Clock, Loader2, Timer } from '#icons'
 import { computed, ref } from 'vue'
+import { useCheckoutPersistence } from '~/features/events/composables/useCheckoutPersistence'
 import { useOrderStatus } from '~/features/events/composables/useOrderStatus'
-import { formatCountdown } from '~/features/events/orderPage'
+import { buildRebuildDraft, formatCountdown } from '~/features/events/orderPage'
 import { ordersService } from '~/features/events/services/orders.service'
 import type { PublicOrder } from '~/features/events/types'
 
@@ -42,12 +43,23 @@ async function handleResume(): Promise<void> {
   }
 }
 
-// Rebuild my order — best-effort navigation.
-// TODO(api): expose event_slug: string on PublicOrderResource and ticket_id: number on each
-// OrderItemResource to enable faithful cart re-seed via useCheckoutPersistence(event_slug).seed().
-// Without those fields we cannot navigate back to /e/{slug}/checkout with items pre-selected.
+// Rebuild my order — re-seeds the checkout draft from the order's ticket lines and
+// navigates to the event checkout. Falls back to / when the order has no event slug
+// or no ticket lines (non-ticket orders).
 function handleRebuild(): void {
-  void navigateTo('/')
+  const currentOrder = order.value
+  if (!currentOrder) {
+    void navigateTo('/')
+    return
+  }
+  const draft = buildRebuildDraft(currentOrder)
+  if (draft === null || currentOrder.event_slug === null) {
+    void navigateTo('/')
+    return
+  }
+  const persistence = useCheckoutPersistence(currentOrder.event_slug)
+  persistence.save(draft)
+  void navigateTo(`/e/${currentOrder.event_slug}/checkout`)
 }
 
 const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
