@@ -28,4 +28,63 @@ describe('CheckoutReview', () => {
     await w.get('[data-test="change-email"]').trigger('click')
     expect(w.find('input[type="email"]').exists()).toBe(true)
   })
+
+  it('shows the email input (not collapsed) when emailError is set, even with a non-empty buyer email', async () => {
+    const buyer = reactive({ email: 'bad-email' })
+    const w = mount(CheckoutReview, {
+      props: { groups, calculation: calc, status: 'idle', buyer, emailError: 'Please enter a valid email address.' },
+    })
+    // input must be visible (not collapsed to confirmed text)
+    expect(w.find('input[type="email"]').exists()).toBe(true)
+    // confirmed text / Change button must NOT be shown
+    expect(w.find('[data-test="change-email"]').exists()).toBe(false)
+  })
+
+  it('renders the email error message with role=alert when emailError is set', () => {
+    const buyer = reactive({ email: '' })
+    const w = mount(CheckoutReview, {
+      props: {
+        groups,
+        calculation: calc,
+        status: 'idle',
+        buyer,
+        emailError: 'Please enter your email so we can send your receipt.',
+      },
+    })
+    const alert = w.find('[role="alert"]')
+    expect(alert.exists()).toBe(true)
+    expect(alert.text()).toContain('Please enter your email so we can send your receipt.')
+  })
+
+  it('keeps the email input open after blur when emailError is set and email is non-empty', async () => {
+    const buyer = reactive({ email: 'bad-email' })
+    const w = mount(CheckoutReview, {
+      props: {
+        groups,
+        calculation: calc,
+        status: 'idle',
+        buyer,
+        emailError: 'Please enter a valid email address.',
+      },
+    })
+    // Blur the input — without the fix this would collapse it to confirmed-text
+    await w.get('input[type="email"]').trigger('blur')
+    expect(w.find('input[type="email"]').exists()).toBe(true)
+    expect(w.find('[data-test="change-email"]').exists()).toBe(false)
+  })
+
+  it('sets aria-invalid on the input when emailError is set', () => {
+    const buyer = reactive({ email: '' })
+    const w = mount(CheckoutReview, {
+      props: {
+        groups,
+        calculation: calc,
+        status: 'idle',
+        buyer,
+        emailError: 'Please enter your email so we can send your receipt.',
+      },
+    })
+    const input = w.find('input[type="email"]')
+    expect(input.attributes('aria-invalid')).toBe('true')
+  })
 })

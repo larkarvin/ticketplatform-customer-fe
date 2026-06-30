@@ -117,4 +117,18 @@ describe('ParticipantCard', () => {
     })
     expect(w.text()).toContain('Runner name is required')
   })
+
+  // ── Root id for scroll targeting ───────────────────────────────────────────
+
+  it('root div has attendee-<errorPrefix-dots-as-dashes> id', () => {
+    const w = mount(ParticipantCard, { props: { ...base(), errorPrefix: '9-1.0' } })
+    expect(w.element.id).toBe('attendee-9-1-0')
+  })
+
+  it('root id updates when errorPrefix changes', async () => {
+    const w = mount(ParticipantCard, { props: { ...base(), errorPrefix: 'abc.1' } })
+    expect(w.element.id).toBe('attendee-abc-1')
+    await w.setProps({ errorPrefix: 'xyz.3' })
+    expect(w.element.id).toBe('attendee-xyz-3')
+  })
 })

@@ -1,6 +1,7 @@
 <!-- customer-fe/app/pages/e/[slug]/checkout.vue -->
 <script setup lang="ts">
 import { useConfirm } from '#core/composables/useConfirm'
+import { Lock } from '#icons'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePublicEvent } from '~/features/events'
 import { hasAnswer } from '~/features/events/answers'
@@ -29,6 +30,7 @@ const { event } = await usePublicEvent(slug.value)
 
 const cartStore = useCart(event, parseSelection(route.query.tickets))
 const c = usePublicCheckout(event, cartStore.cart)
+const { placeAndPay, submitting, submitError } = c
 const persistence = useCheckoutPersistence(slug.value)
 const { confirm } = useConfirm()
 
@@ -96,11 +98,15 @@ function onPopState(): void {
 }
 
 function scrollToFirstError(): void {
-  // validateCheckout only produces attendee errors (uid.index.field_key keys), so
-  // 'checkout-attendees' is always the right target — the 'checkout-addons' branch was unreachable.
-  void nextTick(() =>
-    document.getElementById('checkout-attendees')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  )
+  // Find the first participant error key (exclude buyer.email, which is only set on the review step)
+  // then scroll to that specific attendee's card. Falls back to the section header if no card id found.
+  const key = Object.keys(c.fieldErrors.value).find((k) => k !== 'buyer.email')
+  void nextTick(() => {
+    const cardId = key ? `attendee-${key.split('.').slice(0, 2).join('-')}` : null
+    const cardEl = cardId ? document.getElementById(cardId) : null
+    const el = cardEl ?? document.getElementById('checkout-attendees')
+    el?.scrollIntoView({ behavior: 'smooth', block: cardEl ? 'center' : 'start' })
+  })
 }
 
 // URL sync: keep ?tickets= in sync whenever the cart changes, then recalc totals.
@@ -267,18 +273,55 @@ async function startOver(): Promise<void> {
         :calculation="c.calculation.value"
         :status="c.totalsStatus.value"
         :buyer="c.buyer"
+        :email-error="c.fieldErrors.value['buyer.email']"
         @edit="leaveReview"
       />
     </article>
+
+    <!-- Submit error — shown near the pay bar when placeAndPay fails with a non-422 error -->
+    <div v-if="submitError" role="alert" class="fixed inset-x-0 bottom-20 z-20 flex justify-center px-4">
+      <p
+        class="rounded-xl bg-danger-50 px-4 py-3 text-sm text-danger-700 shadow dark:bg-danger-900/40 dark:text-danger-300"
+      >
+        {{ submitError }}
+      </p>
+    </div>
 
     <CheckoutPayBar
       :calculation="c.calculation.value"
       :status="c.totalsStatus.value"
       :mode="view"
       :continue-disabled="!hasContent"
+      :submitting="submitting"
       @retry="c.recalcTotals"
       @continue="goToReview"
       @back="leaveReview(null)"
+      @pay="placeAndPay"
     />
+
+    <!-- Redirecting interstitial — covers the viewport while placeAndPay is in-flight -->
+    <div
+      v-if="submitting"
+      data-test="payment-interstitial"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60"
+      aria-live="assertive"
+      aria-atomic="true"
+      role="status"
+    >
+      <div class="flex flex-col items-center gap-5 rounded-2xl bg-white px-10 py-8 shadow-xl dark:bg-gray-800">
+        <!-- Spinner: animated for users who allow motion, static for those who prefer reduced motion -->
+        <span
+          class="block h-10 w-10 rounded-full border-4 border-brand-200 border-t-brand-500 motion-safe:animate-spin"
+          aria-hidden="true"
+        />
+        <p class="text-center text-base font-semibold text-gray-900 dark:text-white">
+          Redirecting you to our secure payment provider…
+        </p>
+        <span class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+          <Lock :size="15" aria-hidden="true" />
+          Secure checkout
+        </span>
+      </div>
+    </div>
   </div>
 </template>

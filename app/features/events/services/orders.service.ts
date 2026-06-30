@@ -1,6 +1,6 @@
 // Public orders API surface — endpoint calls only, no reactivity/UI. Returns typed DTOs.
 import { useApiClient } from '#core/api'
-import type { PaymentStatusResponse, PublicOrder } from '../types'
+import type { PaymentStatusResponse, PublicOrder, PublicOrderRegisterResponse, RegisterPayload } from '../types'
 
 export const ordersService = {
   getOrder: (orderNumber: string): Promise<PublicOrder> =>
@@ -18,4 +18,9 @@ export const ordersService = {
   // so there is no wrapping `data` key — return the response directly.
   paymentStatus: (orderNumber: string): Promise<PaymentStatusResponse> =>
     useApiClient().get<PaymentStatusResponse>(`/orders/${orderNumber}/payment-status`),
+
+  registerOrder: (slug: string, payload: RegisterPayload): Promise<PublicOrderRegisterResponse> =>
+    useApiClient()
+      .post<{ data: PublicOrderRegisterResponse }>(`/events/public/${slug}/register`, payload)
+      .then((r) => r.data),
 }

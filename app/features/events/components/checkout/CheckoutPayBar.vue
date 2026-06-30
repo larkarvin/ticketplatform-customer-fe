@@ -1,5 +1,4 @@
-<!-- Sticky bottom bar. Entry mode: running total + Continue to review. Review mode: total + Back +
-     disabled pay placeholder (payment deferred). -->
+<!-- Sticky bottom bar. Entry mode: running total + Continue to review. Review mode: total + Back + Pay. -->
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight } from '#icons'
 import { computed } from 'vue'
@@ -12,9 +11,11 @@ const props = defineProps<{
   mode: 'entry' | 'review'
   /** Disable the entry "Continue to review" action (e.g. no tickets chosen yet). */
   continueDisabled?: boolean
+  /** True while the pay action is in-flight (redirecting to payment provider). */
+  submitting?: boolean
 }>()
 
-const emit = defineEmits<{ retry: []; continue: []; back: [] }>()
+const emit = defineEmits<{ retry: []; continue: []; back: []; pay: [] }>()
 
 const totalText = computed(() =>
   props.calculation ? formatMoney(props.calculation.total, props.calculation.currency) : '—'
@@ -78,10 +79,14 @@ const totalText = computed(() =>
           </button>
           <button
             type="button"
-            disabled
-            class="min-h-tap cursor-not-allowed rounded-xl bg-brand-500 px-6 text-base font-semibold text-white opacity-50"
+            data-test="pay"
+            :disabled="props.submitting || status === 'updating' || status === 'error' || !calculation"
+            class="inline-flex min-h-tap items-center gap-2 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+            :class="props.submitting || status === 'updating' ? '' : 'cursor-pointer'"
+            @click="emit('pay')"
           >
-            Payment coming soon
+            <span v-if="props.submitting" aria-live="polite">Taking you to secure payment…</span>
+            <span v-else>{{ calculation ? `Pay ${totalText}` : 'Pay' }}</span>
           </button>
         </template>
       </div>

@@ -4,7 +4,7 @@
 <script setup lang="ts">
 import { borderClass, controlClass } from '#core/field-engine/components/controls/inputClass'
 import { Mail } from '#icons'
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import ReviewSummary from '~/core/components/ReviewSummary.vue'
 import type { ReviewGroup } from '~/core/types/review'
 import { EDIT_TICKETS } from '../../checkoutReview'
@@ -16,12 +16,21 @@ const props = defineProps<{
   calculation: OrderCalculation | null
   status: 'idle' | 'updating' | 'error'
   buyer: { email: string }
+  emailError?: string
 }>()
 const emit = defineEmits<{ edit: [editTarget: number] }>()
 
 // Confirmed-text + Change pattern (mirrors the form's Review email): show the input on first entry,
 // collapse to confirmed text once a value exists, reveal again on Change.
 const editingEmail = ref(props.buyer.email === '')
+// When an email error is present, always force the input open so the user can correct it.
+watch(
+  () => props.emailError,
+  (err) => {
+    if (err) editingEmail.value = true
+  },
+  { immediate: true }
+)
 const emailInput = ref<HTMLInputElement | null>(null)
 function changeEmail(): void {
   editingEmail.value = true
@@ -72,9 +81,10 @@ function setEmail(value: string): void {
           type="email"
           autocomplete="email"
           placeholder="you@example.com"
-          :class="[controlClass, borderClass(false), 'pl-14']"
+          :aria-invalid="emailError ? 'true' : 'false'"
+          :class="[controlClass, borderClass(!!emailError), 'pl-14']"
           @input="setEmail(($event.target as HTMLInputElement).value)"
-          @blur="editingEmail = buyer.email === ''"
+          @blur="editingEmail = buyer.email === '' || !!emailError"
         />
         <span
           class="pointer-events-none absolute inset-y-0 left-0 flex items-center border-r border-gray-300 px-4 text-gray-500 dark:border-gray-700 dark:text-gray-400"
@@ -82,6 +92,9 @@ function setEmail(value: string): void {
           <Mail :size="20" />
         </span>
       </div>
+      <p v-if="emailError" role="alert" class="mt-1 text-sm text-danger-600 dark:text-danger-400">
+        {{ emailError }}
+      </p>
     </section>
 
     <!-- Reserved: terms acceptance — wired in a later cross-repo PR alongside payment. -->
