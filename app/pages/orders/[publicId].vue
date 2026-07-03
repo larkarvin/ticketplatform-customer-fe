@@ -13,7 +13,7 @@ const route = useRoute()
 // address the order via URL/fetch/poll/resume. order_number is a display-only reference,
 // read from the fetched order below (see the "Order reference" markup).
 const publicId = computed(() => String(route.params.publicId))
-useSeoMeta({ title: () => `Order ${publicId.value}` })
+useSeoMeta({ title: () => (order.value?.order_number ? `Order ${order.value.order_number}` : 'Order status') })
 
 // Fetch order synchronously (SSR-safe) before any await in this script block.
 const { data } = await useAsyncData(`order:${publicId.value}`, () => ordersService.getOrder(publicId.value))
