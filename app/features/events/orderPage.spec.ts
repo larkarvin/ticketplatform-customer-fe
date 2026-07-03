@@ -47,6 +47,7 @@ describe('formatCountdown', () => {
 
 function makeOrder(overrides: Partial<PublicOrder> = {}): PublicOrder {
   return {
+    public_id: '11111111-1111-4111-8111-111111111111',
     order_number: 'ORD-001',
     currency: 'USD',
     total: '100.00',
@@ -140,7 +141,7 @@ describe('order page status seed (gateway return) + poll transition', () => {
   it('returning with status=success + pending order starts processing, then transitions on poll', async () => {
     vi.mocked(ordersService.paymentStatus).mockResolvedValue({ success: true, status: 'paid' })
 
-    const { state } = useOrderStatus('ORD-RET', {
+    const { state } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: seedStatus('pending', 'success'),
       expires_at: null,
     })

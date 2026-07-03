@@ -60,7 +60,7 @@ export interface UseOrderStatusOptions {
 }
 
 export function useOrderStatus(
-  orderNumber: string,
+  publicId: string,
   initial: UseOrderStatusOptions
 ): {
   state: Ref<OrderStatusState>
@@ -106,7 +106,7 @@ export function useOrderStatus(
 
   async function doPoll(): Promise<void> {
     try {
-      const response = await ordersService.paymentStatus(orderNumber)
+      const response = await ordersService.paymentStatus(publicId)
       // Guard: if the state became terminal while this request was in-flight (e.g. countdown
       // expired or stop() was called), discard the late response — never clobber terminal state.
       if (TERMINAL.has(state.value)) return

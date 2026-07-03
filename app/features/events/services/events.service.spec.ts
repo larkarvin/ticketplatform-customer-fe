@@ -19,9 +19,15 @@ describe('eventsService', () => {
     expect(event).toEqual({ id: 1, slug: 'gala', title: 'Gala', tickets: [] })
   })
 
-  it('registerOrder posts the payload + unwraps', async () => {
+  it('registerOrder posts the payload + unwraps (public_id + display order_number)', async () => {
     post.mockResolvedValue({
-      data: { order_number: 'A1', requires_payment: true, payment_total: 200, currency: 'PHP' },
+      data: {
+        public_id: '11111111-1111-4111-8111-111111111111',
+        order_number: 'A1',
+        requires_payment: true,
+        payment_total: 200,
+        currency: 'PHP',
+      },
     })
     const r = await eventsService.registerOrder('gala', {
       buyer: { email: 'b@e.co' },
@@ -33,6 +39,7 @@ describe('eventsService', () => {
       tickets: [],
       checkout: {},
     })
+    expect(r.public_id).toBe('11111111-1111-4111-8111-111111111111')
     expect(r.order_number).toBe('A1')
   })
 

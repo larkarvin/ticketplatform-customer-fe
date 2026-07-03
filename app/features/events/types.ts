@@ -92,6 +92,7 @@ export interface RegisterPayload {
 }
 
 export interface EventOrderResponse {
+  public_id: string
   order_number: string
   requires_payment: boolean
   payment_total: number
@@ -110,6 +111,7 @@ export interface PublicOrderItem {
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired' | 'refunded'
 
 export interface PublicOrder {
+  public_id: string
   order_number: string
   currency: string
   total: string
@@ -150,6 +152,6 @@ export interface PaymentStatusResponse {
 
 /**
  * Shape returned by POST /events/public/{slug}/register (EventOrderResponseResource).
- * Confirmed fields: order_number, requires_payment, payment_total, currency.
+ * Confirmed fields: public_id, order_number, requires_payment, payment_total, currency.
  */
 export type PublicOrderRegisterResponse = EventOrderResponse

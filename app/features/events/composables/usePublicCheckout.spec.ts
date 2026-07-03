@@ -274,6 +274,7 @@ describe('usePublicCheckout.placeAndPay', () => {
 
   it('calls registerOrder with buyer in payload, then initiatePayment, then assigns redirect_url', async () => {
     registerOrder.mockResolvedValue({
+      public_id: '11111111-1111-4111-8111-111111111111',
       order_number: 'ORD-001',
       requires_payment: true,
       payment_total: 100,
@@ -298,13 +299,18 @@ describe('usePublicCheckout.placeAndPay', () => {
     expect(payload.buyer).toEqual({ email: 'buyer@example.com', name: 'Buyer', phone: '' })
     expect(payload.tickets).toHaveLength(1)
 
-    expect(initiatePayment).toHaveBeenCalledWith('ORD-001', 'http://localhost/orders/ORD-001')
+    // Navigation/pay must address the order by public_id, not the display-only order_number.
+    expect(initiatePayment).toHaveBeenCalledWith(
+      '11111111-1111-4111-8111-111111111111',
+      'http://localhost/orders/11111111-1111-4111-8111-111111111111'
+    )
     expect(assignSpy).toHaveBeenCalledWith('https://pay.example.com/xyz')
     expect(navigateTo).not.toHaveBeenCalled()
   })
 
   it('calls navigateTo when redirect_url is absent (free / already-paid path)', async () => {
     registerOrder.mockResolvedValue({
+      public_id: '22222222-2222-4222-8222-222222222222',
       order_number: 'ORD-002',
       requires_payment: false,
       payment_total: 0,
@@ -318,7 +324,7 @@ describe('usePublicCheckout.placeAndPay', () => {
 
     await c.placeAndPay()
 
-    expect(navigateTo).toHaveBeenCalledWith('/orders/ORD-002')
+    expect(navigateTo).toHaveBeenCalledWith('/orders/22222222-2222-4222-8222-222222222222')
     expect(assignSpy).not.toHaveBeenCalled()
   })
 
@@ -362,6 +368,7 @@ describe('usePublicCheckout.placeAndPay', () => {
 
   it('retry after a post-register failure reuses the order: registerOrder once, initiatePayment twice', async () => {
     registerOrder.mockResolvedValue({
+      public_id: '77777777-7777-4777-8777-777777777777',
       order_number: 'ORD-777',
       requires_payment: true,
       payment_total: 100,
@@ -380,17 +387,21 @@ describe('usePublicCheckout.placeAndPay', () => {
     expect(c.submitError.value).toBeTruthy()
     expect(c.submitting.value).toBe(false)
 
-    // Retry: must NOT register again — reuses ORD-777 and re-initiates payment.
+    // Retry: must NOT register again — reuses the same public_id and re-initiates payment.
     await c.placeAndPay()
 
     expect(registerOrder).toHaveBeenCalledOnce()
     expect(initiatePayment).toHaveBeenCalledTimes(2)
-    expect(initiatePayment).toHaveBeenLastCalledWith('ORD-777', 'http://localhost/orders/ORD-777')
+    expect(initiatePayment).toHaveBeenLastCalledWith(
+      '77777777-7777-4777-8777-777777777777',
+      'http://localhost/orders/77777777-7777-4777-8777-777777777777'
+    )
     expect(assignSpy).toHaveBeenCalledWith('https://pay.example.com/abc')
   })
 
   it('clears the cached order when the cart selection changes (edit forces a fresh order)', async () => {
     registerOrder.mockResolvedValue({
+      public_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       order_number: 'ORD-A',
       requires_payment: true,
       payment_total: 100,
@@ -441,6 +452,7 @@ describe('usePublicCheckout.placeAndPay', () => {
   it('reentrancy guard: a second call while one is in-flight does not fire registerOrder again', async () => {
     // Deferred promise — stays pending so the first placeAndPay never resolves during this test.
     type OrderResult = {
+      public_id: string
       order_number: string
       requires_payment: boolean
       payment_total: number
@@ -463,7 +475,13 @@ describe('usePublicCheckout.placeAndPay', () => {
     await c.placeAndPay()
 
     // Resolve the pending order so the first call can complete cleanly.
-    resolveOrder({ order_number: 'ORD-999', requires_payment: false, payment_total: 0, currency: 'PHP' })
+    resolveOrder({
+      public_id: '99999999-9999-4999-8999-999999999999',
+      order_number: 'ORD-999',
+      requires_payment: false,
+      payment_total: 0,
+      currency: 'PHP',
+    })
     initiatePayment.mockResolvedValue({ redirect_url: undefined })
     await first
 
