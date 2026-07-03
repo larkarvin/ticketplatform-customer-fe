@@ -24,7 +24,7 @@ describe('useOrderStatus', () => {
   })
 
   it('maps pending + future expires_at → awaiting with secondsLeft counting down', async () => {
-    const { state, secondsLeft } = useOrderStatus('ORD-001', {
+    const { state, secondsLeft } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'pending',
       expires_at: expiresAt(60),
     })
@@ -39,39 +39,54 @@ describe('useOrderStatus', () => {
   })
 
   it('maps paid → paid immediately, processing → processing', () => {
-    const { state: paidState } = useOrderStatus('ORD-002', { status: 'paid', expires_at: null })
+    const { state: paidState } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
+      status: 'paid',
+      expires_at: null,
+    })
     expect(paidState.value).toBe('paid')
 
-    const { state: processingState } = useOrderStatus('ORD-003', { status: 'processing', expires_at: null })
+    const { state: processingState } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
+      status: 'processing',
+      expires_at: null,
+    })
     expect(processingState.value).toBe('processing')
   })
 
   it('maps failed + cancelled → failed', () => {
-    const { state: f } = useOrderStatus('ORD-004', { status: 'failed', expires_at: null })
+    const { state: f } = useOrderStatus('11111111-1111-4111-8111-111111111111', { status: 'failed', expires_at: null })
     expect(f.value).toBe('failed')
 
-    const { state: c } = useOrderStatus('ORD-005', { status: 'cancelled', expires_at: null })
+    const { state: c } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
+      status: 'cancelled',
+      expires_at: null,
+    })
     expect(c.value).toBe('failed')
   })
 
   it('maps declined + error + canceled (American single-l) → failed', () => {
-    const { state: d } = useOrderStatus('ORD-004a', { status: 'declined', expires_at: null })
+    const { state: d } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
+      status: 'declined',
+      expires_at: null,
+    })
     expect(d.value).toBe('failed')
 
-    const { state: e } = useOrderStatus('ORD-004b', { status: 'error', expires_at: null })
+    const { state: e } = useOrderStatus('11111111-1111-4111-8111-111111111111', { status: 'error', expires_at: null })
     expect(e.value).toBe('failed')
 
-    const { state: c } = useOrderStatus('ORD-004c', { status: 'canceled', expires_at: null })
+    const { state: c } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
+      status: 'canceled',
+      expires_at: null,
+    })
     expect(c.value).toBe('failed')
   })
 
   it('maps expired → expired immediately', () => {
-    const { state } = useOrderStatus('ORD-006', { status: 'expired', expires_at: null })
+    const { state } = useOrderStatus('11111111-1111-4111-8111-111111111111', { status: 'expired', expires_at: null })
     expect(state.value).toBe('expired')
   })
 
   it('flips to expired when expires_at is in the past', async () => {
-    const { state } = useOrderStatus('ORD-007', {
+    const { state } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'pending',
       expires_at: expiresAt(-5), // already past
     })
@@ -84,7 +99,7 @@ describe('useOrderStatus', () => {
   it('poll returns paid → state becomes paid and polling stops', async () => {
     mockPaymentStatus.mockResolvedValue({ success: true, status: 'paid' })
 
-    const { state } = useOrderStatus('ORD-008', {
+    const { state } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'pending',
       expires_at: expiresAt(300),
     })
@@ -105,7 +120,7 @@ describe('useOrderStatus', () => {
   it('poll error keeps the last good state (no blanking)', async () => {
     mockPaymentStatus.mockRejectedValue(new Error('network'))
 
-    const { state } = useOrderStatus('ORD-009', {
+    const { state } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'pending',
       expires_at: expiresAt(300),
     })
@@ -121,7 +136,7 @@ describe('useOrderStatus', () => {
   it('countdown reaches 0 while pending → flips to expired and stops polling', async () => {
     mockPaymentStatus.mockResolvedValue({ success: true, status: 'pending' })
 
-    const { state, secondsLeft } = useOrderStatus('ORD-010', {
+    const { state, secondsLeft } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'pending',
       expires_at: expiresAt(3),
     })
@@ -137,7 +152,7 @@ describe('useOrderStatus', () => {
   it('refresh() triggers an immediate poll', async () => {
     mockPaymentStatus.mockResolvedValue({ success: true, status: 'pending' })
 
-    const { refresh } = useOrderStatus('ORD-011', {
+    const { refresh } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'pending',
       expires_at: expiresAt(300),
     })
@@ -150,7 +165,7 @@ describe('useOrderStatus', () => {
   it('stop() clears timers so no further polls occur', async () => {
     mockPaymentStatus.mockResolvedValue({ success: true, status: 'pending' })
 
-    const { stop } = useOrderStatus('ORD-012', {
+    const { stop } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'pending',
       expires_at: expiresAt(300),
     })
@@ -169,7 +184,7 @@ describe('useOrderStatus', () => {
     mockPaymentStatus.mockReturnValue(deferred)
 
     // expires 5s out — enough headroom to trigger a poll (t=2s) before the countdown (t=5s).
-    const { state } = useOrderStatus('ORD-013', {
+    const { state } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'pending',
       expires_at: expiresAt(5),
     })
@@ -196,7 +211,7 @@ describe('useOrderStatus', () => {
   it('refresh() after terminal state does not change state', async () => {
     mockPaymentStatus.mockResolvedValue({ success: true, status: 'pending' })
 
-    const { state, refresh } = useOrderStatus('ORD-014', {
+    const { state, refresh } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'paid',
       expires_at: null,
     })

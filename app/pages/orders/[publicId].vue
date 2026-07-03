@@ -9,11 +9,14 @@ import { ordersService } from '~/features/events/services/orders.service'
 import type { PublicOrder } from '~/features/events/types'
 
 const route = useRoute()
-const orderNumber = computed(() => String(route.params.orderNumber))
-useSeoMeta({ title: () => `Order ${orderNumber.value}` })
+// The route param is the order's public_id (a random UUID) — the sole handle used to
+// address the order via URL/fetch/poll/resume. order_number is a display-only reference,
+// read from the fetched order below (see the "Order reference" markup).
+const publicId = computed(() => String(route.params.publicId))
+useSeoMeta({ title: () => `Order ${publicId.value}` })
 
 // Fetch order synchronously (SSR-safe) before any await in this script block.
-const { data } = await useAsyncData(`order:${orderNumber.value}`, () => ordersService.getOrder(orderNumber.value))
+const { data } = await useAsyncData(`order:${publicId.value}`, () => ordersService.getOrder(publicId.value))
 
 const order = ref<PublicOrder | null>(data.value ?? null)
 
@@ -22,7 +25,7 @@ const order = ref<PublicOrder | null>(data.value ?? null)
 const returnStatus = Array.isArray(route.query.status) ? route.query.status[0] : route.query.status
 
 // Replace ad-hoc poll loop with the composable (SSR-safe timers, terminal-state guards).
-const { state, secondsLeft, refresh } = useOrderStatus(orderNumber.value, {
+const { state, secondsLeft, refresh } = useOrderStatus(publicId.value, {
   status: seedStatus(order.value?.payment_status ?? 'pending', returnStatus ?? undefined),
   expires_at: order.value?.expires_at ?? null,
 })
@@ -35,8 +38,8 @@ async function handleResume(): Promise<void> {
   resuming.value = true
   try {
     // Build the absolute return URL in the click handler so it is SSR-safe (no window at module scope).
-    const returnUrl = `${window.location.origin}/orders/${orderNumber.value}`
-    const result = await ordersService.initiatePayment(orderNumber.value, returnUrl)
+    const returnUrl = `${window.location.origin}/orders/${publicId.value}`
+    const result = await ordersService.initiatePayment(publicId.value, returnUrl)
     if (result.redirect_url) {
       window.location.assign(result.redirect_url)
     } else {
@@ -157,10 +160,10 @@ const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
       </template>
     </section>
 
-    <!-- Order reference -->
-    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+    <!-- Order reference — display-only human reference (order_number), never the route's public_id -->
+    <p v-if="order" class="mt-4 text-sm text-gray-500 dark:text-gray-400">
       Order
-      <span class="font-mono">{{ orderNumber }}</span>
+      <span class="font-mono">{{ order.order_number }}</span>
     </p>
 
     <!-- Order items (shown for all states) -->
