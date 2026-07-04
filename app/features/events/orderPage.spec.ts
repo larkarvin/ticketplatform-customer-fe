@@ -3,7 +3,7 @@ import { parseSelection } from './cart'
 import { useOrderStatus } from './composables/useOrderStatus'
 import { buildTicketsQuery, formatCountdown, seedStatus } from './orderPage'
 import { ordersService } from './services/orders.service'
-import type { PublicOrder } from './types'
+import type { PublicOrder, PublicOrderItem } from './types'
 
 describe('formatCountdown', () => {
   it('returns empty string for null', () => {
@@ -45,6 +45,20 @@ describe('formatCountdown', () => {
 // buildTicketsQuery
 // ---------------------------------------------------------------------------
 
+function makeItem(overrides: Partial<PublicOrderItem> = {}): PublicOrderItem {
+  return {
+    type: 'ticket',
+    name: 'General',
+    quantity: 1,
+    unit_price: '0.00',
+    subtotal: '0.00',
+    ticket_id: null,
+    participant_fields: [],
+    attendees: [],
+    ...overrides,
+  }
+}
+
 function makeOrder(overrides: Partial<PublicOrder> = {}): PublicOrder {
   return {
     public_id: '11111111-1111-4111-8111-111111111111',
@@ -56,6 +70,7 @@ function makeOrder(overrides: Partial<PublicOrder> = {}): PublicOrder {
     can_be_paid: false,
     event_slug: 'my-event',
     items: [],
+    can_add_attendees: false,
     ...overrides,
   }
 }
@@ -68,7 +83,7 @@ describe('buildTicketsQuery', () => {
 
   it('returns null when there are no ticket lines', () => {
     const order = makeOrder({
-      items: [{ type: 'addon', name: 'T-shirt', quantity: 1, unit_price: '10.00', subtotal: '10.00', ticket_id: null }],
+      items: [makeItem({ type: 'addon', name: 'T-shirt', quantity: 1, unit_price: '10.00', subtotal: '10.00', ticket_id: null })],
     })
     expect(buildTicketsQuery(order)).toBeNull()
   })
@@ -77,9 +92,9 @@ describe('buildTicketsQuery', () => {
     const order = makeOrder({
       event_slug: 'summer-fest',
       items: [
-        { type: 'ticket', name: 'General', quantity: 2, unit_price: '20.00', subtotal: '40.00', ticket_id: 12 },
-        { type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 },
-        { type: 'addon', name: 'Merch', quantity: 1, unit_price: '10.00', subtotal: '10.00', ticket_id: null },
+        makeItem({ type: 'ticket', name: 'General', quantity: 2, unit_price: '20.00', subtotal: '40.00', ticket_id: 12 }),
+        makeItem({ type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 }),
+        makeItem({ type: 'addon', name: 'Merch', quantity: 1, unit_price: '10.00', subtotal: '10.00', ticket_id: null }),
       ],
     })
     expect(buildTicketsQuery(order)).toBe('12:2,15:1')
@@ -88,8 +103,8 @@ describe('buildTicketsQuery', () => {
   it('produces a string the checkout parser (parseSelection) round-trips exactly', () => {
     const order = makeOrder({
       items: [
-        { type: 'ticket', name: 'General', quantity: 2, unit_price: '20.00', subtotal: '40.00', ticket_id: 12 },
-        { type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 },
+        makeItem({ type: 'ticket', name: 'General', quantity: 2, unit_price: '20.00', subtotal: '40.00', ticket_id: 12 }),
+        makeItem({ type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 }),
       ],
     })
     const query = buildTicketsQuery(order)!
