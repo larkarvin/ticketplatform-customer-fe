@@ -1,6 +1,12 @@
 // Public orders API surface — endpoint calls only, no reactivity/UI. Returns typed DTOs.
 import { useApiClient } from '#core/api'
-import type { PaymentStatusResponse, PublicOrder, PublicOrderRegisterResponse, RegisterPayload } from '../types'
+import type {
+  AttendeeSubmission,
+  PaymentStatusResponse,
+  PublicOrder,
+  PublicOrderRegisterResponse,
+  RegisterPayload,
+} from '../types'
 
 export const ordersService = {
   // Orders are addressed by public_id (a random UUID) — order_number stays as a
@@ -25,4 +31,17 @@ export const ordersService = {
     useApiClient()
       .post<{ data: PublicOrderRegisterResponse }>(`/events/public/${slug}/register`, payload)
       .then((r) => r.data),
+
+  submitAttendees: (publicId: string, participants: AttendeeSubmission[]): Promise<PublicOrder> =>
+    useApiClient()
+      .post<{ data: PublicOrder }>(`/orders/${publicId}/attendees`, { participants })
+      .then((r) => r.data),
+
+  cancelOrder: (publicId: string): Promise<PublicOrder> =>
+    useApiClient()
+      .post<{ data: PublicOrder }>(`/orders/${publicId}/cancel`)
+      .then((r) => r.data),
+
+  resendLink: (publicId: string): Promise<{ message: string }> =>
+    useApiClient().post<{ message: string }>(`/orders/${publicId}/resend-link`),
 }

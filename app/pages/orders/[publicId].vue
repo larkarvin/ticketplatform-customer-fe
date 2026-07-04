@@ -2,6 +2,8 @@
 <script setup lang="ts">
 import { AlertCircle, CheckCircle, Clock, Loader2, Timer } from '#icons'
 import { computed, ref } from 'vue'
+import OrderAttendeePanel from '~/features/events/components/order/OrderAttendeePanel.vue'
+import { useOrderManage } from '~/features/events/composables/useOrderManage'
 import { useOrderStatus } from '~/features/events/composables/useOrderStatus'
 import { formatMoney } from '~/features/events/money'
 import { buildTicketsQuery, formatCountdown, seedStatus } from '~/features/events/orderPage'
@@ -69,6 +71,15 @@ function handleRebuild(): void {
 }
 
 const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
+
+const manage = useOrderManage(order)
+
+async function onCancel(): Promise<void> {
+  if (!window.confirm('This releases your tickets — you’ll need to start over to get them back. Cancel?')) return
+  await manage.cancel()
+  // Reflect the cancellation immediately instead of waiting for the next status poll.
+  await refresh()
+}
 </script>
 
 <template>
@@ -117,6 +128,25 @@ const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
           >
             {{ resuming ? 'Redirecting…' : 'Resume payment' }}
           </button>
+          <button
+            type="button"
+            class="min-h-tap mt-3 block text-sm font-medium text-gray-500 underline hover:text-gray-700 dark:text-gray-400"
+            :disabled="manage.cancelling.value"
+            @click="onCancel"
+          >
+            Cancel this order
+          </button>
+          <button
+            type="button"
+            class="min-h-tap mt-3 block text-sm font-medium text-primary-600 hover:text-primary-700"
+            :disabled="manage.resending.value"
+            @click="manage.resend"
+          >
+            Email me this order link
+          </button>
+          <p v-if="manage.resendMessage.value" class="mt-2 text-sm text-success-700">
+            {{ manage.resendMessage.value }}
+          </p>
         </div>
       </template>
 
@@ -136,6 +166,17 @@ const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
           >
             {{ resuming ? 'Redirecting…' : 'Try again' }}
           </button>
+          <button
+            type="button"
+            class="min-h-tap mt-3 block text-sm font-medium text-primary-600 hover:text-primary-700"
+            :disabled="manage.resending.value"
+            @click="manage.resend"
+          >
+            Email me this order link
+          </button>
+          <p v-if="manage.resendMessage.value" class="mt-2 text-sm text-success-700">
+            {{ manage.resendMessage.value }}
+          </p>
         </div>
       </template>
 
@@ -147,6 +188,26 @@ const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
         </h1>
         <p class="mt-2 text-gray-600 dark:text-gray-300">
           Your spot was released. You're welcome to start a new order.
+        </p>
+        <div class="mt-6">
+          <button
+            type="button"
+            class="min-h-tap min-w-tap inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            @click="handleRebuild"
+          >
+            Rebuild my order
+          </button>
+        </div>
+      </template>
+
+      <!-- cancelled -->
+      <template v-else-if="state === 'cancelled'">
+        <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
+          <Clock :size="28" :stroke-width="2" class="text-gray-400" aria-hidden="true" />
+          This order was cancelled
+        </h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-300">
+          Your tickets were released. You can start a new order any time.
         </p>
         <div class="mt-6">
           <button
@@ -181,5 +242,13 @@ const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
     <p v-if="order" class="mt-4 text-right text-lg font-semibold text-gray-900 dark:text-white">
       Total: {{ formatMoney(Number(order.total), order.currency) }}
     </p>
+
+    <OrderAttendeePanel
+      v-if="order && order.can_add_attendees"
+      :order="order"
+      :errors="manage.attendeeErrors.value"
+      :saving="manage.savingAttendees.value"
+      @submit="manage.submitAttendees"
+    />
   </article>
 </template>

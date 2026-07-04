@@ -3,8 +3,8 @@
  *
  * State mapping (server status → UI state):
  *   paid                              → 'paid'       (terminal)
- *   failed | declined | error |       → 'failed'     (terminal — treated as failed for UI
- *     canceled | cancelled                            purposes; canceled/cancelled = both spellings)
+ *   failed | declined | error         → 'failed'     (terminal)
+ *   canceled | cancelled              → 'cancelled'  (terminal — both spellings)
  *   expired                           → 'expired'    (terminal)
  *   processing                        → 'processing' (non-terminal, polls until terminal)
  *   pending | abandoned |             → 'awaiting'   (non-terminal, still resumable, keeps polling)
@@ -21,12 +21,12 @@
 import { getCurrentScope, onScopeDispose, ref, type Ref } from 'vue'
 import { ordersService } from '../services/orders.service'
 
-export type OrderStatusState = 'processing' | 'paid' | 'awaiting' | 'failed' | 'expired'
+export type OrderStatusState = 'processing' | 'paid' | 'awaiting' | 'failed' | 'expired' | 'cancelled'
 
 const POLL_INTERVAL_MS = 2_000
 const COUNTDOWN_INTERVAL_MS = 1_000
 
-const TERMINAL: ReadonlySet<OrderStatusState> = new Set(['paid', 'failed', 'expired'])
+const TERMINAL: ReadonlySet<OrderStatusState> = new Set(['paid', 'failed', 'expired', 'cancelled'])
 
 function mapStatus(serverStatus: string): OrderStatusState {
   switch (serverStatus) {
@@ -35,9 +35,10 @@ function mapStatus(serverStatus: string): OrderStatusState {
     case 'failed':
     case 'declined':
     case 'error':
+      return 'failed'
     case 'canceled':
     case 'cancelled':
-      return 'failed'
+      return 'cancelled'
     case 'expired':
       return 'expired'
     case 'processing':

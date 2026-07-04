@@ -99,6 +99,17 @@ export interface EventOrderResponse {
   currency: string
 }
 
+export interface OrderAttendee {
+  id: number
+  field_data: Record<string, unknown>
+  status: string
+}
+
+export interface AttendeeSubmission {
+  id: number
+  field_data: Record<string, unknown>
+}
+
 export interface PublicOrderItem {
   type: string
   name: string
@@ -106,6 +117,8 @@ export interface PublicOrderItem {
   unit_price: string
   subtotal: string
   ticket_id: number | null
+  participant_fields: Field[]
+  attendees: OrderAttendee[]
 }
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired' | 'refunded'
@@ -120,6 +133,7 @@ export interface PublicOrder {
   can_be_paid: boolean
   event_slug: string | null
   items: PublicOrderItem[]
+  can_add_attendees: boolean
 }
 
 export interface CalcLine {
