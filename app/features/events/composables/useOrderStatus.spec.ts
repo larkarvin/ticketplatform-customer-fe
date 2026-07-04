@@ -52,18 +52,17 @@ describe('useOrderStatus', () => {
     expect(processingState.value).toBe('processing')
   })
 
-  it('maps failed + cancelled → failed', () => {
+  it('maps failed → failed', () => {
     const { state: f } = useOrderStatus('11111111-1111-4111-8111-111111111111', { status: 'failed', expires_at: null })
     expect(f.value).toBe('failed')
-
-    const { state: c } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
-      status: 'cancelled',
-      expires_at: null,
-    })
-    expect(c.value).toBe('failed')
   })
 
-  it('maps declined + error + canceled (American single-l) → failed', () => {
+  it("maps 'cancelled' to its own terminal state", () => {
+    const { state } = useOrderStatus('p1', { status: 'cancelled', expires_at: null })
+    expect(state.value).toBe('cancelled')
+  })
+
+  it('maps declined + error → failed', () => {
     const { state: d } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'declined',
       expires_at: null,
@@ -72,12 +71,14 @@ describe('useOrderStatus', () => {
 
     const { state: e } = useOrderStatus('11111111-1111-4111-8111-111111111111', { status: 'error', expires_at: null })
     expect(e.value).toBe('failed')
+  })
 
+  it('maps canceled (American single-l) → cancelled', () => {
     const { state: c } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'canceled',
       expires_at: null,
     })
-    expect(c.value).toBe('failed')
+    expect(c.value).toBe('cancelled')
   })
 
   it('maps expired → expired immediately', () => {
