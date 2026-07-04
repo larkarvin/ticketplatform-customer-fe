@@ -47,4 +47,27 @@ describe('ordersService', () => {
     expect(r.public_id).toBe(publicId)
     expect(r.order_number).toBe('A1B2')
   })
+
+  it('submitAttendees posts participants to the attendees endpoint and unwraps data', async () => {
+    post.mockResolvedValue({ data: { public_id: publicId, order_number: 'A1B2' } })
+    const r = await ordersService.submitAttendees(publicId, [{ id: 5, field_data: { name: 'Ada' } }])
+    expect(post).toHaveBeenCalledWith(`/orders/${publicId}/attendees`, {
+      participants: [{ id: 5, field_data: { name: 'Ada' } }],
+    })
+    expect(r.public_id).toBe(publicId)
+  })
+
+  it('cancelOrder posts to the cancel endpoint and unwraps data', async () => {
+    post.mockResolvedValue({ data: { public_id: publicId, order_number: 'A1B2', payment_status: 'cancelled' } })
+    const r = await ordersService.cancelOrder(publicId)
+    expect(post).toHaveBeenCalledWith(`/orders/${publicId}/cancel`)
+    expect(r.payment_status).toBe('cancelled')
+  })
+
+  it('resendLink posts to the resend-link endpoint (no data wrapper)', async () => {
+    post.mockResolvedValue({ message: 'Link sent' })
+    const r = await ordersService.resendLink(publicId)
+    expect(post).toHaveBeenCalledWith(`/orders/${publicId}/resend-link`)
+    expect(r.message).toBe('Link sent')
+  })
 })
