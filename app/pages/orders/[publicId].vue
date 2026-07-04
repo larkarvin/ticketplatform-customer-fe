@@ -2,6 +2,8 @@
 <script setup lang="ts">
 import { AlertCircle, CheckCircle, Clock, Loader2, Timer } from '#icons'
 import { computed, ref } from 'vue'
+import OrderAttendeePanel from '~/features/events/components/order/OrderAttendeePanel.vue'
+import { useOrderManage } from '~/features/events/composables/useOrderManage'
 import { useOrderStatus } from '~/features/events/composables/useOrderStatus'
 import { formatMoney } from '~/features/events/money'
 import { buildTicketsQuery, formatCountdown, seedStatus } from '~/features/events/orderPage'
@@ -69,6 +71,8 @@ function handleRebuild(): void {
 }
 
 const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
+
+const manage = useOrderManage(order)
 </script>
 
 <template>
@@ -181,5 +185,13 @@ const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
     <p v-if="order" class="mt-4 text-right text-lg font-semibold text-gray-900 dark:text-white">
       Total: {{ formatMoney(Number(order.total), order.currency) }}
     </p>
+
+    <OrderAttendeePanel
+      v-if="order && order.can_add_attendees"
+      :order="order"
+      :errors="manage.attendeeErrors.value"
+      :saving="manage.savingAttendees.value"
+      @submit="manage.submitAttendees"
+    />
   </article>
 </template>
