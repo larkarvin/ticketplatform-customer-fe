@@ -77,6 +77,8 @@ const manage = useOrderManage(order)
 async function onCancel(): Promise<void> {
   if (!window.confirm('This releases your tickets — you’ll need to start over to get them back. Cancel?')) return
   await manage.cancel()
+  // Reflect the cancellation immediately instead of waiting for the next status poll.
+  await refresh()
 }
 </script>
 
