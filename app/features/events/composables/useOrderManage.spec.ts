@@ -34,7 +34,7 @@ describe('useOrderManage.submitAttendees', () => {
     mockSubmitAttendees.mockRejectedValue(
       new ValidationError({
         'participants.0.field_data.shirt_size': 'The shirt size field is required.',
-      }),
+      })
     )
     const order = ref<PublicOrder | null>({ public_id: 'p1', payment_status: 'pending' } as PublicOrder)
     const m = useOrderManage(order)

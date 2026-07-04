@@ -2,8 +2,8 @@
      Props-in/events-out — reuses ParticipantCard, no service/#core/api import here. -->
 <script setup lang="ts">
 import { reactive } from 'vue'
-import ParticipantCard from '../checkout/ParticipantCard.vue'
 import type { AttendeeSubmission, PublicOrder } from '../../types'
+import ParticipantCard from '../checkout/ParticipantCard.vue'
 
 const props = defineProps<{ order: PublicOrder; errors: Record<string, string>; saving: boolean }>()
 const emit = defineEmits<{ submit: [AttendeeSubmission[]] }>()

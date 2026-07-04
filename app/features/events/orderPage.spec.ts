@@ -83,7 +83,16 @@ describe('buildTicketsQuery', () => {
 
   it('returns null when there are no ticket lines', () => {
     const order = makeOrder({
-      items: [makeItem({ type: 'addon', name: 'T-shirt', quantity: 1, unit_price: '10.00', subtotal: '10.00', ticket_id: null })],
+      items: [
+        makeItem({
+          type: 'addon',
+          name: 'T-shirt',
+          quantity: 1,
+          unit_price: '10.00',
+          subtotal: '10.00',
+          ticket_id: null,
+        }),
+      ],
     })
     expect(buildTicketsQuery(order)).toBeNull()
   })
@@ -92,9 +101,23 @@ describe('buildTicketsQuery', () => {
     const order = makeOrder({
       event_slug: 'summer-fest',
       items: [
-        makeItem({ type: 'ticket', name: 'General', quantity: 2, unit_price: '20.00', subtotal: '40.00', ticket_id: 12 }),
+        makeItem({
+          type: 'ticket',
+          name: 'General',
+          quantity: 2,
+          unit_price: '20.00',
+          subtotal: '40.00',
+          ticket_id: 12,
+        }),
         makeItem({ type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 }),
-        makeItem({ type: 'addon', name: 'Merch', quantity: 1, unit_price: '10.00', subtotal: '10.00', ticket_id: null }),
+        makeItem({
+          type: 'addon',
+          name: 'Merch',
+          quantity: 1,
+          unit_price: '10.00',
+          subtotal: '10.00',
+          ticket_id: null,
+        }),
       ],
     })
     expect(buildTicketsQuery(order)).toBe('12:2,15:1')
@@ -103,7 +126,14 @@ describe('buildTicketsQuery', () => {
   it('produces a string the checkout parser (parseSelection) round-trips exactly', () => {
     const order = makeOrder({
       items: [
-        makeItem({ type: 'ticket', name: 'General', quantity: 2, unit_price: '20.00', subtotal: '40.00', ticket_id: 12 }),
+        makeItem({
+          type: 'ticket',
+          name: 'General',
+          quantity: 2,
+          unit_price: '20.00',
+          subtotal: '40.00',
+          ticket_id: 12,
+        }),
         makeItem({ type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 }),
       ],
     })
