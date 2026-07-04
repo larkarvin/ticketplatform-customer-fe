@@ -134,6 +134,17 @@ async function onCancel(): Promise<void> {
           >
             Cancel this order
           </button>
+          <button
+            type="button"
+            class="min-h-tap mt-3 block text-sm font-medium text-primary-600 hover:text-primary-700"
+            :disabled="manage.resending.value"
+            @click="manage.resend"
+          >
+            Email me this order link
+          </button>
+          <p v-if="manage.resendMessage.value" class="mt-2 text-sm text-success-700">
+            {{ manage.resendMessage.value }}
+          </p>
         </div>
       </template>
 
@@ -153,6 +164,17 @@ async function onCancel(): Promise<void> {
           >
             {{ resuming ? 'Redirecting…' : 'Try again' }}
           </button>
+          <button
+            type="button"
+            class="min-h-tap mt-3 block text-sm font-medium text-primary-600 hover:text-primary-700"
+            :disabled="manage.resending.value"
+            @click="manage.resend"
+          >
+            Email me this order link
+          </button>
+          <p v-if="manage.resendMessage.value" class="mt-2 text-sm text-success-700">
+            {{ manage.resendMessage.value }}
+          </p>
         </div>
       </template>
 
