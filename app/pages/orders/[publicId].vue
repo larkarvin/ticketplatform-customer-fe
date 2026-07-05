@@ -81,8 +81,13 @@ const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
 const expiryClock = computed(() => {
   const iso = order.value?.expires_at
   if (!iso) return ''
-  // 24-hour, browser timezone (toLocaleTimeString defaults to the local zone).
-  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  // 24-hour, browser timezone (toLocaleTimeString defaults to the local zone), with the zone shown.
+  return new Date(iso).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZoneName: 'short',
+  })
 })
 
 // When the order was paid, formatted in the buyer's locale/timezone. Rendered client-only (see the
@@ -90,7 +95,7 @@ const expiryClock = computed(() => {
 const paidOn = computed(() => {
   const iso = order.value?.paid_at
   if (!iso) return ''
-  // 24-hour clock, browser timezone (toLocaleString defaults to the local zone).
+  // 24-hour clock, browser timezone (toLocaleString defaults to the local zone), with the zone shown.
   return new Date(iso).toLocaleString([], {
     year: 'numeric',
     month: 'short',
@@ -98,12 +103,28 @@ const paidOn = computed(() => {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
+    timeZoneName: 'short',
   })
 })
 
 // Full reload re-runs the SSR fetch from scratch — the simplest correct recovery from a failed load.
 function reloadPage(): void {
   if (typeof window !== 'undefined') window.location.reload()
+}
+
+// Customer self-service: resend the paid receipt to the buyer's own email via the public magic link.
+// Deliberately independent of useOrderManage (order-management / resend-link) — no staff involvement.
+const resendingReceipt = ref(false)
+const receiptMessage = ref<string | null>(null)
+async function resendReceipt(): Promise<void> {
+  if (resendingReceipt.value) return
+  resendingReceipt.value = true
+  try {
+    const { message } = await ordersService.resendReceipt(publicId.value)
+    receiptMessage.value = message
+  } finally {
+    resendingReceipt.value = false
+  }
 }
 
 const manage = useOrderManage(order)
@@ -147,6 +168,19 @@ async function onCancel(): Promise<void> {
           Order
           <span class="font-mono">#{{ order.order_number }}</span>
         </p>
+        <div class="mt-6">
+          <button
+            type="button"
+            class="min-h-tap block text-sm font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
+            :disabled="resendingReceipt"
+            @click="resendReceipt"
+          >
+            {{ resendingReceipt ? 'Sending…' : 'Resend receipt' }}
+          </button>
+          <p v-if="receiptMessage" class="mt-2 text-sm text-success-700">
+            {{ receiptMessage }}
+          </p>
+        </div>
       </template>
 
       <!-- awaiting -->
