@@ -350,6 +350,18 @@ async function onCancel(): Promise<void> {
       </li>
     </ul>
 
+    <!-- Subtotal + fee breakdown (shown only when there are fees; otherwise the Total alone is clear) -->
+    <dl v-if="order && order.fees.length > 0" class="mt-4 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+      <div class="flex justify-between">
+        <dt>Subtotal</dt>
+        <dd>{{ formatMoney(Number(order.subtotal), order.currency) }}</dd>
+      </div>
+      <div v-for="(fee, i) in order.fees" :key="i" class="flex justify-between">
+        <dt>{{ fee.label }}</dt>
+        <dd>{{ formatMoney(Number(fee.amount), order.currency) }}</dd>
+      </div>
+    </dl>
+
     <p v-if="order" class="mt-4 text-right text-lg font-semibold text-gray-900 dark:text-white">
       Total: {{ formatMoney(Number(order.total), order.currency) }}
     </p>

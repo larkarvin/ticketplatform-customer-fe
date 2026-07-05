@@ -130,6 +130,9 @@ export interface PublicOrder {
   public_id: string
   order_number: string
   currency: string
+  subtotal: string
+  fees: { label: string; amount: string }[]
+  fees_total: string
   total: string
   payment_status: PaymentStatus
   expires_at: string | null
