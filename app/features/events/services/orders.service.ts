@@ -44,4 +44,7 @@ export const ordersService = {
 
   resendLink: (publicId: string): Promise<{ message: string }> =>
     useApiClient().post<{ message: string }>(`/orders/${publicId}/resend-link`),
+
+  resendReceipt: (publicId: string): Promise<{ message: string }> =>
+    useApiClient().post<{ message: string }>(`/orders/${publicId}/resend-receipt`),
 }

@@ -73,6 +73,7 @@ function event(over: Partial<PublicEvent> = {}): PublicEvent {
     visibility: 'public',
     cover: null,
     has_capacity: false,
+    collects_info: false,
     available_capacity: null,
     tickets: [{ ...baseTicket, collect_details_later: false, participant_fields: [nameField] }],
     form_fields: null,

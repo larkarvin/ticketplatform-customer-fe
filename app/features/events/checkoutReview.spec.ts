@@ -1,7 +1,7 @@
 // app/features/events/checkoutReview.spec.ts
 import type { Field } from '#core/field-engine/types'
 import { describe, expect, it } from 'vitest'
-import { EDIT_ADDONS, EDIT_ATTENDEES, buildReviewGroups, firstOrderEmail } from './checkoutReview'
+import { EDIT_ADDONS, EDIT_ATTENDEES, buildReviewGroups, firstOrderEmail, initialCheckoutView } from './checkoutReview'
 import type { CartTicket, PublicEvent } from './types'
 
 const nameField: Field = {
@@ -73,6 +73,7 @@ function event(over: Partial<PublicEvent> = {}): PublicEvent {
     available_capacity: null,
     tickets: [ticket],
     form_fields: null,
+    collects_info: false,
     ...over,
   }
 }
@@ -161,5 +162,19 @@ describe('firstOrderEmail', () => {
     const ev = event({ tickets: [ticketWithEmail] })
     const c: CartTicket[] = [{ uid: 'u1', ticket_id: 9, participants: [{ field_data: {} }] }]
     expect(firstOrderEmail(ev, c, {})).toBe('')
+  })
+})
+
+describe('initialCheckoutView', () => {
+  it('opens on review when nothing is collected and tickets are selected', () => {
+    expect(initialCheckoutView(false, true)).toBe('review')
+  })
+
+  it('opens on entry when the event collects info, even with tickets selected', () => {
+    expect(initialCheckoutView(true, true)).toBe('entry')
+  })
+
+  it('opens on entry when the cart is empty, so the buyer can pick tickets first', () => {
+    expect(initialCheckoutView(false, false)).toBe('entry')
   })
 })

@@ -7,7 +7,7 @@ vi.mock('../services/orders.service', () => ({
 }))
 const mockPaymentStatus = vi.mocked(ordersService.paymentStatus)
 
-const POLL_MS = 2_000
+const POLL_MS = 10_000
 const TICK_MS = 1_000
 
 function expiresAt(secondsFromNow: number): string {
@@ -184,21 +184,21 @@ describe('useOrderStatus', () => {
     })
     mockPaymentStatus.mockReturnValue(deferred)
 
-    // expires 5s out — enough headroom to trigger a poll (t=2s) before the countdown (t=5s).
+    // expires 15s out — enough headroom to trigger a poll (t=10s) before the countdown (t=15s).
     const { state } = useOrderStatus('11111111-1111-4111-8111-111111111111', {
       status: 'pending',
-      expires_at: expiresAt(5),
+      expires_at: expiresAt(15),
     })
 
     expect(state.value).toBe('awaiting')
 
-    // Advance past the first poll interval (t=2s) so doPoll() is in-flight.
-    // Countdown has only ticked twice (secondsLeft ~3); state still 'awaiting'.
+    // Advance past the first poll interval (t=10s) so doPoll() is in-flight.
+    // Countdown has ticked ~10 times (secondsLeft ~5); state still 'awaiting'.
     await vi.advanceTimersByTimeAsync(POLL_MS + 100)
     expect(state.value).toBe('awaiting') // poll hasn't resolved yet
 
-    // Advance the remaining ~3 s so the countdown reaches 0 → state flips to 'expired'.
-    await vi.advanceTimersByTimeAsync(4 * TICK_MS)
+    // Advance the remaining ~5 s so the countdown reaches 0 → state flips to 'expired'.
+    await vi.advanceTimersByTimeAsync(5 * TICK_MS)
     expect(state.value).toBe('expired')
 
     // NOW let the stale in-flight poll resolve with 'pending' (would map to 'awaiting').

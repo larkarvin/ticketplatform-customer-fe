@@ -23,7 +23,10 @@ import { ordersService } from '../services/orders.service'
 
 export type OrderStatusState = 'processing' | 'paid' | 'awaiting' | 'failed' | 'expired' | 'cancelled'
 
-const POLL_INTERVAL_MS = 2_000
+// Payment-status poll cadence. Kept at 10s so a guest sitting on the order page stays well under the
+// public API's hourly rate limit (a 2s poll blew past it in minutes → 429s that made a paid order fall
+// back to the "reserved" state). The countdown below ticks independently client-side (no API call).
+const POLL_INTERVAL_MS = 10_000
 const COUNTDOWN_INTERVAL_MS = 1_000
 
 const TERMINAL: ReadonlySet<OrderStatusState> = new Set(['paid', 'failed', 'expired', 'cancelled'])

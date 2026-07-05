@@ -71,6 +71,10 @@ export interface PublicEvent {
   available_capacity: number | null
   tickets: PublicTicket[]
   form_fields: Field[] | null
+  // Backend-computed: true when checkout has attendee details or extras to collect. When false, the
+  // buyer skips the entry step and lands straight on review (nothing to fill in). Emitted only on the
+  // single-event (show) endpoint, so it can be absent elsewhere.
+  collects_info?: boolean
 }
 
 /** A buyer's chosen quantity per ticket, from the event card. */
@@ -112,7 +116,7 @@ export interface AttendeeSubmission {
 
 export interface PublicOrderItem {
   type: string
-  name: string
+  unit_name: string
   quantity: number
   unit_price: string
   subtotal: string
@@ -126,10 +130,19 @@ export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expir
 export interface PublicOrder {
   public_id: string
   order_number: string
+  type: string
+  source_name: string | null
+  source_slug: string | null
   currency: string
+  subtotal: string
+  fees: { label: string; amount: string }[]
+  fees_total: string
   total: string
   payment_status: PaymentStatus
   expires_at: string | null
+  paid_at: string | null
+  // Payment gateway reference for a settled order (present only on the single-order view).
+  payment_reference?: string | null
   can_be_paid: boolean
   event_slug: string | null
   items: PublicOrderItem[]

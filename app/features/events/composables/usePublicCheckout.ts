@@ -32,13 +32,32 @@ export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
   )
 
   function buildCalcPayload(): Pick<RegisterPayload, 'tickets' | 'checkout'> {
+    // Collapse identical cart instances into one ticket line with a summed quantity (and the
+    // participants concatenated in order), so the order records "General Admission × 3" as a single
+    // line item rather than three quantity-1 lines. Only single-admit tickets consolidate: a
+    // group ticket is a distinct container (its own attendees + group name), so every group
+    // instance keeps its own line — keyed by its unique uid, never merged with a sibling group.
+    type TicketLine = RegisterPayload['tickets'][number]
+    const lines = new Map<string, TicketLine>()
+    for (const inst of cart.value) {
+      const isGroup = event.tickets.find((t) => t.id === inst.ticket_id)?.participant_type === 'group'
+      const key = isGroup ? `group:${inst.uid}` : `single:${inst.ticket_id}`
+      const participants = inst.participants.map((p) => ({ field_data: p.field_data }))
+      const existing = lines.get(key)
+      if (existing) {
+        existing.quantity += 1
+        existing.participants.push(...participants)
+      } else {
+        lines.set(key, {
+          ticket_id: inst.ticket_id,
+          quantity: 1,
+          group_name: inst.group_name || undefined,
+          participants,
+        })
+      }
+    }
     return {
-      tickets: cart.value.map((inst) => ({
-        ticket_id: inst.ticket_id,
-        quantity: 1,
-        group_name: inst.group_name || undefined,
-        participants: inst.participants.map((p) => ({ field_data: p.field_data })),
-      })),
+      tickets: [...lines.values()],
       checkout: { ...checkoutAnswers },
     }
   }
