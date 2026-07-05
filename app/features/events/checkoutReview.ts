@@ -17,12 +17,12 @@ export const EDIT_TICKETS = 2
 
 export type CheckoutView = 'entry' | 'review'
 
-// Which step checkout opens on. When the event collects nothing (no attendee details, no extras —
-// `event.collects_info` is false) and tickets are already selected, there is nothing to fill in, so
-// open straight on review. Otherwise open on entry. An empty cart always opens on entry so the buyer
-// can pick tickets first.
+// Which step checkout opens on. Only skip straight to review when we KNOW the event collects nothing
+// (explicit `collects_info === false`) and tickets are already selected — review skips the entry
+// step's validation, so an unknown/absent flag must fall through to the safe default of `entry`. An
+// empty cart always opens on entry so the buyer can pick tickets first.
 export function initialCheckoutView(collectsInfo: boolean, hasTickets: boolean): CheckoutView {
-  return !collectsInfo && hasTickets ? 'review' : 'entry'
+  return collectsInfo === false && hasTickets ? 'review' : 'entry'
 }
 
 function formatAnswer(field: Field, value: unknown): string {
