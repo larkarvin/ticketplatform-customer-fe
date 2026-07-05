@@ -6,6 +6,9 @@ import OrderAttendeePanel from './OrderAttendeePanel.vue'
 const order: PublicOrder = {
   public_id: 'p1',
   order_number: 'X',
+  type: 'event',
+  source_name: 'E',
+  source_slug: 'e',
   currency: 'USD',
   subtotal: '10',
   fees: [],

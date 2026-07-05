@@ -129,6 +129,9 @@ export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expir
 export interface PublicOrder {
   public_id: string
   order_number: string
+  type: string
+  source_name: string | null
+  source_slug: string | null
   currency: string
   subtotal: string
   fees: { label: string; amount: string }[]

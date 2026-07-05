@@ -63,6 +63,9 @@ function makeOrder(overrides: Partial<PublicOrder> = {}): PublicOrder {
   return {
     public_id: '11111111-1111-4111-8111-111111111111',
     order_number: 'ORD-001',
+    type: 'event',
+    source_name: 'My Event',
+    source_slug: 'my-event',
     currency: 'USD',
     subtotal: '100.00',
     fees: [],

@@ -75,6 +75,13 @@ function handleRebuild(): void {
 
 const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
 
+// Link back to the order's source event/form public page. `type` picks the route prefix (/e vs /f).
+const sourceLink = computed(() => {
+  const o = order.value
+  if (!o?.source_slug || !o.source_name) return null
+  return { name: o.source_name, to: `${o.type === 'form' ? '/f/' : '/e/'}${o.source_slug}` }
+})
+
 // Absolute clock time the hold expires (e.g. "14:59"), shown alongside the countdown. Rendered
 // client-only (inside the countdown's ClientOnly) so the local-timezone formatting never differs
 // between the server and the browser.
@@ -330,6 +337,14 @@ async function onCancel(): Promise<void> {
         </button>
       </div>
     </section>
+
+    <!-- Link back to the source event/form public page -->
+    <p v-if="order && sourceLink" class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+      For
+      <NuxtLink :to="sourceLink.to" class="font-medium text-brand-600 hover:text-brand-700 hover:underline">
+        {{ sourceLink.name }}
+      </NuxtLink>
+    </p>
 
     <!-- Order reference — display-only human reference (order_number), never the route's public_id.
          Hidden in the paid state, which shows the reference alongside the paid date instead. -->
