@@ -175,6 +175,10 @@ async function onCancel(): Promise<void> {
           Order
           <span class="font-mono">#{{ order.order_number }}</span>
         </p>
+        <p v-if="order.payment_reference" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Payment ref
+          <span class="font-mono">{{ order.payment_reference }}</span>
+        </p>
         <div class="mt-6">
           <button
             type="button"

@@ -140,6 +140,8 @@ export interface PublicOrder {
   payment_status: PaymentStatus
   expires_at: string | null
   paid_at: string | null
+  // Payment gateway reference for a settled order (present only on the single-order view).
+  payment_reference?: string | null
   can_be_paid: boolean
   event_slug: string | null
   items: PublicOrderItem[]
