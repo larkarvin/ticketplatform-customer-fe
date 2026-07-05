@@ -48,7 +48,7 @@ describe('formatCountdown', () => {
 function makeItem(overrides: Partial<PublicOrderItem> = {}): PublicOrderItem {
   return {
     type: 'ticket',
-    name: 'General',
+    unit_name: 'General',
     quantity: 1,
     unit_price: '0.00',
     subtotal: '0.00',
@@ -67,6 +67,7 @@ function makeOrder(overrides: Partial<PublicOrder> = {}): PublicOrder {
     total: '100.00',
     payment_status: 'failed',
     expires_at: null,
+    paid_at: null,
     can_be_paid: false,
     event_slug: 'my-event',
     items: [],
@@ -86,7 +87,7 @@ describe('buildTicketsQuery', () => {
       items: [
         makeItem({
           type: 'addon',
-          name: 'T-shirt',
+          unit_name: 'T-shirt',
           quantity: 1,
           unit_price: '10.00',
           subtotal: '10.00',
@@ -103,16 +104,23 @@ describe('buildTicketsQuery', () => {
       items: [
         makeItem({
           type: 'ticket',
-          name: 'General',
+          unit_name: 'General',
           quantity: 2,
           unit_price: '20.00',
           subtotal: '40.00',
           ticket_id: 12,
         }),
-        makeItem({ type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 }),
+        makeItem({
+          type: 'ticket',
+          unit_name: 'VIP',
+          quantity: 1,
+          unit_price: '50.00',
+          subtotal: '50.00',
+          ticket_id: 15,
+        }),
         makeItem({
           type: 'addon',
-          name: 'Merch',
+          unit_name: 'Merch',
           quantity: 1,
           unit_price: '10.00',
           subtotal: '10.00',
@@ -128,13 +136,20 @@ describe('buildTicketsQuery', () => {
       items: [
         makeItem({
           type: 'ticket',
-          name: 'General',
+          unit_name: 'General',
           quantity: 2,
           unit_price: '20.00',
           subtotal: '40.00',
           ticket_id: 12,
         }),
-        makeItem({ type: 'ticket', name: 'VIP', quantity: 1, unit_price: '50.00', subtotal: '50.00', ticket_id: 15 }),
+        makeItem({
+          type: 'ticket',
+          unit_name: 'VIP',
+          quantity: 1,
+          unit_price: '50.00',
+          subtotal: '50.00',
+          ticket_id: 15,
+        }),
       ],
     })
     const query = buildTicketsQuery(order)!
@@ -194,8 +209,8 @@ describe('order page status seed (gateway return) + poll transition', () => {
     // Seeded as processing — NOT awaiting — so no "Resume payment" + countdown is shown.
     expect(state.value).toBe('processing')
 
-    // First poll resolves the real outcome.
-    await vi.advanceTimersByTimeAsync(2_100)
+    // First poll (10s cadence) resolves the real outcome.
+    await vi.advanceTimersByTimeAsync(10_100)
     expect(state.value).toBe('paid')
   })
 })

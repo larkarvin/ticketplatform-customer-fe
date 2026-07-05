@@ -52,7 +52,7 @@ function save(): void {
     <button
       data-test="save-attendees"
       type="button"
-      class="min-h-tap mt-4 inline-flex items-center justify-center rounded-lg bg-primary-600 px-6 font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+      class="min-h-tap mt-4 inline-flex items-center justify-center rounded-lg bg-brand-600 px-6 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
       :disabled="saving"
       @click="save"
     >

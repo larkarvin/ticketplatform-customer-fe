@@ -27,10 +27,13 @@ const order = ref<PublicOrder | null>(data.value ?? null)
 const returnStatus = Array.isArray(route.query.status) ? route.query.status[0] : route.query.status
 
 // Replace ad-hoc poll loop with the composable (SSR-safe timers, terminal-state guards).
-const { state, secondsLeft, refresh } = useOrderStatus(publicId.value, {
+const { state, secondsLeft, refresh, stop } = useOrderStatus(publicId.value, {
   status: seedStatus(order.value?.payment_status ?? 'pending', returnStatus ?? undefined),
   expires_at: order.value?.expires_at ?? null,
 })
+
+// Nothing to poll when the order never loaded — the page shows the retry error instead.
+if (!order.value) stop()
 
 // Resume / Try-again — guarded against double-click.
 const resuming = ref(false)
@@ -72,6 +75,28 @@ function handleRebuild(): void {
 
 const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
 
+// Absolute clock time the hold expires (e.g. "14:59"), shown alongside the countdown. Rendered
+// client-only (inside the countdown's ClientOnly) so the local-timezone formatting never differs
+// between the server and the browser.
+const expiryClock = computed(() => {
+  const iso = order.value?.expires_at
+  if (!iso) return ''
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+})
+
+// When the order was paid, formatted in the buyer's locale/timezone. Rendered client-only (see the
+// paid state) so the timezone formatting never mismatches between server and browser.
+const paidOn = computed(() => {
+  const iso = order.value?.paid_at
+  if (!iso) return ''
+  return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+})
+
+// Full reload re-runs the SSR fetch from scratch — the simplest correct recovery from a failed load.
+function reloadPage(): void {
+  if (typeof window !== 'undefined') window.location.reload()
+}
+
 const manage = useOrderManage(order)
 
 async function onCancel(): Promise<void> {
@@ -84,12 +109,14 @@ async function onCancel(): Promise<void> {
 
 <template>
   <article class="mx-auto w-full max-w-2xl px-4 py-10">
-    <!-- Status section — aria-live so screen readers announce state transitions -->
-    <section aria-live="polite">
+    <!-- Status section — aria-live so screen readers announce state transitions. Only shown once the
+         order actually loaded: if the fetch failed (network / rate limit / 5xx) we must NOT fall back
+         to the payable "reserved" state, which would invite a second payment on an already-paid order. -->
+    <section v-if="order" aria-live="polite">
       <!-- processing -->
       <template v-if="state === 'processing'">
         <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
-          <Loader2 :size="28" :stroke-width="2" class="motion-safe:animate-spin text-primary-600" aria-hidden="true" />
+          <Loader2 :size="28" :stroke-width="2" class="motion-safe:animate-spin text-brand-600" aria-hidden="true" />
           Confirming your payment…
         </h1>
         <p class="mt-2 text-gray-600 dark:text-gray-300">
@@ -104,6 +131,13 @@ async function onCancel(): Promise<void> {
           You're in!
         </h1>
         <p class="mt-2 text-gray-600 dark:text-gray-300">A receipt has been emailed to you.</p>
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <ClientOnly>
+            <template v-if="paidOn">Paid {{ paidOn }} ·</template>
+          </ClientOnly>
+          Order
+          <span class="font-mono">#{{ order.order_number }}</span>
+        </p>
       </template>
 
       <!-- awaiting -->
@@ -112,17 +146,30 @@ async function onCancel(): Promise<void> {
           <Timer :size="28" :stroke-width="2" class="text-warning-600" aria-hidden="true" />
           Your order is reserved
         </h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-300">
-          <template v-if="countdownDisplay">
-            Held for
-            <span class="font-mono">{{ countdownDisplay }}</span>
+        <!-- The countdown is time-relative (Date.now), so it must not be server-rendered: SSR and the
+             client would differ by ~1s → a hydration mismatch that crashes the client render (via
+             unhead's unmount cleanup) and drops the buttons below. ClientOnly renders it fresh on the
+             client; the server shows the static fallback. -->
+        <ClientOnly>
+          <p class="mt-2 text-gray-600 dark:text-gray-300">
+            <template v-if="countdownDisplay">
+              Held for
+              <span class="font-mono">{{ countdownDisplay }}</span>
+              <template v-if="expiryClock">
+                until
+                <span class="font-mono">{{ expiryClock }}</span>
+              </template>
+            </template>
+            <template v-else>Complete payment to confirm your spot.</template>
+          </p>
+          <template #fallback>
+            <p class="mt-2 text-gray-600 dark:text-gray-300">Complete payment to confirm your spot.</p>
           </template>
-          <template v-else>Complete payment to confirm your spot.</template>
-        </p>
+        </ClientOnly>
         <div class="mt-6">
           <button
             type="button"
-            class="min-h-tap min-w-tap inline-flex items-center justify-center rounded-lg bg-primary-600 px-6 font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+            class="min-h-tap min-w-tap inline-flex items-center justify-center rounded-lg bg-brand-600 px-6 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
             :disabled="resuming"
             @click="handleResume"
           >
@@ -138,7 +185,7 @@ async function onCancel(): Promise<void> {
           </button>
           <button
             type="button"
-            class="min-h-tap mt-3 block text-sm font-medium text-primary-600 hover:text-primary-700"
+            class="min-h-tap mt-3 block text-sm font-medium text-brand-600 hover:text-brand-700"
             :disabled="manage.resending.value"
             @click="manage.resend"
           >
@@ -160,7 +207,7 @@ async function onCancel(): Promise<void> {
         <div class="mt-6">
           <button
             type="button"
-            class="min-h-tap min-w-tap inline-flex items-center justify-center rounded-lg bg-primary-600 px-6 font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+            class="min-h-tap min-w-tap inline-flex items-center justify-center rounded-lg bg-brand-600 px-6 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
             :disabled="resuming"
             @click="handleResume"
           >
@@ -168,7 +215,7 @@ async function onCancel(): Promise<void> {
           </button>
           <button
             type="button"
-            class="min-h-tap mt-3 block text-sm font-medium text-primary-600 hover:text-primary-700"
+            class="min-h-tap mt-3 block text-sm font-medium text-brand-600 hover:text-brand-700"
             :disabled="manage.resending.value"
             @click="manage.resend"
           >
@@ -221,10 +268,31 @@ async function onCancel(): Promise<void> {
       </template>
     </section>
 
-    <!-- Order reference — display-only human reference (order_number), never the route's public_id -->
-    <p v-if="order" class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+    <!-- Fetch failed — show an explicit error + retry instead of a misleading payable state. -->
+    <section v-else aria-live="polite">
+      <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
+        <AlertCircle :size="28" :stroke-width="2" class="text-danger-600" aria-hidden="true" />
+        We couldn't load your order
+      </h1>
+      <p class="mt-2 text-gray-600 dark:text-gray-300">
+        Check your connection and try again — your order and any payment are safe.
+      </p>
+      <div class="mt-6">
+        <button
+          type="button"
+          class="min-h-tap min-w-tap inline-flex items-center justify-center rounded-lg bg-brand-600 px-6 font-semibold text-white hover:bg-brand-700"
+          @click="reloadPage"
+        >
+          Try again
+        </button>
+      </div>
+    </section>
+
+    <!-- Order reference — display-only human reference (order_number), never the route's public_id.
+         Hidden in the paid state, which shows the reference alongside the paid date instead. -->
+    <p v-if="order && state !== 'paid'" class="mt-4 text-sm text-gray-500 dark:text-gray-400">
       Order
-      <span class="font-mono">{{ order.order_number }}</span>
+      <span class="font-mono">#{{ order.order_number }}</span>
     </p>
 
     <!-- Order items (shown for all states) -->
@@ -234,7 +302,7 @@ async function onCancel(): Promise<void> {
         :key="i"
         class="flex justify-between py-3 text-sm text-gray-700 dark:text-gray-300"
       >
-        <span>{{ item.name }} × {{ item.quantity }}</span>
+        <span>{{ item.unit_name }} × {{ item.quantity }}</span>
         <span>{{ formatMoney(Number(item.subtotal), order.currency) }}</span>
       </li>
     </ul>

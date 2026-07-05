@@ -10,13 +10,14 @@ const order: PublicOrder = {
   total: '10',
   payment_status: 'paid',
   expires_at: null,
+  paid_at: null,
   can_be_paid: false,
   event_slug: 'e',
   can_add_attendees: true,
   items: [
     {
       type: 'ticket',
-      name: 'GA',
+      unit_name: 'GA',
       quantity: 1,
       unit_price: '10',
       subtotal: '10',

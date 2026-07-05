@@ -115,7 +115,7 @@ export interface AttendeeSubmission {
 
 export interface PublicOrderItem {
   type: string
-  name: string
+  unit_name: string
   quantity: number
   unit_price: string
   subtotal: string
@@ -133,6 +133,7 @@ export interface PublicOrder {
   total: string
   payment_status: PaymentStatus
   expires_at: string | null
+  paid_at: string | null
   can_be_paid: boolean
   event_slug: string | null
   items: PublicOrderItem[]
