@@ -12,6 +12,7 @@ import {
   EDIT_TICKETS,
   buildReviewGroups,
   firstOrderEmail,
+  initialCheckoutView,
 } from '~/features/events/checkoutReview'
 import CheckoutAddOns from '~/features/events/components/checkout/CheckoutAddOns.vue'
 import CheckoutAttendees from '~/features/events/components/checkout/CheckoutAttendees.vue'
@@ -34,7 +35,9 @@ const { placeAndPay, submitting, submitError } = c
 const persistence = useCheckoutPersistence(slug.value)
 const { confirm } = useConfirm()
 
-const view = ref<'entry' | 'review'>('entry')
+// Open on review when the event collects nothing and tickets are already selected — the backend's
+// event.collects_info flag is the single source of truth for "is there anything to fill in?".
+const view = ref<'entry' | 'review'>(initialCheckoutView(event.collects_info, cartStore.cart.value.length > 0))
 const reviewGroups = computed(() => buildReviewGroups(event, cartStore.cart.value, c.checkoutAnswers))
 
 // An order is checkout-able with a ticket OR just an optional extra (e.g. a donation / merch), so the

@@ -99,6 +99,7 @@ const event: PublicEvent = {
   visibility: 'public',
   cover: null,
   has_capacity: false,
+  collects_info: false,
   available_capacity: null,
   tickets: [gaTicket],
   form_fields: null,

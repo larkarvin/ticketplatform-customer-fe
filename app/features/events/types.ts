@@ -71,6 +71,9 @@ export interface PublicEvent {
   available_capacity: number | null
   tickets: PublicTicket[]
   form_fields: Field[] | null
+  // Backend-computed: true when checkout has attendee details or extras to collect. When false, the
+  // buyer skips the entry step and lands straight on review (nothing to fill in).
+  collects_info: boolean
 }
 
 /** A buyer's chosen quantity per ticket, from the event card. */
