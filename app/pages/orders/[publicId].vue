@@ -123,12 +123,17 @@ function reloadPage(): void {
 // Deliberately independent of useOrderManage (order-management / resend-link) — no staff involvement.
 const resendingReceipt = ref(false)
 const receiptMessage = ref<string | null>(null)
+const receiptError = ref<string | null>(null)
 async function resendReceipt(): Promise<void> {
   if (resendingReceipt.value) return
   resendingReceipt.value = true
+  receiptMessage.value = null
+  receiptError.value = null
   try {
     const { message } = await ordersService.resendReceipt(publicId.value)
     receiptMessage.value = message
+  } catch {
+    receiptError.value = "We couldn't resend the receipt just now — please try again."
   } finally {
     resendingReceipt.value = false
   }
@@ -190,6 +195,9 @@ async function onCancel(): Promise<void> {
           </button>
           <p v-if="receiptMessage" class="mt-2 text-sm text-success-700">
             {{ receiptMessage }}
+          </p>
+          <p v-if="receiptError" role="alert" class="mt-2 text-sm text-danger-600">
+            {{ receiptError }}
           </p>
         </div>
       </template>

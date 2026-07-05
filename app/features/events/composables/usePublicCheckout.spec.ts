@@ -68,6 +68,34 @@ function event(): PublicEvent {
         ask_group_name: false,
         group_name_label: 'Group name',
       },
+      {
+        id: 2,
+        name: 'Table',
+        description: null,
+        price: 400,
+        price_formatted: '₱400',
+        early_bird_price: null,
+        early_bird_ends_at: null,
+        is_early_bird: false,
+        early_bird_price_formatted: null,
+        currency: 'PHP',
+        is_on_sale: true,
+        is_available: true,
+        available_quantity: null,
+        sales_start_at: null,
+        sales_end_at: null,
+        min_per_order: 1,
+        max_per_order: 10,
+        sort_order: 1,
+        collect_details_later: false,
+        participant_fields: [],
+        participant_type: 'group' as const,
+        min_participants: 4,
+        max_participants: 4,
+        admits_per_ticket: 4,
+        ask_group_name: true,
+        group_name_label: 'Table name',
+      },
     ],
   }
 }
@@ -95,22 +123,13 @@ describe('usePublicCheckout', () => {
     vi.useRealTimers()
   })
 
-  it('buildCalcPayload emits one entry per cart instance carrying group_name', async () => {
+  it('keeps each group-ticket container as its own line (never merges distinct groups)', async () => {
     calculateOrder.mockResolvedValue(mockCalcResult())
 
+    // Ticket 2 is a group ticket — two containers must stay separate even with the same name.
     const cart = ref<CartTicket[]>([
-      {
-        uid: 'a',
-        ticket_id: 1,
-        group_name: 'Table A',
-        participants: [{ field_data: { name: 'Alice' } }],
-      },
-      {
-        uid: 'b',
-        ticket_id: 1,
-        group_name: 'Table B',
-        participants: [{ field_data: { name: 'Bob' } }],
-      },
+      { uid: 'a', ticket_id: 2, group_name: 'Table A', participants: [{ field_data: { name: 'Alice' } }] },
+      { uid: 'b', ticket_id: 2, group_name: 'Table B', participants: [{ field_data: { name: 'Bob' } }] },
     ])
 
     const c = usePublicCheckout(event(), cart)
@@ -121,8 +140,41 @@ describe('usePublicCheckout', () => {
       'gala',
       expect.objectContaining({
         tickets: [
-          { ticket_id: 1, quantity: 1, group_name: 'Table A', participants: [{ field_data: { name: 'Alice' } }] },
-          { ticket_id: 1, quantity: 1, group_name: 'Table B', participants: [{ field_data: { name: 'Bob' } }] },
+          { ticket_id: 2, quantity: 1, group_name: 'Table A', participants: [{ field_data: { name: 'Alice' } }] },
+          { ticket_id: 2, quantity: 1, group_name: 'Table B', participants: [{ field_data: { name: 'Bob' } }] },
+        ],
+      })
+    )
+  })
+
+  it('consolidates identical single-admit instances into one quantity-N line, participants in order', async () => {
+    calculateOrder.mockResolvedValue(mockCalcResult())
+
+    // Ticket 1 is single-admit — three instances collapse into one line, quantity 3.
+    const cart = ref<CartTicket[]>([
+      { uid: 'a', ticket_id: 1, participants: [{ field_data: { name: 'Alice' } }] },
+      { uid: 'b', ticket_id: 1, participants: [{ field_data: { name: 'Bob' } }] },
+      { uid: 'c', ticket_id: 1, participants: [{ field_data: { name: 'Cara' } }] },
+    ])
+
+    const c = usePublicCheckout(event(), cart)
+    c.recalcTotals()
+    await vi.runAllTimersAsync()
+
+    expect(calculateOrder).toHaveBeenCalledWith(
+      'gala',
+      expect.objectContaining({
+        tickets: [
+          {
+            ticket_id: 1,
+            quantity: 3,
+            group_name: undefined,
+            participants: [
+              { field_data: { name: 'Alice' } },
+              { field_data: { name: 'Bob' } },
+              { field_data: { name: 'Cara' } },
+            ],
+          },
         ],
       })
     )

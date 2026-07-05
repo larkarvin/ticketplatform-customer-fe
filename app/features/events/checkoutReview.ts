@@ -21,7 +21,7 @@ export type CheckoutView = 'entry' | 'review'
 // (explicit `collects_info === false`) and tickets are already selected — review skips the entry
 // step's validation, so an unknown/absent flag must fall through to the safe default of `entry`. An
 // empty cart always opens on entry so the buyer can pick tickets first.
-export function initialCheckoutView(collectsInfo: boolean, hasTickets: boolean): CheckoutView {
+export function initialCheckoutView(collectsInfo: boolean | undefined, hasTickets: boolean): CheckoutView {
   return collectsInfo === false && hasTickets ? 'review' : 'entry'
 }
 
