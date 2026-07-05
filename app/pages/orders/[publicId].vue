@@ -81,7 +81,8 @@ const countdownDisplay = computed(() => formatCountdown(secondsLeft.value))
 const expiryClock = computed(() => {
   const iso = order.value?.expires_at
   if (!iso) return ''
-  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  // 24-hour, browser timezone (toLocaleTimeString defaults to the local zone).
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
 })
 
 // When the order was paid, formatted in the buyer's locale/timezone. Rendered client-only (see the
@@ -89,7 +90,15 @@ const expiryClock = computed(() => {
 const paidOn = computed(() => {
   const iso = order.value?.paid_at
   if (!iso) return ''
-  return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+  // 24-hour clock, browser timezone (toLocaleString defaults to the local zone).
+  return new Date(iso).toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
 })
 
 // Full reload re-runs the SSR fetch from scratch — the simplest correct recovery from a failed load.
