@@ -1,6 +1,7 @@
 import { ValidationError } from '#core/errors'
 import { describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
+import { toast } from 'vue-sonner'
 import { ordersService } from '../services/orders.service'
 import type { PublicOrder } from '../types'
 import { useOrderManage } from './useOrderManage'
@@ -11,6 +12,10 @@ vi.mock('../services/orders.service', () => ({
     resendLink: vi.fn(),
     submitAttendees: vi.fn(),
   },
+}))
+
+vi.mock('vue-sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
 }))
 
 const mockCancelOrder = vi.mocked(ordersService.cancelOrder)
@@ -44,5 +49,16 @@ describe('useOrderManage.submitAttendees', () => {
     expect(result).toBe(false)
     expect(m.attendeeErrors.value).toEqual({ '0.shirt_size': 'The shirt size field is required.' })
     expect(m.savingAttendees.value).toBe(false)
+  })
+
+  it('toasts success and replaces the order on a successful save', async () => {
+    mockSubmitAttendees.mockResolvedValue({ public_id: 'p1', payment_status: 'paid' } as PublicOrder)
+    const order = ref<PublicOrder | null>({ public_id: 'p1', payment_status: 'paid' } as PublicOrder)
+    const m = useOrderManage(order)
+
+    const result = await m.submitAttendees([])
+
+    expect(result).toBe(true)
+    expect(toast.success).toHaveBeenCalledWith('Attendee details saved')
   })
 })

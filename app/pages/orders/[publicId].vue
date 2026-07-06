@@ -15,12 +15,17 @@ const route = useRoute()
 // address the order via URL/fetch/poll/resume. order_number is a display-only reference,
 // read from the fetched order below (see the "Order reference" markup).
 const publicId = computed(() => String(route.params.publicId))
-useSeoMeta({ title: () => (order.value?.order_number ? `Order ${order.value.order_number}` : 'Order status') })
 
 // Fetch order synchronously (SSR-safe) before any await in this script block.
 const { data } = await useAsyncData(`order:${publicId.value}`, () => ordersService.getOrder(publicId.value))
 
 const order = ref<PublicOrder | null>(data.value ?? null)
+
+// Register the document title AFTER `order` is declared. The title getter reads `order.value`, and
+// unhead resolves it synchronously when it registers the head entry — so if this ran before `order`
+// existed, the getter would throw on `order` (temporal dead zone), unhead's entry would never be
+// assigned, and the page's onBeforeUnmount would crash with "entry is undefined" on `entry.dispose()`.
+useSeoMeta({ title: () => (order.value?.order_number ? `Order ${order.value.order_number}` : 'Order status') })
 
 // Seed `processing` (not "reserved / Resume payment") when returning from a successful
 // gateway redirect on a not-yet-paid order, so the buyer is never invited to pay twice.
