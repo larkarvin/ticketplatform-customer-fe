@@ -10,14 +10,18 @@ const emit = defineEmits<{ submit: [AttendeeSubmission[]] }>()
 
 // Flatten ticket items → one editable row per attendee, carrying the fields that item's
 // attendees must answer and a mutable copy of their field_data for ParticipantCard to edit in place.
+// Tickets with no participant fields (e.g. a plain general-admission ticket) have nothing to
+// collect, so they're skipped rather than showing an empty card.
 const rows = reactive(
-  props.order.items.flatMap((item) =>
-    (item.attendees ?? []).map((a) => ({
+  props.order.items.flatMap((item) => {
+    const fields = item.participant_fields ?? []
+    if (fields.length === 0) return []
+    return (item.attendees ?? []).map((a) => ({
       id: a.id,
-      fields: item.participant_fields ?? [],
+      fields,
       participant: { field_data: { ...a.field_data } },
     }))
-  )
+  })
 )
 
 function save(): void {
@@ -29,7 +33,7 @@ function save(): void {
 </script>
 
 <template>
-  <section class="mt-8">
+  <section v-if="rows.length > 0" class="mt-8">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Who's attending?</h2>
     <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Add the details for everyone coming.</p>
 

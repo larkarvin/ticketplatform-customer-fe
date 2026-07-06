@@ -64,4 +64,39 @@ describe('OrderAttendeePanel', () => {
     const w = mount(OrderAttendeePanel, { props: { order, errors: {}, saving: true } })
     expect(w.get('[data-test="save-attendees"]').attributes('disabled')).toBeDefined()
   })
+
+  it('skips attendee rows for tickets with no participant fields to collect', () => {
+    const orderWithFieldlessTicket: PublicOrder = {
+      ...order,
+      items: [
+        {
+          type: 'ticket',
+          unit_name: 'General Admission',
+          quantity: 1,
+          unit_price: '10',
+          subtotal: '10',
+          ticket_id: 2,
+          participant_fields: [],
+          attendees: [{ id: 6, field_data: {}, status: 'pending' }],
+        },
+        ...order.items,
+      ],
+    }
+    const w = mount(OrderAttendeePanel, { props: { order: orderWithFieldlessTicket, errors: {}, saving: false } })
+    expect(w.findAll('[data-test="card-toggle"]')).toHaveLength(1)
+  })
+
+  it('renders nothing when every ticket has no participant fields to collect', () => {
+    const orderWithNoFields: PublicOrder = {
+      ...order,
+      items: [
+        {
+          ...order.items[0]!,
+          participant_fields: [],
+        },
+      ],
+    }
+    const w = mount(OrderAttendeePanel, { props: { order: orderWithNoFields, errors: {}, saving: false } })
+    expect(w.find('section').exists()).toBe(false)
+  })
 })

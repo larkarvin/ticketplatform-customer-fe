@@ -2,6 +2,7 @@
 // Calls the service (no direct $fetch); maps 422 → attendeeErrors keyed `${index}.${field_key}`.
 import { isValidationError } from '#core/errors'
 import { ref, type Ref } from 'vue'
+import { toast } from 'vue-sonner'
 import { ordersService } from '../services/orders.service'
 import type { AttendeeSubmission, PublicOrder } from '../types'
 
@@ -42,6 +43,7 @@ export function useOrderManage(order: Ref<PublicOrder | null>) {
     attendeeErrors.value = {}
     try {
       order.value = await ordersService.submitAttendees(id, participants)
+      toast.success('Attendee details saved')
       return true
     } catch (e) {
       if (isValidationError(e)) {

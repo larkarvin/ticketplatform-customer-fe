@@ -15,10 +15,16 @@ const route = useRoute()
 // address the order via URL/fetch/poll/resume. order_number is a display-only reference,
 // read from the fetched order below (see the "Order reference" markup).
 const publicId = computed(() => String(route.params.publicId))
-useSeoMeta({ title: () => (order.value?.order_number ? `Order ${order.value.order_number}` : 'Order status') })
 
-// Fetch order synchronously (SSR-safe) before any await in this script block.
-const { data } = await useAsyncData(`order:${publicId.value}`, () => ordersService.getOrder(publicId.value))
+// Nuxt composables (useAsyncData, useSeoMeta) MUST be called synchronously before any await — after an
+// await the setup context is lost and they throw "composable called outside setup". So start the fetch
+// without awaiting (its `data` ref is available immediately), register the title reading `data` lazily,
+// then await. Reading `data` (not a later-declared `order` ref) also avoids a temporal-dead-zone throw
+// inside the head getter, which would leave unhead with no entry and crash onBeforeUnmount's dispose().
+const asyncOrder = useAsyncData(`order:${publicId.value}`, () => ordersService.getOrder(publicId.value))
+const { data } = asyncOrder
+useSeoMeta({ title: () => (data.value?.order_number ? `Order ${data.value.order_number}` : 'Order status') })
+await asyncOrder
 
 const order = ref<PublicOrder | null>(data.value ?? null)
 
