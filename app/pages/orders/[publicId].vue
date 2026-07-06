@@ -16,16 +16,17 @@ const route = useRoute()
 // read from the fetched order below (see the "Order reference" markup).
 const publicId = computed(() => String(route.params.publicId))
 
-// Fetch order synchronously (SSR-safe) before any await in this script block.
-const { data } = await useAsyncData(`order:${publicId.value}`, () => ordersService.getOrder(publicId.value))
+// Nuxt composables (useAsyncData, useSeoMeta) MUST be called synchronously before any await — after an
+// await the setup context is lost and they throw "composable called outside setup". So start the fetch
+// without awaiting (its `data` ref is available immediately), register the title reading `data` lazily,
+// then await. Reading `data` (not a later-declared `order` ref) also avoids a temporal-dead-zone throw
+// inside the head getter, which would leave unhead with no entry and crash onBeforeUnmount's dispose().
+const asyncOrder = useAsyncData(`order:${publicId.value}`, () => ordersService.getOrder(publicId.value))
+const { data } = asyncOrder
+useSeoMeta({ title: () => (data.value?.order_number ? `Order ${data.value.order_number}` : 'Order status') })
+await asyncOrder
 
 const order = ref<PublicOrder | null>(data.value ?? null)
-
-// Register the document title AFTER `order` is declared. The title getter reads `order.value`, and
-// unhead resolves it synchronously when it registers the head entry — so if this ran before `order`
-// existed, the getter would throw on `order` (temporal dead zone), unhead's entry would never be
-// assigned, and the page's onBeforeUnmount would crash with "entry is undefined" on `entry.dispose()`.
-useSeoMeta({ title: () => (order.value?.order_number ? `Order ${order.value.order_number}` : 'Order status') })
 
 // Seed `processing` (not "reserved / Resume payment") when returning from a successful
 // gateway redirect on a not-yet-paid order, so the buyer is never invited to pay twice.
