@@ -15,6 +15,15 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/eslint', '@pinia/nuxt'],
 
+  css: [
+    // flatpickr's base stylesheet supplies the calendar GRID layout used by fe-core's shared
+    // DatePicker/CalendarPanel (fe-core/main.css only adds brand-tokened theme overrides on top).
+    // Without it, every date field's calendar renders unstyled/misaligned. Design tokens and custom
+    // Tailwind `@utility` rules stay in the single fe-core Tailwind entry (assets/css/main.css) — a
+    // standalone CSS entry has no Tailwind context, so only vendor CSS belongs here.
+    'flatpickr/dist/flatpickr.css',
+  ],
+
   postcss: {
     plugins: {
       '@tailwindcss/postcss': {},
