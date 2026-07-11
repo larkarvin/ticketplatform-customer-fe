@@ -2,6 +2,7 @@
 <!-- Ticket selection card: one row per ticket with a QuantityStepper, plus a single "Get tickets" CTA
      that emits the selection. The event page owns navigation to checkout. -->
 <script setup lang="ts">
+import { Timer } from '#icons'
 import { computed, reactive } from 'vue'
 import QuantityStepper from '~/features/forms/components/controls/QuantityStepper.vue'
 import type { CheckoutSelection, PublicTicket } from '../types'
@@ -40,6 +41,13 @@ const totalQty = computed(() => selection.value.reduce((n, s) => n + s.quantity,
           <p class="text-sm">
             <span class="font-semibold">{{ currentPrice(t) }}</span>
             <span v-if="t.is_early_bird" class="ml-1 text-xs text-gray-400 line-through">{{ t.price_formatted }}</span>
+          </p>
+          <p
+            v-if="t.is_early_bird"
+            class="mt-0.5 flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400"
+          >
+            <Timer :size="14" aria-hidden="true" />
+            Early bird
           </p>
           <p v-if="!t.is_available" class="mt-0.5 text-xs text-gray-400">Sold out</p>
           <p v-else-if="!t.is_on_sale" class="mt-0.5 text-xs text-gray-400">Not on sale yet</p>
