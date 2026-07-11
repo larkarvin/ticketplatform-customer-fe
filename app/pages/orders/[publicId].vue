@@ -3,6 +3,7 @@
 import { AlertCircle, CheckCircle, Clock, Loader2, Timer } from '#icons'
 import { computed, ref } from 'vue'
 import OrderAttendeePanel from '~/features/events/components/order/OrderAttendeePanel.vue'
+import OrderTicketQrList from '~/features/events/components/order/OrderTicketQrList.vue'
 import { useOrderManage } from '~/features/events/composables/useOrderManage'
 import { useOrderStatus } from '~/features/events/composables/useOrderStatus'
 import { formatMoney } from '~/features/events/money'
@@ -406,5 +407,7 @@ async function onCancel(): Promise<void> {
       :saving="manage.savingAttendees.value"
       @submit="manage.submitAttendees"
     />
+
+    <OrderTicketQrList v-if="order" :order="order" :public-id="publicId" />
   </article>
 </template>
