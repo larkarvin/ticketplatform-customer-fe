@@ -1,6 +1,12 @@
 import { fileURLToPath } from 'node:url'
 
+import { resolveSite } from './app/whitelabels/registry'
+
 const isDev = process.env.NODE_ENV !== 'production'
+
+// Whitelabel selected at build time: `npm run dev|build --site=<domain>` (npm exposes it as
+// npm_config_site). Defaults to sportsquad when omitted. Mirrors the #icons alias pattern.
+const site = resolveSite(process.env.npm_config_site)
 
 // Customer-facing public app. Server-rendered (SSR) for SEO, social share cards, and fast first
 // paint. Extends the shared fe-core layer (git submodule) for design tokens, the #icons alias, the
@@ -29,6 +35,7 @@ export default defineNuxtConfig({
     '#icons': fileURLToPath(
       new URL(`./fe-core/app/icons/${process.env.NUXT_PUBLIC_ICON_SET || 'lucide'}/index.ts`, import.meta.url)
     ),
+    '#whitelabel': fileURLToPath(new URL(`./app/whitelabels/${site}`, import.meta.url)),
   },
 
   runtimeConfig: {
@@ -48,6 +55,9 @@ export default defineNuxtConfig({
       devOrgSubdomain: process.env.NUXT_PUBLIC_DEV_ORG_SUBDOMAIN || '',
       // Public origin of THIS deploy (absolute canonical/OG/sitemap URLs), e.g. https://tickets.acme.org
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || '',
+      // The staff-fe admin app for this whitelabel (app.<domain>), used for organizer sign in/up
+      // links. Empty → the marketing chrome hides those buttons.
+      staffUrl: process.env.NUXT_PUBLIC_STAFF_URL || '',
     },
   },
 

@@ -24,5 +24,14 @@ export default withNuxt(
     // Spec files use vitest's mock-before-import pattern; import/first must be off.
     files: ['app/**/*.spec.ts'],
     rules: { 'import/first': 'off' },
+  },
+  {
+    // Whitelabel entry components (Home/Chrome) are single-word BY DESIGN: they are the
+    // per-whitelabel entry points loaded behind the `#whitelabel/Home.vue` / `#whitelabel/Chrome.vue`
+    // import contract, and renaming them would break that contract.
+    files: ['app/whitelabels/**/*.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
   }
 )

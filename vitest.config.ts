@@ -2,6 +2,8 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
+import { resolveSite } from './app/whitelabels/registry'
+
 export default defineConfig({
   plugins: [vue()],
   test: {
@@ -13,6 +15,9 @@ export default defineConfig({
       '#core': fileURLToPath(new URL('./fe-core/app/core', import.meta.url)),
       '#icons': fileURLToPath(
         new URL(`./fe-core/app/icons/${process.env.NUXT_PUBLIC_ICON_SET || 'lucide'}/index.ts`, import.meta.url)
+      ),
+      '#whitelabel': fileURLToPath(
+        new URL(`./app/whitelabels/${resolveSite(process.env.npm_config_site)}`, import.meta.url)
       ),
       '~': fileURLToPath(new URL('./app', import.meta.url)),
       '@': fileURLToPath(new URL('./app', import.meta.url)),
