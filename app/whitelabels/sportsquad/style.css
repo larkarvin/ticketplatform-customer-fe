@@ -1,0 +1,38 @@
+/* app/whitelabels/sportsquad/style.css */
+/* Scoped Martex style-island (ported from the purchased demo-1 template). Every selector is
+   namespaced under .sq so template styles cannot leak into the rest of the app or the catholic
+   site. Accent uses the brand token, not the template's pink hex. */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+.sq {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.sq .sq-accent {
+  color: var(--color-brand-500);
+}
+
+.sq .sq-accent-bg {
+  background-color: var(--color-brand-500);
+}
+
+/* OrganizerPitch: ported from demo-1 hero-1, now a below-grid band with a soft tint instead of
+   the template's fixed background photo. */
+.sq .sq-pitch {
+  background-color: var(--color-brand-25);
+}
+
+/* ValuePoints: ported from demo-1's statistic-1 digit blocks. */
+.sq .sq-stat-number {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.03em;
+}
+
+/* SignupCta: ported from demo-1's banner-3 (cover photo band). Layered under sq-accent-bg with a
+   multiply blend so the brand token stays the dominant color, not the template's raw photo. */
+.sq .sq-cta-band {
+  background-image: url('/whitelabels/sportsquad/cta-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: multiply;
+}
