@@ -46,6 +46,8 @@ export default defineNuxtConfig({
       baseDomain: process.env.NUXT_PUBLIC_BASE_DOMAIN || 'localhost',
       // Dev/preview override: pretend we are on this org's subdomain when the host has none.
       devOrgSubdomain: process.env.NUXT_PUBLIC_DEV_ORG_SUBDOMAIN || '',
+      // Public origin of THIS deploy (absolute canonical/OG/sitemap URLs), e.g. https://tickets.acme.org
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || '',
     },
   },
 
