@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const get = vi.fn()
 const post = vi.fn()
-vi.mock('#core/api', () => ({ useApiClient: () => ({ get, post }) }))
+const put = vi.fn()
+vi.mock('#core/api', () => ({ useApiClient: () => ({ get, post, put }) }))
 
 import { formsService } from './forms.service'
 
@@ -10,6 +11,7 @@ describe('formsService', () => {
   beforeEach(() => {
     get.mockReset()
     post.mockReset()
+    put.mockReset()
   })
 
   it('getPublicForm unwraps the data envelope', async () => {
@@ -51,5 +53,21 @@ describe('formsService', () => {
     const res = await formsService.initiatePayment('ord-123', 'https://app/orders/ord-123')
     expect(post).toHaveBeenCalledWith('/orders/ord-123/pay', { redirect_url: 'https://app/orders/ord-123' })
     expect(res.redirect_url).toBe('https://pay.example/xyz')
+  })
+
+  it('getSubmission unwraps the data envelope', async () => {
+    get.mockResolvedValue({
+      data: { id: 3, slug: 'sub-3', form_data: {}, locked_field_ids: [1], order_public_id: 'ord-3' },
+    })
+    const res = await formsService.getSubmission('sub-3')
+    expect(get).toHaveBeenCalledWith('/submissions/sub-3')
+    expect(res.order_public_id).toBe('ord-3')
+  })
+
+  it('updateSubmission puts id-keyed answers to the submission endpoint', async () => {
+    put.mockResolvedValue({ message: 'Submission updated successfully' })
+    const res = await formsService.updateSubmission('sub-3', { '1': 'new' })
+    expect(put).toHaveBeenCalledWith('/submissions/sub-3', { '1': 'new' })
+    expect(res.message).toContain('updated')
   })
 })
