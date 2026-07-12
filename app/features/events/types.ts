@@ -77,6 +77,21 @@ export interface PublicEvent {
   collects_info?: boolean
 }
 
+/** Home page listing item (subset of `PublicEvent` returned by the list endpoint). */
+export interface PublicEventListItem {
+  id: number
+  slug: string
+  title: string
+  description: string | null
+  starts_at: string
+  ends_at: string | null
+  timezone: string | null
+  location: string | null
+  currency: string
+  cover: { url: string } | null
+  tickets: { price: number; price_formatted: string }[]
+}
+
 /** A buyer's chosen quantity per ticket, from the event card. */
 export interface CheckoutSelection {
   ticket_id: number
