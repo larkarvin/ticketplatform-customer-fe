@@ -27,7 +27,7 @@ const displayName = computed(() => props.orgName?.trim() || chrome.brandName)
         <nav class="flex items-center gap-3 text-sm sm:gap-5">
           <a
             :href="links.signIn || '/'"
-            class="ct-focus min-h-tap hidden items-center font-medium text-gray-700 transition hover:text-brand-600 sm:inline-flex"
+            class="ct-focus min-h-tap inline-flex items-center font-medium text-gray-700 transition hover:text-brand-600"
           >
             Sign in
           </a>

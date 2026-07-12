@@ -29,8 +29,8 @@ const qr = [1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1,
         </ul>
       </div>
 
-      <!-- Visual -->
-      <div :class="i % 2 === 1 ? 'md:order-1' : ''">
+      <!-- Visual (decorative illustration of the feature). -->
+      <div :class="i % 2 === 1 ? 'md:order-1' : ''" aria-hidden="true">
         <!-- Registration forms -->
         <div v-if="item.visual === 'forms'" class="mx-auto max-w-sm rounded-2xl border border-gray-200 bg-white p-7">
           <p class="ct-gold-text text-xs font-bold tracking-widest uppercase">Registration</p>
