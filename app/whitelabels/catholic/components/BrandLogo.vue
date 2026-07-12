@@ -26,7 +26,7 @@
             rx="6"
             fill="none"
             stroke="#141414"
-            stroke-width="3"
+            stroke-width="2"
             stroke-dasharray="6 6"
             stroke-linecap="round"
           />
