@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { staffLinks } from '../staffLinks'
+import BrandLogo from './components/BrandLogo.vue'
 import { chrome } from './content'
 
 // Pure component: orgName + logoUrl + staffUrl come from the layout (which has Nuxt context), so
@@ -17,10 +18,12 @@ const displayName = computed(() => props.orgName?.trim() || chrome.brandName)
     <header class="border-b border-gray-100">
       <div class="mx-auto flex min-h-tap w-full max-w-5xl items-center justify-between px-4 py-3">
         <NuxtLink to="/" class="flex min-h-tap items-center">
-          <img v-if="logoUrl" :src="logoUrl" :alt="displayName" class="h-8 w-auto" />
-          <span v-else class="text-lg font-semibold" :style="{ color: 'var(--color-brand-500)' }">
-            {{ displayName }}
+          <!-- A specific org's own logo/name wins; on the platform home, show the CatholicTickets mark. -->
+          <img v-if="logoUrl" :src="logoUrl" :alt="displayName" class="h-9 w-auto" />
+          <span v-else-if="orgName" class="text-lg font-semibold" :style="{ color: 'var(--color-brand-500)' }">
+            {{ orgName }}
           </span>
+          <BrandLogo v-else />
         </NuxtLink>
         <nav v-if="links.enabled" class="flex items-center gap-4 text-sm">
           <span class="hidden text-gray-400 sm:inline">For organizers</span>
