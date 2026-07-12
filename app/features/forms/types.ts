@@ -52,7 +52,11 @@ export type SubmitAnswers = Record<string, unknown> & { guest_email?: string }
 
 // Server-computed price breakdown for a priced submission (POST /forms/public/{slug}/calculate).
 export interface PaymentLineItem {
-  field_label: string
+  /** The line's display name — the canonical key the preview engine sends for every line
+   *  (base price, ticket, add-on). Prefer this; the *_label/product_name fields are optional
+   *  richer variants that may be absent. */
+  label?: string
+  field_label?: string
   /** The product's name for product line items (absent for priced select options). */
   product_name?: string
   /** Plain-words label for the chosen option/variant; falls back to the field label. */
