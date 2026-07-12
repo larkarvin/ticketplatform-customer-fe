@@ -2,8 +2,8 @@
      and empty states. The page owns the query (usePublicEvents) and passes events/error in, so
      this component stays SSR/context-free and unit-testable. -->
 <script setup lang="ts">
-import EventCard from './EventCard.vue'
 import type { PublicEventListItem } from '../types'
+import EventCard from './EventCard.vue'
 
 withDefaults(
   defineProps<{

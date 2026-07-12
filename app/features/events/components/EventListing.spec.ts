@@ -4,8 +4,15 @@ import type { PublicEventListItem } from '../types'
 import EventListing from './EventListing.vue'
 
 const event = {
-  id: 1, slug: 'gala', title: 'Spring Gala', starts_at: '2026-08-01T18:00:00+00:00',
-  ends_at: null, timezone: 'UTC', location: 'Hall A', cover: null, tickets: [],
+  id: 1,
+  slug: 'gala',
+  title: 'Spring Gala',
+  starts_at: '2026-08-01T18:00:00+00:00',
+  ends_at: null,
+  timezone: 'UTC',
+  location: 'Hall A',
+  cover: null,
+  tickets: [],
 } as unknown as PublicEventListItem
 
 describe('EventListing', () => {
