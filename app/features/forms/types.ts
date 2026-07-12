@@ -38,6 +38,11 @@ export interface SubmitResult {
   submission_slug: string
   edit_url: string
   requires_payment: boolean
+  /** Always present — an Order is created for every submission (even $0). */
+  public_id: string
+  /** Only present when requires_payment is true. */
+  order_number?: string
+  payment_total?: number
 }
 
 export interface UploadedMedia {
@@ -76,4 +81,22 @@ export interface PaymentBreakdown {
   subtotal: number
   fees_total: number
   total: number
+}
+
+// GET /submissions/{slug} — an existing submission loaded for editing.
+export interface SubmissionDetail {
+  id: number
+  slug: string
+  edit_url: string
+  email: string | null
+  submitter_name: string | null
+  /** Answers keyed by field_key (UUID). The edit composable maps these to field id for the inputs. */
+  form_data: Record<string, unknown>
+  total_amount: number | null
+  status: string
+  /** Field ids to render read-only (priced-when-paid + disabled_after_submission). */
+  locked_field_ids: number[]
+  /** The linked order's public handle — where the edit page returns after saving. */
+  order_public_id: string | null
+  form: Form
 }
