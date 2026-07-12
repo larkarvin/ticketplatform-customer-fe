@@ -6,6 +6,7 @@ import {
   EventBanner,
   EventDetailsBody,
   EventHero,
+  EventShare,
   EventTicketList,
   useEventSeo,
   usePublicEvent,
@@ -39,6 +40,7 @@ function onCheckout(selection: CheckoutSelection[]): void {
       <div class="grid gap-8 lg:grid-cols-[1fr_22rem]">
         <div class="min-w-0 space-y-8 py-6 lg:py-8">
           <EventHero :event="event" />
+          <EventShare :url="`${config.public.siteUrl}/e/${slug}`" :title="event.title" />
           <EventDetailsBody :html="event.details" />
         </div>
 
