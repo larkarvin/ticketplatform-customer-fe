@@ -2,6 +2,7 @@
 import type { ChromeContent } from '../types'
 
 export const chrome: ChromeContent = {
+  brandName: 'SportSquad',
   contactEmail: 'hello@sportsquad.io',
   footerLinks: [
     { label: 'Terms', to: '/terms' },

@@ -6,6 +6,9 @@ export interface FooterLink {
 }
 
 export interface ChromeContent {
+  // The whitelabel's own brand name (e.g. "SportSquad"), shown in the header/footer when no
+  // specific organization branding has resolved. Never the generic app name.
+  brandName: string
   contactEmail: string
   footerLinks: FooterLink[]
 }

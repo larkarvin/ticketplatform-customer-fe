@@ -1,6 +1,7 @@
 import type { ChromeContent } from '../types'
 
 export const chrome: ChromeContent = {
+  brandName: 'CatholicTickets',
   contactEmail: 'hello@catholictickets.com',
   footerLinks: [
     { label: 'Terms', to: '/terms' },
