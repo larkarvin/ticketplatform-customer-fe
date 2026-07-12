@@ -1,16 +1,25 @@
+<!-- app/whitelabels/catholic/components/HowItWorks.vue — three gentle steps. Roman numerals are the
+     structural device because the steps are a real sequence; a gold rule sits under each. -->
 <script setup lang="ts">
-import { Calendar, CheckCircle, Link2 } from '#icons'
-defineProps<{ steps: { title: string; body: string }[] }>()
-const icons = [Calendar, Link2, CheckCircle]
+defineProps<{
+  eyebrow: string
+  heading: string
+  items: { numeral: string; title: string; body: string }[]
+}>()
 </script>
 
 <template>
-  <section class="mx-auto max-w-5xl px-4 py-16">
-    <div class="grid gap-8 sm:grid-cols-3">
-      <div v-for="(s, i) in steps" :key="s.title" class="text-center">
-        <component :is="icons[i]" :size="40" class="mx-auto text-brand-500" aria-hidden="true" />
-        <h3 class="mt-4 text-lg font-semibold text-gray-900">{{ s.title }}</h3>
-        <p class="mt-2 text-gray-600">{{ s.body }}</p>
+  <section class="mx-auto max-w-6xl px-6 py-24">
+    <div class="mx-auto max-w-2xl text-center">
+      <p class="ct-eyebrow ct-eyebrow--center">{{ eyebrow }}</p>
+      <h2 class="mt-3 text-4xl text-brand-600">{{ heading }}</h2>
+    </div>
+    <div class="mx-auto mt-14 grid max-w-4xl gap-12 sm:grid-cols-3">
+      <div v-for="step in items" :key="step.numeral" class="text-center">
+        <div class="ct-display ct-gold-text text-3xl font-semibold">{{ step.numeral }}</div>
+        <div class="ct-gold-rule mx-auto mt-4 mb-5 h-px w-9"></div>
+        <h3 class="text-xl text-brand-600">{{ step.title }}</h3>
+        <p class="mt-2 text-sm text-gray-600">{{ step.body }}</p>
       </div>
     </div>
   </section>

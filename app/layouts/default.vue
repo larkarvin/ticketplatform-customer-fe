@@ -7,6 +7,10 @@ import { computed } from 'vue'
 
 const config = useRuntimeConfig()
 const staffUrl = config.public.staffUrl as string
+// Whether we're on the marketing home — a whitelabel may theme its home differently from its
+// functional pages (e.g. catholic uses this to scope its marketing look to the home only).
+const route = useRoute()
+const isHome = computed(() => route.path === '/')
 const { branding } = useTenant()
 // Only the RESOLVED organization name (empty when no org branding). Chrome falls back to the
 // whitelabel's own brand name in that case — never the generic app name ("Platform").
@@ -17,7 +21,7 @@ const logoUrl = computed(() => branding.value?.logoUrl || null)
 </script>
 
 <template>
-  <Chrome :staff-url="staffUrl" :org-name="orgName" :logo-url="logoUrl">
+  <Chrome :staff-url="staffUrl" :org-name="orgName" :logo-url="logoUrl" :is-home="isHome">
     <slot />
   </Chrome>
 </template>
