@@ -2,7 +2,10 @@ import type { ChromeContent } from '../types'
 
 export const chrome: ChromeContent = {
   contactEmail: 'hello@catholictickets.com',
-  footerLinks: [{ label: 'Terms', to: '/terms' }],
+  footerLinks: [
+    { label: 'Terms', to: '/terms' },
+    { label: 'Privacy', to: '/privacy' },
+  ],
 }
 
 export const home = {

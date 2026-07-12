@@ -9,3 +9,24 @@ export interface ChromeContent {
   contactEmail: string
   footerLinks: FooterLink[]
 }
+
+// A numbered section of a legal document. `paragraphs` render as prose; optional `bullets` render
+// as a list beneath them.
+export interface LegalSection {
+  heading: string
+  paragraphs?: string[]
+  bullets?: string[]
+}
+
+// A per-whitelabel legal document (Terms, Privacy Policy) rendered by the shared LegalPage via the
+// `#whitelabel` alias. `companyLegalName` and `jurisdiction` are legal placeholders each deploy
+// MUST set before launch (see each site's terms.ts / privacy.ts).
+export interface LegalDocument {
+  title: string
+  brandName: string
+  companyLegalName: string
+  jurisdiction: string
+  lastUpdated: string
+  intro: string[]
+  sections: LegalSection[]
+}

@@ -1,13 +1,13 @@
 <!-- app/pages/terms.vue -->
+<!-- Shared Terms route. Content is per-whitelabel: `#whitelabel/terms` resolves to the active
+     site's terms.ts (sportsquad or catholic), so each brand serves its own Terms & Conditions. -->
 <script setup lang="ts">
+import { terms } from '#whitelabel/terms'
+import LegalPage from '~/components/LegalPage.vue'
+
 useHead({ title: 'Terms' })
 </script>
 
 <template>
-  <section class="mx-auto w-full max-w-3xl px-4 py-12">
-    <h1 class="mb-4 text-2xl font-semibold text-gray-900">Terms &amp; Conditions</h1>
-    <p class="text-gray-600">
-      These terms will be published before launch. For questions in the meantime, contact the event organizer.
-    </p>
-  </section>
+  <LegalPage :doc="terms" />
 </template>
