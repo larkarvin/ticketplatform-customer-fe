@@ -1,0 +1,202 @@
+/* app/whitelabels/catholic/theme.css */
+/* CatholicTickets design-token layer. All hex lives HERE (the token layer); components consume tokens
+   via Tailwind `brand-*` / `gray-*` utilities (remapped below) and the small set of `.ct-*` semantic
+   classes. Everything is scoped under `.ct` (applied at the whitelabel Chrome root), so the warm
+   parchment palette + Fraunces/Public Sans typography cover the catholic whitelabel without leaking. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap');
+
+.ct {
+  /* Brand ramp → liturgical burgundy-violet (primary = brand-600). */
+  --color-brand-25: #faf6f8;
+  --color-brand-50: #f5edf1;
+  --color-brand-100: #ead8e2;
+  --color-brand-200: #d8b6c9;
+  --color-brand-300: #be8ca8;
+  --color-brand-400: #9c5f83;
+  --color-brand-500: #7a3e62;
+  --color-brand-600: #5b2a4a;
+  --color-brand-700: #46203a;
+  --color-brand-800: #351830;
+  --color-brand-900: #271226;
+  --color-brand-950: #1b0c1b;
+
+  /* Neutrals → warm (so standard gray-* utilities read warm within the catholic pages). */
+  --color-gray-25: #fdfbf7;
+  --color-gray-50: #faf6ef;
+  --color-gray-100: #f1eade;
+  --color-gray-200: #e7ddcc;
+  --color-gray-300: #dcd0be;
+  --color-gray-400: #a99a8b;
+  --color-gray-500: #8a7c70;
+  --color-gray-600: #6b5d54;
+  --color-gray-700: #463c34;
+  --color-gray-800: #322a24;
+  --color-gray-900: #2a2320;
+
+  /* Catholic-specific tokens. */
+  --ct-parchment: #fbf7f0;
+  --ct-stone: #f3ece0;
+  --ct-gold: #d9a521;
+  --ct-gold-deep: #8a6314;
+  --ct-arch-radius: 200px;
+
+  /* Typography: Public Sans body, Fraunces display. */
+  --font-family: 'Public Sans', sans-serif;
+  --ct-font-display: 'Fraunces', serif;
+
+  background-color: var(--ct-parchment);
+  color: var(--color-gray-900);
+  font-family: var(--font-family);
+}
+
+/* Reverent serif for headings + the display helper. Colour is applied per-element with a text-*
+   utility (so the invite band heading can be white) — only the typeface is set here. */
+.ct h1,
+.ct h2,
+.ct h3,
+.ct .ct-display {
+  font-family: var(--ct-font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.14;
+}
+
+/* Gold eyebrow label with a short gold tick. */
+.ct .ct-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ct-gold-deep);
+}
+.ct .ct-eyebrow::before {
+  content: '';
+  width: 1.75rem;
+  height: 1.5px;
+  background: var(--ct-gold);
+}
+.ct .ct-eyebrow--center {
+  justify-content: center;
+}
+
+/* Signature: the Romanesque arch card + inset gold halo hairline. */
+.ct .ct-arch {
+  border-radius: var(--ct-arch-radius) var(--ct-arch-radius) 1.25rem 1.25rem;
+  box-shadow: 0 24px 60px -30px rgb(70 32 58 / 0.35);
+}
+.ct .ct-arch--sm {
+  --ct-arch-radius: 7.5rem;
+}
+.ct .ct-arch-halo {
+  position: relative;
+}
+.ct .ct-arch-halo::before {
+  content: '';
+  position: absolute;
+  inset: 0.5625rem 0.5625rem auto 0.5625rem;
+  height: 11rem;
+  border: 1.5px solid var(--ct-gold);
+  border-bottom: none;
+  border-radius: calc(var(--ct-arch-radius) - 0.5rem) calc(var(--ct-arch-radius) - 0.5rem) 0 0;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Surfaces + gold accents. */
+.ct .ct-parchment {
+  background-color: var(--ct-parchment);
+}
+.ct .ct-stone {
+  background-color: var(--ct-stone);
+}
+.ct .ct-gold-rule {
+  background-color: var(--ct-gold);
+}
+.ct .ct-gold-text {
+  color: var(--ct-gold-deep);
+}
+.ct .ct-gold-btn {
+  background-color: var(--ct-gold);
+  color: var(--color-brand-700);
+}
+.ct .ct-gold-btn:hover {
+  background-color: #c8941a;
+}
+
+/* Respect reduced motion for the hover transitions used across the sections. */
+@media (prefers-reduced-motion: reduce) {
+  .ct * {
+    transition: none !important;
+  }
+}
+
+/* Translucent sticky header surface. */
+.ct .ct-header {
+  background-color: color-mix(in srgb, var(--ct-parchment) 90%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+/* Consistent, visible keyboard focus ring on interactive elements. */
+.ct .ct-focus:focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Gold halo arch cresting the closing invitation band. */
+.ct .ct-invite::before {
+  content: '';
+  position: absolute;
+  top: -3.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22rem;
+  height: 12rem;
+  border: 1.5px solid color-mix(in srgb, var(--ct-gold) 55%, transparent);
+  border-top: none;
+  border-radius: 0 0 999px 999px;
+  pointer-events: none;
+}
+
+/* Old-wooden picture frame for the upcoming-events board (replaces the arch on this panel). */
+.ct .ct-frame {
+  position: relative;
+  display: flex;
+  padding: 1.4rem;
+  border-radius: 3px;
+  background-color: #5c3d20;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.1) 0 1px,
+      rgb(255 255 255 / 0.03) 1px 3px,
+      transparent 3px 9px
+    ),
+    linear-gradient(150deg, #7a5230 0%, #4e3319 45%, #6b4526 74%, #3f2913 100%);
+  box-shadow:
+    inset 0 2px 2px rgb(255 255 255 / 0.28),
+    inset 0 -3px 4px rgb(0 0 0 / 0.45),
+    inset 2px 0 3px rgb(0 0 0 / 0.25),
+    inset -2px 0 3px rgb(0 0 0 / 0.25);
+}
+/* Ornate gold inner lip. */
+.ct .ct-frame::after {
+  content: '';
+  position: absolute;
+  inset: 1.05rem;
+  border: 2px solid color-mix(in srgb, var(--ct-gold) 72%, #6a4d10);
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25);
+  pointer-events: none;
+}
+/* Aged-paper mat inside the frame. */
+.ct .ct-frame-mat {
+  width: 100%;
+  border-radius: 1px;
+  background-color: #fdfaf3;
+  padding: 1.75rem 1.5rem;
+}
