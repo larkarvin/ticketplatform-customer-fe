@@ -15,7 +15,7 @@
                L -40 -46 A 12 12 0 0 0 -28 -58 Z"
             fill="#ffffff"
             stroke="#141414"
-            stroke-width="7"
+            stroke-width="5"
             stroke-linejoin="round"
           />
           <rect
@@ -26,13 +26,13 @@
             rx="6"
             fill="none"
             stroke="#141414"
-            stroke-width="4"
+            stroke-width="3"
             stroke-dasharray="6 6"
             stroke-linecap="round"
           />
         </g>
       </defs>
-      <ellipse cx="120" cy="34" rx="58" ry="10" fill="none" stroke="#D9A521" stroke-width="9" />
+      <ellipse cx="120" cy="34" rx="58" ry="10" fill="none" stroke="#D9A521" stroke-width="6.5" />
       <use href="#ct-tkt" transform="translate(90,138) rotate(32)" />
       <use href="#ct-tkt" transform="translate(126,120) rotate(15)" />
     </svg>
