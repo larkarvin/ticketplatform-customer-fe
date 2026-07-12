@@ -45,4 +45,11 @@ describe('formsService', () => {
     expect((body as FormData).get('file')).toBe(file)
     expect(media.uuid).toBe('abc')
   })
+
+  it('initiatePayment posts the redirect url and unwraps the data envelope', async () => {
+    post.mockResolvedValue({ data: { redirect_url: 'https://pay.example/xyz' } })
+    const res = await formsService.initiatePayment('ord-123', 'https://app/orders/ord-123')
+    expect(post).toHaveBeenCalledWith('/orders/ord-123/pay', { redirect_url: 'https://app/orders/ord-123' })
+    expect(res.redirect_url).toBe('https://pay.example/xyz')
+  })
 })

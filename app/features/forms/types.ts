@@ -38,6 +38,11 @@ export interface SubmitResult {
   submission_slug: string
   edit_url: string
   requires_payment: boolean
+  /** Always present — an Order is created for every submission (even $0). */
+  public_id: string
+  /** Only present when requires_payment is true. */
+  order_number?: string
+  payment_total?: number
 }
 
 export interface UploadedMedia {

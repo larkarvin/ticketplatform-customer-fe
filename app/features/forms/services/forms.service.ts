@@ -22,4 +22,11 @@ export const formsService = {
     form.append('file', file)
     return useApiClient().post<UploadedMedia>(`/forms/public/${slug}/fields/${fieldId}/upload`, form)
   },
+
+  // Kick off payment for the order minted by submit. The /orders/{id}/pay endpoint is
+  // order-generic (same one events use); forms call it directly to keep the feature sealed.
+  initiatePayment: (publicId: string, redirectUrl: string): Promise<{ redirect_url?: string }> =>
+    useApiClient()
+      .post<{ data: { redirect_url?: string } }>(`/orders/${publicId}/pay`, { redirect_url: redirectUrl })
+      .then((r) => r.data),
 }
