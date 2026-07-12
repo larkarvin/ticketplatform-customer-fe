@@ -1,8 +1,13 @@
 // Public events API surface — endpoint calls only, no reactivity/UI. Returns typed DTOs.
 import { useApiClient } from '#core/api'
-import type { EventOrderResponse, OrderCalculation, PublicEvent, RegisterPayload } from '../types'
+import type { EventOrderResponse, OrderCalculation, PublicEvent, PublicEventListItem, RegisterPayload } from '../types'
 
 export const eventsService = {
+  list: (): Promise<PublicEventListItem[]> =>
+    useApiClient()
+      .get<{ data: PublicEventListItem[] }>('/events/public/', { query: { 'filter[upcoming]': 1 } })
+      .then((r) => r.data),
+
   getPublicEvent: (slug: string): Promise<PublicEvent> =>
     useApiClient()
       .get<{ data: PublicEvent }>(`/events/public/${slug}`)
