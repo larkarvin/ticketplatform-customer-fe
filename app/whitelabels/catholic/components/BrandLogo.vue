@@ -1,30 +1,40 @@
 <!-- app/whitelabels/catholic/components/BrandLogo.vue -->
-<!-- CatholicTickets brand mark: a horizontal ticket in the brand token with a thin gold halo
-     centred above it (a halo "over" the ticket, like a nimbus over a saint). Deliberately NOT a
-     diagonal shaft — a tilted ticket with a loop at one end reads badly. No text inside; paired
-     with a legible wordmark. Halo is a restrained gold ring (logo asset colour, reverent). -->
+<!-- CatholicTickets brand mark: two fanned tickets (scalloped edges + dashed inner rectangles)
+     with a gold halo floating above. Approved logo. Paired with a legible wordmark. Colours are
+     the logo's own asset colours (black tickets, gold halo). -->
 <script setup lang="ts"></script>
 
 <template>
   <span class="flex items-center gap-2.5">
-    <svg viewBox="0 0 56 36" class="h-9 w-auto shrink-0" aria-hidden="true">
-      <!-- halo: thin gold ellipse centred above the ticket -->
-      <ellipse cx="26" cy="7" rx="15" ry="3" fill="none" stroke="#D9A521" stroke-width="2" />
-      <!-- horizontal ticket (brand-toned) -->
-      <rect x="4" y="15" width="44" height="16" rx="3" fill="var(--color-brand-500)" />
-      <!-- perforation + notches read as a tear line before the stub -->
-      <line
-        x1="37"
-        y1="17"
-        x2="37"
-        y2="29"
-        stroke="#ffffff"
-        stroke-width="1.3"
-        stroke-linecap="round"
-        stroke-dasharray="1.5 1.9"
-      />
-      <circle cx="37" cy="15" r="2" fill="#ffffff" />
-      <circle cx="37" cy="31" r="2" fill="#ffffff" />
+    <svg viewBox="16 16 182 192" class="h-10 w-auto shrink-0" aria-hidden="true">
+      <defs>
+        <g id="ct-tkt">
+          <path
+            d="M -28 -58 L 28 -58 A 12 12 0 0 0 40 -46 L 40 -9 A 9 9 0 0 0 40 9 L 40 46
+               A 12 12 0 0 0 28 58 L -28 58 A 12 12 0 0 0 -40 46 L -40 9 A 9 9 0 0 0 -40 -9
+               L -40 -46 A 12 12 0 0 0 -28 -58 Z"
+            fill="#ffffff"
+            stroke="#141414"
+            stroke-width="7"
+            stroke-linejoin="round"
+          />
+          <rect
+            x="-18"
+            y="-34"
+            width="36"
+            height="68"
+            rx="6"
+            fill="none"
+            stroke="#141414"
+            stroke-width="4"
+            stroke-dasharray="6 6"
+            stroke-linecap="round"
+          />
+        </g>
+      </defs>
+      <ellipse cx="120" cy="34" rx="58" ry="10" fill="none" stroke="#D9A521" stroke-width="9" />
+      <use href="#ct-tkt" transform="translate(90,138) rotate(32)" />
+      <use href="#ct-tkt" transform="translate(126,120) rotate(15)" />
     </svg>
     <span class="text-lg font-semibold" :style="{ color: 'var(--color-brand-500)' }">CatholicTickets</span>
   </span>
