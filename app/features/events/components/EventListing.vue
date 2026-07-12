@@ -18,7 +18,7 @@ withDefaults(
 
 <template>
   <section class="mx-auto w-full max-w-5xl px-4 py-8">
-    <h1 class="mb-2 text-3xl font-semibold">{{ heading }}</h1>
+    <h1 v-if="heading" class="mb-2 text-3xl font-semibold">{{ heading }}</h1>
     <p v-if="subheading" class="mb-6 text-gray-500">{{ subheading }}</p>
 
     <p v-if="error" class="text-gray-500">Couldn't load events — please try again.</p>
