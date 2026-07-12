@@ -3,15 +3,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import type { Form } from '~/features/forms/types'
 
-const { getPublicForm, submitForm } = vi.hoisted(() => ({ getPublicForm: vi.fn(), submitForm: vi.fn() }))
+const { getPublicForm, submitForm, initiatePayment } = vi.hoisted(() => ({
+  getPublicForm: vi.fn(),
+  submitForm: vi.fn(),
+  initiatePayment: vi.fn(),
+}))
 vi.mock('~/features/forms/services/forms.service', () => ({
-  formsService: { getPublicForm, submitForm, uploadFieldMedia: vi.fn() },
+  formsService: { getPublicForm, submitForm, initiatePayment, uploadFieldMedia: vi.fn() },
 }))
 
 // Stub the Nuxt auto-imports usePublicForm relies on (it runs outside a Nuxt app here).
 beforeEach(() => {
   getPublicForm.mockReset()
   submitForm.mockReset()
+  initiatePayment.mockReset()
+  vi.stubGlobal('navigateTo', vi.fn())
   vi.stubGlobal('useAsyncData', (_key: string, handler: () => Promise<unknown>) => {
     const data = ref<unknown>(null)
     const error = ref<unknown>(null)
@@ -194,5 +200,52 @@ describe('usePublicForm', () => {
     await s.submit()
     expect(submitForm).not.toHaveBeenCalled()
     expect(s.errors.value[1]).toBe('F is required')
+  })
+
+  it('a free form submit navigates to the order hub and never initiates payment', async () => {
+    getPublicForm.mockResolvedValue(form({ requires_guest_email: true, fields: [field({ id: 1, type: 'text' })] }))
+    submitForm.mockResolvedValue({
+      message: 'ok',
+      submission_id: 7,
+      submission_slug: 'sub-7',
+      edit_url: '/e',
+      requires_payment: false,
+      public_id: 'ord-7',
+    })
+    const s = await usePublicForm('s')
+    s.setAnswer(1, 'hi')
+    s.setGuestEmail('a@b.com')
+    // A form always has an implicit Review step after its field sections (currentStep starts on the
+    // field step) — advance to it before submitting, matching the real Continue → Review → Submit flow.
+    s.nextStep()
+    await s.submit()
+    expect(initiatePayment).not.toHaveBeenCalled()
+    expect(navigateTo).toHaveBeenCalledWith('/orders/ord-7')
+  })
+
+  it('a priced form submit initiates payment and redirects to the gateway', async () => {
+    const assign = vi.spyOn(window.location, 'assign').mockImplementation(() => {})
+    getPublicForm.mockResolvedValue(
+      form({ price: 500, requires_guest_email: true, fields: [field({ id: 1, type: 'text' })] })
+    )
+    submitForm.mockResolvedValue({
+      message: 'ok',
+      submission_id: 8,
+      submission_slug: 'sub-8',
+      edit_url: '/e',
+      requires_payment: true,
+      public_id: 'ord-8',
+    })
+    initiatePayment.mockResolvedValue({ redirect_url: 'https://pay.example/xyz' })
+    const s = await usePublicForm('s')
+    s.setAnswer(1, 'hi')
+    s.setGuestEmail('a@b.com')
+    // A form always has an implicit Review step after its field sections (currentStep starts on the
+    // field step) — advance to it before submitting, matching the real Continue → Review → Submit flow.
+    s.nextStep()
+    await s.submit()
+    expect(initiatePayment).toHaveBeenCalledWith('ord-8', expect.stringContaining('/orders/ord-8'))
+    expect(assign).toHaveBeenCalledWith('https://pay.example/xyz')
+    assign.mockRestore()
   })
 })

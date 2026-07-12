@@ -45,20 +45,13 @@ const payLabel = computed(() => {
 <template>
   <!-- Phone: full-bleed white page, minimal gutter. sm+: a calm sheet — rounded, shadowed, roomy padding. -->
   <div class="bg-white px-4 py-6 sm:rounded-2xl sm:p-10 sm:shadow-theme-lg sm:ring-1 sm:ring-gray-100">
-    <!-- ── Done ────────────────────────────────────────────────────────────── -->
-    <div v-if="s.submitted.value" class="py-6 text-center">
-      <span class="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-success-50 text-success-600">
+    <!-- ── Leaving to the order hub / payment provider ─────────────────────── -->
+    <div v-if="s.redirecting.value" class="py-10 text-center">
+      <span class="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-brand-50 text-brand-600">
         <CheckCircle :size="36" :stroke-width="2" />
       </span>
-      <h1 class="text-title-sm font-semibold tracking-tight text-gray-900">You're all done</h1>
-      <p class="mx-auto mt-2 max-w-md text-lg text-gray-600">Your response has been submitted.</p>
-      <a
-        v-if="s.submitted.value.edit_url"
-        :href="s.submitted.value.edit_url"
-        class="mt-6 inline-flex min-h-tap items-center gap-1.5 text-base font-medium text-brand-600 underline underline-offset-2 hover:text-brand-700"
-      >
-        Need to change something? View or edit your response
-      </a>
+      <h1 class="text-title-sm font-semibold tracking-tight text-gray-900">One moment…</h1>
+      <p class="mx-auto mt-2 max-w-md text-lg text-gray-600">Taking you to your order.</p>
     </div>
 
     <template v-else>
@@ -238,7 +231,7 @@ const payLabel = computed(() => {
             <button
               v-else
               type="submit"
-              :disabled="s.submitting.value || s.isPriced.value"
+              :disabled="s.submitting.value"
               class="inline-flex min-h-control-lg flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-8"
             >
               <component :is="s.isPriced.value ? CreditCard : Check" v-if="!s.submitting.value" :size="20" />

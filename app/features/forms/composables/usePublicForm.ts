@@ -134,6 +134,9 @@ export async function usePublicForm(slug: string) {
 
   const submitting = ref(false)
   const submitted = ref<SubmitResult | null>(null)
+  // True from a successful submit until we leave the page (to the gateway or the order hub) —
+  // drives the "one moment…" interstitial and prevents a flash of the old inline success panel.
+  const redirecting = ref(false)
 
   // ── Paging: each section (field group) is a step, then a final Review step that's always present. ──
   const currentStep = ref(0)
@@ -296,7 +299,7 @@ export async function usePublicForm(slug: string) {
   }
 
   async function submit(): Promise<void> {
-    if (submitting.value || isClosed.value || isPriced.value || membersOnlyBlocked.value) return
+    if (submitting.value || isClosed.value || membersOnlyBlocked.value) return
     // On a paged form, Enter / submit before the last step just advances.
     if (isMultiStep.value && !isLastStep.value) {
       nextStep()
@@ -315,8 +318,26 @@ export async function usePublicForm(slug: string) {
     try {
       const payload: SubmitAnswers = { ...answers }
       if (needsGuestEmail.value) payload.guest_email = guestEmail.value.trim()
-      submitted.value = await formsService.submitForm(slug, payload)
+      const result = await formsService.submitForm(slug, payload)
+      submitted.value = result
+      redirecting.value = true
       clearDraft() // submitted — drop the local draft so a return visit starts fresh
+      const orderUrl = `/orders/${result.public_id}`
+      if (result.requires_payment) {
+        try {
+          const { redirect_url } = await formsService.initiatePayment(
+            result.public_id,
+            `${window.location.origin}${orderUrl}`
+          )
+          if (redirect_url) {
+            window.location.assign(redirect_url)
+            return
+          }
+        } catch {
+          // Payment couldn't start — fall through to the hub, where the order can be paid via resume.
+        }
+      }
+      await navigateTo(orderUrl)
     } catch (e) {
       if (isValidationError(e)) {
         // guest_email is a non-numeric 422 key; route it to the -1 slot the template reads.
@@ -354,6 +375,7 @@ export async function usePublicForm(slug: string) {
     membersOnlyBlocked,
     submitting,
     submitted,
+    redirecting,
     submit,
     setAnswer,
     uploads,
