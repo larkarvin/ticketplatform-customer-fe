@@ -3,7 +3,7 @@
 import { useConfirm } from '#core/composables/useConfirm'
 import { Lock } from '#icons'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { usePublicEvent } from '~/features/events'
+import { useCheckoutSeo, usePublicEvent } from '~/features/events'
 import { hasAnswer } from '~/features/events/answers'
 import { hasData, parseSelection, selectionKey } from '~/features/events/cart'
 import {
@@ -28,6 +28,9 @@ const route = useRoute()
 const router = useRouter()
 const slug = computed(() => String(route.params.slug))
 const { event } = await usePublicEvent(slug.value)
+
+const config = useRuntimeConfig()
+useCheckoutSeo(event, (config.public.appName as string) ?? 'Checkout')
 
 const cartStore = useCart(event, parseSelection(route.query.tickets))
 const c = usePublicCheckout(event, cartStore.cart)
