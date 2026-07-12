@@ -40,6 +40,8 @@ export default defineNuxtConfig({
       memberLabelPlural: process.env.NUXT_PUBLIC_MEMBER_LABEL_PLURAL || 'Members',
       // Backend base URL incl. version prefix, e.g. http://localhost:8000/v1
       apiUrl: process.env.NUXT_PUBLIC_API_URL || '',
+      // The org this whitelabel deploy serves — sent as X-Organization-Subdomain. Primary tenant source.
+      orgSubdomain: process.env.NUXT_PUBLIC_ORG_SUBDOMAIN || '',
       // Root domain used to parse the org subdomain from the request host.
       baseDomain: process.env.NUXT_PUBLIC_BASE_DOMAIN || 'localhost',
       // Dev/preview override: pretend we are on this org's subdomain when the host has none.

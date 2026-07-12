@@ -1,31 +1,24 @@
 // composables/useTenant.ts
-// Resolves the current org from the request host (subdomain), fetches its public branding on the
-// server, and injects the brand CSS vars + favicon via useHead so the first paint is already
+// Resolves the current org (env-primary, host-subdomain fallback), fetches its public branding on
+// the server, and injects the brand CSS vars + favicon via useHead so the first paint is already
 // branded. Idempotent and dedup-safe: useTenantState is shared, and useAsyncData dedupes by key, so
 // calling useTenant() from both app.vue and the layout resolves once per request.
 import { useApiClient } from '#core/api'
 import { fetchPublicBranding } from '#core/services/branding.service'
 import type { PublicBranding } from '#core/types/branding'
 import { brandingToCssVars } from '#core/utils/colorUtils'
-
-// Parse the org label from a host like `acme.example.com` given baseDomain `example.com`. Returns
-// null for the bare/`www` apex (no org) or a non-matching host.
-function parseSubdomain(host: string, baseDomain: string): string | null {
-  const h = host.split(':')[0] ?? ''
-  if (!baseDomain || h === baseDomain || h === `www.${baseDomain}`) return null
-  if (!h.endsWith(`.${baseDomain}`)) return null
-  const label = h.slice(0, h.length - baseDomain.length - 1)
-  return label && label !== 'www' ? label : null
-}
+import { resolveTenant } from './resolveTenant'
 
 export function useTenant() {
   const config = useRuntimeConfig()
   const tenant = useTenantState()
 
   const host = useRequestURL().host
-  const resolved =
-    parseSubdomain(host, config.public.baseDomain as string) || (config.public.devOrgSubdomain as string) || null
-  tenant.value = resolved
+  tenant.value = resolveTenant(host, {
+    orgSubdomain: config.public.orgSubdomain as string,
+    baseDomain: config.public.baseDomain as string,
+    devOrgSubdomain: config.public.devOrgSubdomain as string,
+  })
 
   const subdomain = computed(() => tenant.value)
   const api = useApiClient()
