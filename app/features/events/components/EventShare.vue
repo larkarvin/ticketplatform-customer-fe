@@ -41,13 +41,20 @@
 
 <script setup lang="ts">
 import { Check, ExternalLink, Link2 } from '#icons'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const props = defineProps<{ url: string; title: string }>()
 
-// navigator is only read in computed/handlers on the client; guard for SSR
-// where `navigator` doesn't exist at all.
-const canNativeShare = computed(() => typeof navigator !== 'undefined' && typeof navigator.share === 'function')
+// Server and the first client render must agree (both show the fallback
+// links) to avoid a hydration mismatch; only upgrade to the native share
+// button once mounted on the client.
+const mounted = ref(false)
+onMounted(() => {
+  mounted.value = true
+})
+const canNativeShare = computed(
+  () => mounted.value && typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+)
 
 const links = computed(() => {
   const u = encodeURIComponent(props.url)

@@ -26,4 +26,9 @@ describe('buildEventJsonLd', () => {
     expect(ld.offers).toMatchObject({ '@type': 'AggregateOffer', lowPrice: 500, highPrice: 1500, priceCurrency: 'PHP' })
     expect(ld.image).toBe('https://cdn/x.jpg')
   })
+
+  it('omits the image key when there is no cover or org logo', () => {
+    const ld = buildEventJsonLd(event, { siteUrl: 'https://tix.test', orgName: 'Acme', imageUrl: '' })
+    expect(ld).not.toHaveProperty('image')
+  })
 })

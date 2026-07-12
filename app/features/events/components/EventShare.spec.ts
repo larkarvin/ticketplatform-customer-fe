@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import EventShare from './EventShare.vue'
 
 const props = { url: 'https://tix.test/e/spring-gala', title: 'Spring Gala' }
@@ -19,6 +20,7 @@ describe('EventShare', () => {
     const share = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('navigator', { share })
     const w = mount(EventShare, { props })
+    await nextTick()
     await w.get('[data-test="share-native"]').trigger('click')
     expect(share).toHaveBeenCalledWith({ title: props.title, url: props.url })
   })

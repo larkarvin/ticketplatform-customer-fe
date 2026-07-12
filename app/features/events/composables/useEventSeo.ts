@@ -17,10 +17,10 @@ export function buildEventJsonLd(event: PublicEvent, opts: SeoOpts): Record<stri
     name: event.title,
     startDate: event.starts_at,
     url,
-    image: opts.imageUrl,
     organizer: { '@type': 'Organization', name: opts.orgName, url: opts.siteUrl },
     eventStatus: 'https://schema.org/EventScheduled',
   }
+  if (opts.imageUrl) ld.image = opts.imageUrl
   if (event.ends_at) ld.endDate = event.ends_at
   if (event.description) ld.description = event.description
   if (event.location) ld.location = { '@type': 'Place', name: event.location }
@@ -48,11 +48,10 @@ export function useEventSeo(event: PublicEvent, opts: SeoOpts): void {
     ogDescription: description,
     ogUrl: canonical,
     ogType: 'website',
-    ogImage: opts.imageUrl,
     twitterCard: 'summary_large_image',
     twitterTitle: event.title,
     twitterDescription: description,
-    twitterImage: opts.imageUrl,
+    ...(opts.imageUrl ? { ogImage: opts.imageUrl, twitterImage: opts.imageUrl } : {}),
   })
 
   useHead({
