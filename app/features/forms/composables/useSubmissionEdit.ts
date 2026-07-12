@@ -70,7 +70,7 @@ export async function useSubmissionEdit(slug: string) {
     try {
       const payload = Object.fromEntries(editableFields.value.map((f) => [String(f.id), answers[String(f.id)]]))
       await formsService.updateSubmission(slug, payload)
-      await navigateTo(`/orders/${detail.order_public_id}`)
+      await navigateTo(detail.order_public_id ? `/orders/${detail.order_public_id}` : '/')
     } catch (e) {
       submitting.value = false
       if (isValidationError(e)) {

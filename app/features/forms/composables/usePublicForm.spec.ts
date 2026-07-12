@@ -248,4 +248,30 @@ describe('usePublicForm', () => {
     expect(assign).toHaveBeenCalledWith('https://pay.example/xyz')
     assign.mockRestore()
   })
+
+  it('falls back to the order hub when payment initiation fails', async () => {
+    const assign = vi.spyOn(window.location, 'assign').mockImplementation(() => {})
+    getPublicForm.mockResolvedValue(
+      form({ price: 500, requires_guest_email: true, fields: [field({ id: 1, type: 'text' })] })
+    )
+    submitForm.mockResolvedValue({
+      message: 'ok',
+      submission_id: 9,
+      submission_slug: 'sub-9',
+      edit_url: '/e',
+      requires_payment: true,
+      public_id: 'ord-9',
+    })
+    initiatePayment.mockRejectedValue(new Error('gateway down'))
+    const s = await usePublicForm('s')
+    s.setAnswer(1, 'hi')
+    s.setGuestEmail('a@b.com')
+    // A form always has an implicit Review step after its field sections (currentStep starts on the
+    // field step) — advance to it before submitting, matching the real Continue → Review → Submit flow.
+    s.nextStep()
+    await s.submit()
+    expect(assign).not.toHaveBeenCalled()
+    expect(navigateTo).toHaveBeenCalledWith('/orders/ord-9')
+    assign.mockRestore()
+  })
 })

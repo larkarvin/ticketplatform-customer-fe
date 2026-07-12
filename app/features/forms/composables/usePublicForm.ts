@@ -10,14 +10,7 @@ import { toast } from 'vue-sonner'
 import type { ReviewGroup } from '~/core/types/review'
 import { variantLabel } from '~/features/forms/productLabels'
 import { formsService } from '~/features/forms/services/forms.service'
-import type {
-  Form,
-  PaymentBreakdown,
-  ProductFieldInfo,
-  ProductSelection,
-  SubmitAnswers,
-  SubmitResult,
-} from '~/features/forms/types'
+import type { Form, PaymentBreakdown, ProductFieldInfo, ProductSelection, SubmitAnswers } from '~/features/forms/types'
 
 interface Section {
   id: string
@@ -133,7 +126,6 @@ export async function usePublicForm(slug: string) {
   }
 
   const submitting = ref(false)
-  const submitted = ref<SubmitResult | null>(null)
   // True from a successful submit until we leave the page (to the gateway or the order hub) —
   // drives the "one moment…" interstitial and prevents a flash of the old inline success panel.
   const redirecting = ref(false)
@@ -319,7 +311,6 @@ export async function usePublicForm(slug: string) {
       const payload: SubmitAnswers = { ...answers }
       if (needsGuestEmail.value) payload.guest_email = guestEmail.value.trim()
       const result = await formsService.submitForm(slug, payload)
-      submitted.value = result
       redirecting.value = true
       clearDraft() // submitted — drop the local draft so a return visit starts fresh
       const orderUrl = `/orders/${result.public_id}`
@@ -374,7 +365,6 @@ export async function usePublicForm(slug: string) {
     isPriced,
     membersOnlyBlocked,
     submitting,
-    submitted,
     redirecting,
     submit,
     setAnswer,
