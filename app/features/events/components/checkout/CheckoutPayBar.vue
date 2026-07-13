@@ -1,9 +1,12 @@
 <!-- Sticky bottom bar. Entry mode: running total + Continue to review. Review mode: total + Back + Pay. -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { ChevronLeft, ChevronRight } from '#icons'
 import { computed } from 'vue'
 import { formatMoney } from '../../money'
 import type { OrderCalculation } from '../../types'
+
+const { t } = useT()
 
 const props = defineProps<{
   calculation: OrderCalculation | null
@@ -29,28 +32,28 @@ const totalText = computed(() =>
   >
     <div class="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
       <div class="min-w-0">
-        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</p>
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.total') }}</p>
         <p
           v-if="status === 'updating'"
           class="text-sm text-gray-400 dark:text-gray-500"
           aria-live="polite"
           aria-atomic="true"
         >
-          Updating…
+          {{ t('common.updating') }}
         </p>
         <p v-else class="text-lg font-bold tabular-nums text-gray-900 dark:text-white">{{ totalText }}</p>
       </div>
 
       <div class="flex flex-shrink-0 items-center gap-3">
         <span v-if="status === 'error'" class="flex items-center gap-2 text-sm text-danger-600 dark:text-danger-400">
-          Couldn't update total
+          {{ t('checkout.payBar.updateFailed') }}
           <button
             type="button"
             data-retry
             class="font-medium text-brand-500 underline hover:text-brand-600"
             @click="emit('retry')"
           >
-            Retry
+            {{ t('common.retry') }}
           </button>
         </span>
 
@@ -63,7 +66,7 @@ const totalText = computed(() =>
           :class="continueDisabled ? '' : 'cursor-pointer'"
           @click="emit('continue')"
         >
-          Continue to review
+          {{ t('checkout.payBar.continueToReview') }}
           <ChevronRight :size="20" />
         </button>
 
@@ -75,7 +78,7 @@ const totalText = computed(() =>
             @click="emit('back')"
           >
             <ChevronLeft :size="20" />
-            Back
+            {{ t('common.back') }}
           </button>
           <button
             type="button"
@@ -85,8 +88,8 @@ const totalText = computed(() =>
             :class="props.submitting || status === 'updating' ? '' : 'cursor-pointer'"
             @click="emit('pay')"
           >
-            <span v-if="props.submitting" aria-live="polite">Taking you to secure payment…</span>
-            <span v-else>{{ calculation ? `Pay ${totalText}` : 'Pay' }}</span>
+            <span v-if="props.submitting" aria-live="polite">{{ t('checkout.payBar.redirecting') }}</span>
+            <span v-else>{{ calculation ? t('checkout.payBar.pay', { total: totalText }) : t('common.pay') }}</span>
           </button>
         </template>
       </div>

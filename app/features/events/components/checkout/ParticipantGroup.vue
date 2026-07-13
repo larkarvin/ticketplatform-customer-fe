@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { Check, ChevronDown, Plus, Trash2 } from '#icons'
 import { computed, ref, watch } from 'vue'
 import { isParticipantComplete } from '../../checkoutValidation'
 import type { CartTicket, PublicTicket } from '../../types'
 import ParticipantCard from './ParticipantCard.vue'
+
+const { t, term } = useT()
 
 const props = defineProps<{
   ticket: PublicTicket
@@ -46,9 +49,10 @@ const allComplete = computed(() => totalCount.value > 0 && completedCount.value 
 
 // Plain-language readiness for the group header — explicit ("1 of 2 ready") rather than a bare "1/2".
 const badgeText = computed(() => {
-  if (allComplete.value) return totalCount.value === 1 ? 'Ready' : 'All ready'
-  if (totalCount.value === 1) return 'Needs details'
-  return `${completedCount.value} of ${totalCount.value} ready`
+  if (allComplete.value)
+    return totalCount.value === 1 ? t('checkout.group.badge.ready') : t('checkout.group.badge.allReady')
+  if (totalCount.value === 1) return t('checkout.group.badge.needsDetails')
+  return t('checkout.group.badge.progress', { done: completedCount.value, total: totalCount.value })
 })
 
 function setGroupName(value: string): void {
@@ -81,7 +85,9 @@ function removeParticipant(i: number): void {
         type="button"
         class="flex flex-1 items-center gap-2 text-left min-h-tap"
         :aria-expanded="open"
-        :aria-label="open ? `Collapse ${ticket.name}` : `Expand ${ticket.name}`"
+        :aria-label="
+          open ? t('checkout.group.collapse', { name: ticket.name }) : t('checkout.group.expand', { name: ticket.name })
+        "
         @click="open = !open"
       >
         <span class="font-semibold text-gray-900 dark:text-white text-sm">
@@ -108,7 +114,7 @@ function removeParticipant(i: number): void {
       <button
         data-test="remove-group"
         type="button"
-        aria-label="Remove this ticket"
+        :aria-label="t('checkout.group.removeTicket')"
         class="flex min-h-tap min-w-tap shrink-0 items-center justify-center text-gray-400 hover:text-danger-500"
         @click="emit('remove', instance.uid)"
       >
@@ -119,7 +125,12 @@ function removeParticipant(i: number): void {
     <div v-show="open" data-test="body" class="px-4 pb-4 space-y-3">
       <!-- collect_details_later: collapsed summary only -->
       <p v-if="ticket.collect_details_later" class="text-sm text-gray-600 dark:text-gray-300">
-        {{ instance.participants.length }} participants — you'll add names after payment
+        {{
+          t('checkout.person.laterSummary', {
+            count: instance.participants.length,
+            people: term('person', { plural: true }),
+          })
+        }}
       </p>
 
       <template v-else>
@@ -146,7 +157,7 @@ function removeParticipant(i: number): void {
           :identity-key="identityKey"
           :errors="errors"
           :error-prefix="`${instance.uid}.${i}`"
-          :title="`Participant ${i + 1}`"
+          :title="t('checkout.person.title', { person: term('person'), n: i + 1 })"
           :can-copy="i > 0"
           :can-remove="instance.participants.length > ticket.min_participants"
           @copy-from-above="copyInto(i)"
@@ -161,7 +172,7 @@ function removeParticipant(i: number): void {
           @click="emit('add-participant', instance.uid)"
         >
           <Plus :size="16" aria-hidden="true" />
-          Add Participant
+          {{ t('checkout.person.add', { person: term('person') }) }}
         </button>
       </template>
     </div>

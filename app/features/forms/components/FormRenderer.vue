@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
+import { useT } from '#core/i18n'
 import { Check, CheckCircle, ChevronLeft, ChevronRight, Clock, CreditCard, Lock, Mail } from '#icons'
 import { computed, nextTick, ref } from 'vue'
 import ReviewSummary from '~/core/components/ReviewSummary.vue'
 import OrderSummary from '~/features/forms/components/OrderSummary.vue'
 import type { PublicFormState } from '~/features/forms/composables/usePublicForm'
+
+const { t } = useT()
 
 const props = defineProps<{ state: PublicFormState }>()
 const s = props.state
@@ -13,12 +16,14 @@ const s = props.state
 // The final step is always Review.
 const stepNumber = computed(() => s.currentStep.value + 1)
 const currentTitle = computed(() =>
-  s.isReviewStep.value ? 'Review' : s.visibleSections.value[0]?.title || `Step ${stepNumber.value}`
+  s.isReviewStep.value
+    ? t('forms.review.stepTitle')
+    : s.visibleSections.value[0]?.title || t('forms.step', { n: stepNumber.value })
 )
 const nextTitle = computed(() => {
   const next = s.currentStep.value + 1
   if (next >= s.totalSteps.value) return null
-  return next === s.totalSteps.value - 1 ? 'Review' : s.sections.value[next]?.title || null
+  return next === s.totalSteps.value - 1 ? t('forms.review.stepTitle') : s.sections.value[next]?.title || null
 })
 const progressPct = computed(() => Math.round((stepNumber.value / s.totalSteps.value) * 100))
 
@@ -36,9 +41,9 @@ function changeEmail(): void {
 
 // With money involved the final action is to pay (with the total once it's known); otherwise it submits.
 const payLabel = computed(() => {
-  if (!s.isPriced.value) return s.form.submit_button_text || 'Submit'
+  if (!s.isPriced.value) return s.form.submit_button_text || t('forms.submitDefault')
   const b = s.breakdown.value
-  return b && b.total > 0 ? `Pay ${b.currency} ${b.total.toFixed(2)}` : 'Pay'
+  return b && b.total > 0 ? t('forms.pay', { currency: b.currency, amount: b.total.toFixed(2) }) : t('common.pay')
 })
 </script>
 
@@ -50,8 +55,8 @@ const payLabel = computed(() => {
       <span class="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-brand-50 text-brand-600">
         <CheckCircle :size="36" :stroke-width="2" />
       </span>
-      <h1 class="text-title-sm font-semibold tracking-tight text-gray-900">One moment…</h1>
-      <p class="mx-auto mt-2 max-w-md text-lg text-gray-600">Taking you to your order.</p>
+      <h1 class="text-title-sm font-semibold tracking-tight text-gray-900">{{ t('forms.redirecting.heading') }}</h1>
+      <p class="mx-auto mt-2 max-w-md text-lg text-gray-600">{{ t('forms.redirecting.body') }}</p>
     </div>
 
     <template v-else>
@@ -67,9 +72,9 @@ const payLabel = computed(() => {
           v-if="hasRequired && !s.isClosed.value && !s.membersOnlyBlocked.value && !s.isReviewStep.value"
           class="mt-3 text-base text-gray-500"
         >
-          Questions marked
+          {{ t('forms.requiredHint.prefix') }}
           <span class="font-semibold text-danger-500">*</span>
-          need an answer.
+          {{ t('forms.requiredHint.suffix') }}
         </p>
       </header>
 
@@ -79,14 +84,14 @@ const payLabel = computed(() => {
         class="flex items-start gap-3 rounded-xl bg-gray-50 p-5 text-gray-700 ring-1 ring-gray-200"
       >
         <Clock :size="22" class="mt-0.5 shrink-0 text-gray-500" />
-        <p class="text-base">This form is closed. It's no longer taking responses.</p>
+        <p class="text-base">{{ t('forms.closed') }}</p>
       </div>
       <div
         v-else-if="s.membersOnlyBlocked.value"
         class="flex items-start gap-3 rounded-xl bg-gray-50 p-5 text-gray-700 ring-1 ring-gray-200"
       >
         <Lock :size="22" class="mt-0.5 shrink-0 text-gray-500" />
-        <p class="text-base">This form is just for members.</p>
+        <p class="text-base">{{ t('forms.membersOnly') }}</p>
       </div>
 
       <template v-else>
@@ -99,11 +104,15 @@ const payLabel = computed(() => {
               class="flex size-16 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-50 leading-none text-gray-900"
             >
               <span class="text-title-sm font-semibold tabular-nums">{{ stepNumber }}</span>
-              <span class="mt-0.5 text-xs font-medium text-gray-500">of {{ s.totalSteps.value }}</span>
+              <span class="mt-0.5 text-xs font-medium text-gray-500">
+                {{ t('forms.stepper.of', { total: s.totalSteps.value }) }}
+              </span>
             </span>
             <div class="min-w-0">
               <p class="truncate text-xl font-semibold text-gray-900">{{ currentTitle }}</p>
-              <p v-if="nextTitle" class="mt-1 truncate text-sm text-gray-500">Next: {{ nextTitle }}</p>
+              <p v-if="nextTitle" class="mt-1 truncate text-sm text-gray-500">
+                {{ t('forms.stepper.next', { title: nextTitle }) }}
+              </p>
             </div>
           </div>
           <div class="mt-4 h-2 overflow-hidden rounded-full bg-gray-200" role="presentation">
@@ -145,20 +154,18 @@ const payLabel = computed(() => {
             <!-- Order summary — server-computed total for priced forms. -->
             <OrderSummary v-if="s.isPriced.value && s.breakdown.value" :breakdown="s.breakdown.value" />
             <p v-else-if="s.isPriced.value && s.calcLoading.value" class="text-base text-gray-500">
-              Working out your total…
+              {{ t('forms.calculating') }}
             </p>
 
             <!-- Contact email — prefilled from the form's email field when it has one. Shows as confirmed
                  text with a Change link once filled; first entry / Change / errors reveal the input. -->
             <div v-if="s.needsGuestEmail.value">
               <label for="guest-email" class="mb-1.5 block text-base font-medium text-gray-800">
-                Send my confirmation to
+                {{ t('forms.review.emailLabel') }}
                 <span class="text-danger-500">*</span>
               </label>
               <p class="mb-2 text-sm text-gray-500">
-                This is where we'll send a copy of your submission{{
-                  s.isPriced.value ? ' and your order receipt' : ''
-                }}.
+                {{ s.isPriced.value ? t('forms.review.emailHintPriced') : t('forms.review.emailHint') }}
               </p>
 
               <div
@@ -174,7 +181,7 @@ const payLabel = computed(() => {
                   class="min-h-tap shrink-0 text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline"
                   @click="changeEmail"
                 >
-                  Change
+                  {{ t('common.change') }}
                 </button>
               </div>
               <div v-else class="relative">
@@ -188,7 +195,7 @@ const payLabel = computed(() => {
                   ref="emailInput"
                   :value="s.guestEmail.value"
                   type="email"
-                  placeholder="your@email.com"
+                  :placeholder="t('forms.review.emailPlaceholder')"
                   class="min-h-control-lg w-full rounded-xl border bg-transparent py-3 pr-4 pl-14 text-base text-gray-900 placeholder:text-gray-400 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10"
                   :class="
                     s.errors.value[-1]
@@ -216,7 +223,7 @@ const payLabel = computed(() => {
               @click="s.prevStep()"
             >
               <ChevronLeft :size="20" />
-              Back
+              {{ t('common.back') }}
             </button>
 
             <button
@@ -225,7 +232,7 @@ const payLabel = computed(() => {
               class="inline-flex min-h-control-lg flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600 sm:flex-none sm:px-8"
               @click="s.nextStep()"
             >
-              Continue
+              {{ t('forms.continueButton') }}
               <ChevronRight :size="20" />
             </button>
             <button
@@ -235,7 +242,7 @@ const payLabel = computed(() => {
               class="inline-flex min-h-control-lg flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 text-base font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-8"
             >
               <component :is="s.isPriced.value ? CreditCard : Check" v-if="!s.submitting.value" :size="20" />
-              {{ s.submitting.value ? 'Submitting…' : payLabel }}
+              {{ s.submitting.value ? t('forms.submitting') : payLabel }}
             </button>
           </div>
         </form>

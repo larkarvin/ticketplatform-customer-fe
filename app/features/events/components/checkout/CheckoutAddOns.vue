@@ -3,6 +3,9 @@
 <script setup lang="ts">
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
 import type { Field } from '#core/field-engine/types'
+import { useT } from '#core/i18n'
+
+const { t } = useT()
 
 const props = defineProps<{
   fields: Field[]
@@ -21,8 +24,8 @@ function setAnswer(key: string, value: unknown): void {
 <template>
   <section v-if="fields.length" class="space-y-4">
     <div>
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Optional extras</h2>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Add only what you'd like.</p>
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('checkout.addOns.heading') }}</h2>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('checkout.addOns.hint') }}</p>
     </div>
     <div class="grid grid-cols-12 gap-4">
       <FieldCell

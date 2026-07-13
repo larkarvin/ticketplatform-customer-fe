@@ -2,6 +2,7 @@
 // and the server-side price preview via useCheckoutTotals.
 // placeAndPay orchestrates registration + payment initiation.
 import { isValidationError } from '#core/errors'
+import { useT } from '#core/i18n'
 import { reactive, ref, watch, type Ref } from 'vue'
 import { validateCheckout } from '~/features/events/checkoutValidation'
 import { ordersService } from '~/features/events/services/orders.service'
@@ -10,6 +11,8 @@ import { useCheckoutPersistence } from './useCheckoutPersistence'
 import { useCheckoutTotals } from './useCheckoutTotals'
 
 export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
+  const { t } = useT()
+
   const buyer = reactive({ email: '', name: '', phone: '' })
   const checkoutAnswers = reactive<Record<string, unknown>>({})
   const fieldErrors = ref<Record<string, string>>({})
@@ -77,8 +80,8 @@ export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
 
   function buyerEmailError(email: string): string | null {
     const trimmed = email.trim()
-    if (!trimmed) return 'Please enter your email so we can send your receipt.'
-    if (!/.+@.+\..+/.test(trimmed)) return 'Please enter a valid email address.'
+    if (!trimmed) return t('checkout.email.required')
+    if (!/.+@.+\..+/.test(trimmed)) return t('checkout.email.invalid')
     return null
   }
 
@@ -118,7 +121,7 @@ export function usePublicCheckout(event: PublicEvent, cart: Ref<CartTicket[]>) {
       if (isValidationError(e)) {
         fieldErrors.value = e.fields
       } else {
-        submitError.value = 'Something went wrong. Please try again.'
+        submitError.value = t('common.genericError')
       }
     }
   }

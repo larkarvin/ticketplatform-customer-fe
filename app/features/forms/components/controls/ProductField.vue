@@ -11,6 +11,7 @@
 import ImageLightbox from '#core/components/ui/ImageLightbox.vue'
 import { borderClass } from '#core/field-engine/components/controls/inputClass'
 import type { Field } from '#core/field-engine/types'
+import { useT } from '#core/i18n'
 import { ChevronDown } from '#icons'
 import { computed, ref } from 'vue'
 import { variantLabel } from '~/features/forms/productLabels'
@@ -22,6 +23,8 @@ import type {
   ProductVariantPrice,
 } from '~/features/forms/types'
 import QuantityStepper from './QuantityStepper.vue'
+
+const { t } = useT()
 
 const props = defineProps<{ field: Field; modelValue: unknown; invalid?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [ProductSelection[]] }>()
@@ -59,7 +62,7 @@ const chooseLabel = computed(() => {
       variants.value.flatMap((v) => v.attribute_values.map((a) => a.attribute)).filter((a): a is string => !!a)
     ),
   ]
-  return names.length ? `Choose ${names.join(' & ')}` : 'Choose options'
+  return names.length ? t('forms.product.chooseNamed', { names: names.join(' & ') }) : t('forms.product.chooseGeneric')
 })
 // A "from" teaser of the cheapest variant; a single figure when every variant costs the same.
 const priceSummary = computed(() => {
@@ -68,7 +71,9 @@ const priceSummary = computed(() => {
   if (!prices.length || !nums.length) return ''
   const min = Math.min(...nums)
   const currency = prices[0]!.currency
-  return min === Math.max(...nums) ? `${currency} ${min.toFixed(2)}` : `From ${currency} ${min.toFixed(2)}`
+  return min === Math.max(...nums)
+    ? `${currency} ${min.toFixed(2)}`
+    : t('forms.product.fromPrice', { currency, amount: min.toFixed(2) })
 })
 // What the person has chosen, for the collapsed summary: each line in plain words with its subtotal
 // ("1 × Small – Blue" → "USD 500.00").
@@ -122,7 +127,7 @@ const galleryImages = computed<{ url: string; alt_text: string; caption?: string
     seen.add(img.id)
     out.push({
       url: img.url,
-      alt_text: img.alt_text ?? product.value?.name ?? 'Image',
+      alt_text: img.alt_text ?? product.value?.name ?? t('forms.product.genericImageAlt'),
       caption,
       thumb: img.thumb_url ?? img.url,
     })
@@ -145,7 +150,7 @@ function openGallery(): void {
         v-if="thumb(product.image)"
         type="button"
         class="shrink-0 overflow-hidden rounded-lg"
-        :aria-label="`View image of ${product.name}`"
+        :aria-label="t('forms.product.viewImageAlt', { name: product.name })"
         @click="openGallery()"
       >
         <img
@@ -180,7 +185,7 @@ function openGallery(): void {
           v-if="product && thumb(product.image)"
           type="button"
           class="shrink-0 overflow-hidden rounded-lg"
-          :aria-label="`View image of ${product.name}`"
+          :aria-label="t('forms.product.viewImageAlt', { name: product.name })"
           @click="lightboxOpen = true"
         >
           <img
@@ -202,12 +207,12 @@ function openGallery(): void {
           :aria-controls="optionsId"
           @click="toggle"
         >
-          Done
+          {{ t('common.done') }}
           <ChevronDown :size="16" class="rotate-180" />
         </button>
       </div>
 
-      <p v-if="!variants.length" class="mt-2 text-sm text-gray-500">No options available.</p>
+      <p v-if="!variants.length" class="mt-2 text-sm text-gray-500">{{ t('forms.product.noOptions') }}</p>
 
       <!-- Collapsed: a price teaser or the current selection, plus the one button that opens the options. -->
       <div v-else-if="!isExpanded">
@@ -226,7 +231,7 @@ function openGallery(): void {
           :aria-controls="optionsId"
           @click="toggle"
         >
-          {{ selectedLines.length ? 'Edit selection' : chooseLabel }}
+          {{ selectedLines.length ? t('forms.product.editSelection') : chooseLabel }}
           <ChevronDown :size="18" />
         </button>
       </div>
@@ -250,7 +255,9 @@ function openGallery(): void {
             @increment="setQty(v.id, qtyFor(v.id) + 1)"
           />
         </div>
-        <p v-if="maxQuantity > 1" class="mt-2 text-xs text-gray-500">Total: {{ totalQty }} of {{ maxQuantity }}</p>
+        <p v-if="maxQuantity > 1" class="mt-2 text-xs text-gray-500">
+          {{ t('forms.product.totalOf', { qty: totalQty, max: maxQuantity }) }}
+        </p>
       </div>
     </template>
 

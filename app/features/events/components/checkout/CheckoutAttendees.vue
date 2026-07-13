@@ -1,8 +1,11 @@
 <!-- Checkout section: one ParticipantGroup per qualifying cart instance (has fields or collect_details_later). Blank-field tickets render nothing here. -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { computed } from 'vue'
 import type { CartTicket, PublicEvent, PublicTicket } from '../../types'
 import ParticipantGroup from './ParticipantGroup.vue'
+
+const { t } = useT()
 
 const props = defineProps<{
   event: PublicEvent
@@ -54,16 +57,18 @@ const peopleWithErrors = computed(
 
 <template>
   <section v-if="hasAnyFields" class="space-y-6">
-    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Who's attending</h2>
+    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('checkout.attendees.heading') }}</h2>
     <p
       v-if="peopleWithErrors > 0"
       role="alert"
       aria-live="polite"
       class="rounded-lg bg-danger-50 px-4 py-3 text-sm font-medium text-danger-700 dark:bg-danger-950 dark:text-danger-300"
     >
-      Please finish the required details for
-      {{ peopleWithErrors === 1 ? '1 person' : `${peopleWithErrors} people` }}
-      below.
+      {{
+        peopleWithErrors === 1
+          ? t('checkout.attendees.needsDetailsOne')
+          : t('checkout.attendees.needsDetailsMany', { count: peopleWithErrors })
+      }}
     </p>
     <ParticipantGroup
       v-for="(entry, i) in qualifyingEntries"
