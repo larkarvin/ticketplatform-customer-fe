@@ -105,7 +105,7 @@ export function buildReviewGroups(
           label: `${ticket.name} · #${n}`,
           value: t('checkout.review.laterSummary', {
             count: inst.participants.length,
-            people: term('person', { plural: true }),
+            people: term('person', { plural: true, lower: true }),
           }),
         },
       ]

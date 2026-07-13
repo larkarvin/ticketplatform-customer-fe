@@ -31,7 +31,7 @@ function qrSrc(attendeeId: number): string {
       >
         <img
           :src="qrSrc(a.id)"
-          :alt="t('orderHub.tickets.qrAlt', { person: term('person'), id: a.id })"
+          :alt="t('orderHub.tickets.qrAlt', { person: term('person', { lower: true }), id: a.id })"
           width="180"
           height="180"
           loading="lazy"

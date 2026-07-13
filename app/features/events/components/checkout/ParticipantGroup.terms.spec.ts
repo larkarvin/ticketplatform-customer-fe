@@ -57,7 +57,7 @@ describe('ParticipantGroup — per-deploy person term', () => {
   it('uses the plural term in the collect-later summary', () => {
     deploy('{"person":["Participant","Participants"]}')
     const w = mount(ParticipantGroup, { props: props(groupTicket({ collect_details_later: true })) })
-    expect(w.find('[data-test="body"]').text()).toContain("2 Participants — you'll add names after payment")
+    expect(w.find('[data-test="body"]').text()).toContain("2 participants — you'll add names after payment")
   })
 
   it('lets a per-deploy copy override change wording without touching code', () => {

@@ -128,7 +128,7 @@ function removeParticipant(i: number): void {
         {{
           t('checkout.person.laterSummary', {
             count: instance.participants.length,
-            people: term('person', { plural: true }),
+            people: term('person', { plural: true, lower: true }),
           })
         }}
       </p>

@@ -63,7 +63,9 @@ function save(): void {
       :disabled="saving"
       @click="save"
     >
-      {{ saving ? t('common.saving') : t('orderHub.attendees.saveButton', { person: term('person') }) }}
+      {{
+        saving ? t('common.saving') : t('orderHub.attendees.saveButton', { person: term('person', { lower: true }) })
+      }}
     </button>
   </section>
 </template>
