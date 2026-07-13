@@ -3,6 +3,7 @@
      Props in / events out; the buyer object is the reactive one owned by usePublicCheckout. -->
 <script setup lang="ts">
 import { borderClass, controlClass } from '#core/field-engine/components/controls/inputClass'
+import { useT } from '#core/i18n'
 import { Mail } from '#icons'
 import { nextTick, ref, watch } from 'vue'
 import ReviewSummary from '~/core/components/ReviewSummary.vue'
@@ -10,6 +11,8 @@ import type { ReviewGroup } from '~/core/types/review'
 import { EDIT_TICKETS } from '../../checkoutReview'
 import type { OrderCalculation } from '../../types'
 import OrderBreakdown from './OrderBreakdown.vue'
+
+const { t } = useT()
 
 const props = defineProps<{
   groups: ReviewGroup[]
@@ -44,7 +47,7 @@ function setEmail(value: string): void {
 
 <template>
   <div class="space-y-8">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Review your order</h1>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('checkout.review.heading') }}</h1>
 
     <ReviewSummary :groups="groups" @edit="emit('edit', $event)" />
 
@@ -52,10 +55,10 @@ function setEmail(value: string): void {
 
     <section class="space-y-2">
       <h2 class="text-base font-semibold text-gray-900 dark:text-white">
-        Send my receipt to
+        {{ t('checkout.review.emailLabel') }}
         <span class="text-danger-500">*</span>
       </h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400">This is where we'll email your order confirmation.</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('checkout.review.emailHint') }}</p>
 
       <div
         v-if="buyer.email && !editingEmail"
@@ -71,7 +74,7 @@ function setEmail(value: string): void {
           class="min-h-tap shrink-0 text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline dark:text-gray-300"
           @click="changeEmail"
         >
-          Change
+          {{ t('common.change') }}
         </button>
       </div>
       <div v-else class="relative">
@@ -80,7 +83,7 @@ function setEmail(value: string): void {
           :value="buyer.email"
           type="email"
           autocomplete="email"
-          placeholder="you@example.com"
+          :placeholder="t('checkout.review.emailPlaceholder')"
           :aria-invalid="emailError ? 'true' : 'false'"
           :class="[controlClass, borderClass(!!emailError), 'pl-14']"
           @input="setEmail(($event.target as HTMLInputElement).value)"

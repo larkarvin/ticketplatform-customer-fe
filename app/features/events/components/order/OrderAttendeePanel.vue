@@ -1,9 +1,12 @@
 <!-- Post-purchase attendee panel: lets a buyer fill in / fix attendee details from the order page.
      Props-in/events-out — reuses ParticipantCard, no service/#core/api import here. -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { reactive } from 'vue'
 import type { AttendeeSubmission, PublicOrder } from '../../types'
 import ParticipantCard from '../checkout/ParticipantCard.vue'
+
+const { t, term } = useT()
 
 const props = defineProps<{ order: PublicOrder; errors: Record<string, string>; saving: boolean }>()
 const emit = defineEmits<{ submit: [AttendeeSubmission[]] }>()
@@ -34,8 +37,8 @@ function save(): void {
 
 <template>
   <section v-if="rows.length > 0" class="mt-8">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Who's attending?</h2>
-    <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Add the details for everyone coming.</p>
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('orderHub.attendees.heading') }}</h2>
+    <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ t('orderHub.attendees.hint') }}</p>
 
     <div class="mt-4 space-y-3">
       <ParticipantCard
@@ -47,7 +50,7 @@ function save(): void {
         :identity-key="null"
         :errors="errors"
         :error-prefix="String(i)"
-        :title="`Attendee ${i + 1}`"
+        :title="t('checkout.person.title', { person: term('person'), n: i + 1 })"
         :can-copy="false"
         :can-remove="false"
       />
@@ -60,7 +63,9 @@ function save(): void {
       :disabled="saving"
       @click="save"
     >
-      {{ saving ? 'Saving…' : 'Save attendee details' }}
+      {{
+        saving ? t('common.saving') : t('orderHub.attendees.saveButton', { person: term('person', { lower: true }) })
+      }}
     </button>
   </section>
 </template>

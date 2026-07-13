@@ -1,9 +1,12 @@
 <!-- Non-collapsible order breakdown for the review step: items + fees + taxes + grand total. -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { Pencil } from '#icons'
 import { computed } from 'vue'
 import { formatMoney } from '../../money'
 import type { OrderCalculation } from '../../types'
+
+const { t } = useT()
 
 const props = defineProps<{
   calculation: OrderCalculation | null
@@ -20,7 +23,7 @@ const totalText = computed(() => (props.calculation ? money(props.calculation.to
 <template>
   <section class="rounded-xl border border-gray-200 p-4 sm:p-5 dark:border-gray-700">
     <div class="mb-3 flex items-center justify-between gap-3">
-      <h3 class="text-base font-semibold text-gray-900 dark:text-white">Order summary</h3>
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('checkout.breakdown.title') }}</h3>
       <button
         v-if="editable"
         type="button"
@@ -29,7 +32,7 @@ const totalText = computed(() => (props.calculation ? money(props.calculation.to
         @click="emit('edit')"
       >
         <Pencil :size="15" />
-        Edit
+        {{ t('common.edit') }}
       </button>
     </div>
     <template v-if="calculation">
@@ -57,13 +60,13 @@ const totalText = computed(() => (props.calculation ? money(props.calculation.to
         </li>
       </ul>
       <div class="mt-3 flex items-baseline justify-between gap-3 border-t border-gray-200 pt-3 dark:border-gray-700">
-        <span class="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
+        <span class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('checkout.breakdown.total') }}</span>
         <span class="text-lg font-semibold tabular-nums text-gray-900 dark:text-white">{{ totalText }}</span>
       </div>
     </template>
     <p v-else-if="status === 'updating'" class="text-sm text-gray-400 dark:text-gray-500" aria-live="polite">
-      Updating…
+      {{ t('common.updating') }}
     </p>
-    <p v-else class="text-sm text-gray-400 dark:text-gray-500">No items yet.</p>
+    <p v-else class="text-sm text-gray-400 dark:text-gray-500">{{ t('checkout.breakdown.empty') }}</p>
   </section>
 </template>

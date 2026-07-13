@@ -3,7 +3,10 @@
      (keyboard + the field label target) but is read-only so touch goes through the buttons. Used by
      ProductField for both the simple-product row and each variant row. -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { Minus, Plus } from '#icons'
+
+const { t } = useT()
 
 defineProps<{
   value: number
@@ -21,7 +24,7 @@ defineEmits<{ decrement: []; increment: [] }>()
       type="button"
       class="flex min-h-tap min-w-tap items-center justify-center text-gray-600 disabled:opacity-40 dark:text-gray-300"
       :disabled="!canDecrement"
-      :aria-label="`Decrease quantity for ${label}`"
+      :aria-label="t('forms.quantity.decreaseAria', { label })"
       @click="$emit('decrement')"
     >
       <Minus :size="18" />
@@ -32,14 +35,14 @@ defineEmits<{ decrement: []; increment: [] }>()
       inputmode="numeric"
       readonly
       :value="value"
-      :aria-label="`Quantity for ${label}`"
+      :aria-label="t('forms.quantity.valueAria', { label })"
       class="w-8 border-0 bg-transparent p-0 text-center text-base text-gray-900 focus:outline-hidden dark:text-white/90"
     />
     <button
       type="button"
       class="flex min-h-tap min-w-tap items-center justify-center text-gray-600 disabled:opacity-40 dark:text-gray-300"
       :disabled="!canIncrement"
-      :aria-label="`Increase quantity for ${label}`"
+      :aria-label="t('forms.quantity.increaseAria', { label })"
       @click="$emit('increment')"
     >
       <Plus :size="18" />

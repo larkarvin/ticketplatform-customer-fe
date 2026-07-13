@@ -1,5 +1,6 @@
 <!-- Order / thank-you page. Loaded after checkout (free order) or after returning from a payment gateway. -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { AlertCircle, CheckCircle, Clock, Loader2, Timer } from '#icons'
 import { computed, ref } from 'vue'
 import OrderAttendeePanel from '~/features/events/components/order/OrderAttendeePanel.vue'
@@ -10,6 +11,8 @@ import { formatMoney } from '~/features/events/money'
 import { buildTicketsQuery, formatCountdown, seedStatus } from '~/features/events/orderPage'
 import { ordersService } from '~/features/events/services/orders.service'
 import type { PublicOrder } from '~/features/events/types'
+
+const { t } = useT()
 
 const route = useRoute()
 // The route param is the order's public_id (a random UUID) — the sole handle used to
@@ -24,7 +27,12 @@ const publicId = computed(() => String(route.params.publicId))
 // inside the head getter, which would leave unhead with no entry and crash onBeforeUnmount's dispose().
 const asyncOrder = useAsyncData(`order:${publicId.value}`, () => ordersService.getOrder(publicId.value))
 const { data } = asyncOrder
-useSeoMeta({ title: () => (data.value?.order_number ? `Order ${data.value.order_number}` : 'Order status') })
+useSeoMeta({
+  title: () =>
+    data.value?.order_number
+      ? t('orderHub.orderLabel') + ' ' + data.value.order_number
+      : t('orderHub.pageTitleFallback'),
+})
 await asyncOrder
 
 const order = ref<PublicOrder | null>(data.value ?? null)
@@ -140,7 +148,7 @@ async function resendReceipt(): Promise<void> {
     const { message } = await ordersService.resendReceipt(publicId.value)
     receiptMessage.value = message
   } catch {
-    receiptError.value = "We couldn't resend the receipt just now — please try again."
+    receiptError.value = t('orderHub.receipt.error')
   } finally {
     resendingReceipt.value = false
   }
@@ -149,7 +157,7 @@ async function resendReceipt(): Promise<void> {
 const manage = useOrderManage(order)
 
 async function onCancel(): Promise<void> {
-  if (!window.confirm('This releases your tickets — you’ll need to start over to get them back. Cancel?')) return
+  if (!window.confirm(t('orderHub.cancelConfirm'))) return
   await manage.cancel()
   // Reflect the cancellation immediately instead of waiting for the next status poll.
   await refresh()
@@ -166,10 +174,10 @@ async function onCancel(): Promise<void> {
       <template v-if="state === 'processing'">
         <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
           <Loader2 :size="28" :stroke-width="2" class="motion-safe:animate-spin text-brand-600" aria-hidden="true" />
-          Confirming your payment…
+          {{ t('orderHub.processing.heading') }}
         </h1>
         <p class="mt-2 text-gray-600 dark:text-gray-300">
-          This usually takes just a moment. Please don't close this page.
+          {{ t('orderHub.processing.body') }}
         </p>
       </template>
 
@@ -177,18 +185,18 @@ async function onCancel(): Promise<void> {
       <template v-else-if="state === 'paid'">
         <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
           <CheckCircle :size="28" :stroke-width="2" class="text-success-600" aria-hidden="true" />
-          You're in!
+          {{ t('orderHub.paid.heading') }}
         </h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-300">A receipt has been emailed to you.</p>
+        <p class="mt-2 text-gray-600 dark:text-gray-300">{{ t('orderHub.paid.body') }}</p>
         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
           <ClientOnly>
-            <template v-if="paidOn">Paid {{ paidOn }} ·</template>
+            <template v-if="paidOn">{{ t('orderHub.paid.on', { date: paidOn }) }}</template>
           </ClientOnly>
-          Order
+          {{ t('orderHub.orderLabel') }}
           <span class="font-mono">#{{ order.order_number }}</span>
         </p>
         <p v-if="order.payment_reference" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Payment ref
+          {{ t('orderHub.paid.paymentRefLabel') }}
           <span class="font-mono">{{ order.payment_reference }}</span>
         </p>
         <div class="mt-6">
@@ -198,7 +206,7 @@ async function onCancel(): Promise<void> {
             :disabled="resendingReceipt"
             @click="resendReceipt"
           >
-            {{ resendingReceipt ? 'Sending…' : 'Resend receipt' }}
+            {{ resendingReceipt ? t('orderHub.receipt.sending') : t('orderHub.receipt.button') }}
           </button>
           <p v-if="receiptMessage" class="mt-2 text-sm text-success-700">
             {{ receiptMessage }}
@@ -213,7 +221,7 @@ async function onCancel(): Promise<void> {
       <template v-else-if="state === 'awaiting'">
         <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
           <Timer :size="28" :stroke-width="2" class="text-warning-600" aria-hidden="true" />
-          Your order is reserved
+          {{ t('orderHub.awaiting.heading') }}
         </h1>
         <!-- The countdown is time-relative (Date.now), so it must not be server-rendered: SSR and the
              client would differ by ~1s → a hydration mismatch that crashes the client render (via
@@ -222,17 +230,17 @@ async function onCancel(): Promise<void> {
         <ClientOnly>
           <p class="mt-2 text-gray-600 dark:text-gray-300">
             <template v-if="countdownDisplay">
-              Held for
+              {{ t('orderHub.awaiting.heldFor') }}
               <span class="font-mono">{{ countdownDisplay }}</span>
               <template v-if="expiryClock">
-                until
+                {{ t('orderHub.awaiting.until') }}
                 <span class="font-mono">{{ expiryClock }}</span>
               </template>
             </template>
-            <template v-else>Complete payment to confirm your spot.</template>
+            <template v-else>{{ t('orderHub.awaiting.completePayment') }}</template>
           </p>
           <template #fallback>
-            <p class="mt-2 text-gray-600 dark:text-gray-300">Complete payment to confirm your spot.</p>
+            <p class="mt-2 text-gray-600 dark:text-gray-300">{{ t('orderHub.awaiting.completePayment') }}</p>
           </template>
         </ClientOnly>
         <div class="mt-6">
@@ -242,7 +250,7 @@ async function onCancel(): Promise<void> {
             :disabled="resuming"
             @click="handleResume"
           >
-            {{ resuming ? 'Redirecting…' : 'Resume payment' }}
+            {{ resuming ? t('orderHub.redirecting') : t('orderHub.awaiting.resumeButton') }}
           </button>
           <button
             type="button"
@@ -250,7 +258,7 @@ async function onCancel(): Promise<void> {
             :disabled="manage.cancelling.value"
             @click="onCancel"
           >
-            Cancel this order
+            {{ t('orderHub.cancelButton') }}
           </button>
           <button
             type="button"
@@ -258,7 +266,7 @@ async function onCancel(): Promise<void> {
             :disabled="manage.resending.value"
             @click="manage.resend"
           >
-            Email me this order link
+            {{ t('orderHub.resendLinkButton') }}
           </button>
           <p v-if="manage.resendMessage.value" class="mt-2 text-sm text-success-700">
             {{ manage.resendMessage.value }}
@@ -270,9 +278,9 @@ async function onCancel(): Promise<void> {
       <template v-else-if="state === 'failed'">
         <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
           <AlertCircle :size="28" :stroke-width="2" class="text-danger-600" aria-hidden="true" />
-          That payment didn't go through
+          {{ t('orderHub.failed.heading') }}
         </h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-300">No charge was made. You can try again below.</p>
+        <p class="mt-2 text-gray-600 dark:text-gray-300">{{ t('orderHub.failed.body') }}</p>
         <div class="mt-6">
           <button
             type="button"
@@ -280,7 +288,7 @@ async function onCancel(): Promise<void> {
             :disabled="resuming"
             @click="handleResume"
           >
-            {{ resuming ? 'Redirecting…' : 'Try again' }}
+            {{ resuming ? t('orderHub.redirecting') : t('common.tryAgain') }}
           </button>
           <button
             type="button"
@@ -288,7 +296,7 @@ async function onCancel(): Promise<void> {
             :disabled="manage.resending.value"
             @click="manage.resend"
           >
-            Email me this order link
+            {{ t('orderHub.resendLinkButton') }}
           </button>
           <p v-if="manage.resendMessage.value" class="mt-2 text-sm text-success-700">
             {{ manage.resendMessage.value }}
@@ -300,10 +308,10 @@ async function onCancel(): Promise<void> {
       <template v-else-if="state === 'expired'">
         <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
           <Clock :size="28" :stroke-width="2" class="text-gray-400" aria-hidden="true" />
-          This reservation expired
+          {{ t('orderHub.expired.heading') }}
         </h1>
         <p class="mt-2 text-gray-600 dark:text-gray-300">
-          Your spot was released. You're welcome to start a new order.
+          {{ t('orderHub.expired.body') }}
         </p>
         <div class="mt-6">
           <button
@@ -311,7 +319,7 @@ async function onCancel(): Promise<void> {
             class="min-h-tap min-w-tap inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
             @click="handleRebuild"
           >
-            Rebuild my order
+            {{ t('orderHub.rebuildButton') }}
           </button>
         </div>
       </template>
@@ -320,10 +328,10 @@ async function onCancel(): Promise<void> {
       <template v-else-if="state === 'cancelled'">
         <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
           <Clock :size="28" :stroke-width="2" class="text-gray-400" aria-hidden="true" />
-          This order was cancelled
+          {{ t('orderHub.cancelled.heading') }}
         </h1>
         <p class="mt-2 text-gray-600 dark:text-gray-300">
-          Your tickets were released. You can start a new order any time.
+          {{ t('orderHub.cancelled.body') }}
         </p>
         <div class="mt-6">
           <button
@@ -331,7 +339,7 @@ async function onCancel(): Promise<void> {
             class="min-h-tap min-w-tap inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
             @click="handleRebuild"
           >
-            Rebuild my order
+            {{ t('orderHub.rebuildButton') }}
           </button>
         </div>
       </template>
@@ -341,10 +349,10 @@ async function onCancel(): Promise<void> {
     <section v-else aria-live="polite">
       <h1 class="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
         <AlertCircle :size="28" :stroke-width="2" class="text-danger-600" aria-hidden="true" />
-        We couldn't load your order
+        {{ t('orderHub.fetchError.heading') }}
       </h1>
       <p class="mt-2 text-gray-600 dark:text-gray-300">
-        Check your connection and try again — your order and any payment are safe.
+        {{ t('orderHub.fetchError.body') }}
       </p>
       <div class="mt-6">
         <button
@@ -352,14 +360,14 @@ async function onCancel(): Promise<void> {
           class="min-h-tap min-w-tap inline-flex items-center justify-center rounded-lg bg-brand-600 px-6 font-semibold text-white hover:bg-brand-700"
           @click="reloadPage"
         >
-          Try again
+          {{ t('common.tryAgain') }}
         </button>
       </div>
     </section>
 
     <!-- Link back to the source event/form public page -->
     <p v-if="order && sourceLink" class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-      For
+      {{ t('orderHub.sourceLinkPrefix') }}
       <NuxtLink :to="sourceLink.to" class="font-medium text-brand-600 hover:text-brand-700 hover:underline">
         {{ sourceLink.name }}
       </NuxtLink>
@@ -368,7 +376,7 @@ async function onCancel(): Promise<void> {
     <!-- Order reference — display-only human reference (order_number), never the route's public_id.
          Hidden in the paid state, which shows the reference alongside the paid date instead. -->
     <p v-if="order && state !== 'paid'" class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-      Order
+      {{ t('orderHub.orderLabel') }}
       <span class="font-mono">#{{ order.order_number }}</span>
     </p>
 
@@ -387,7 +395,7 @@ async function onCancel(): Promise<void> {
     <!-- Subtotal + fee breakdown (shown only when there are fees; otherwise the Total alone is clear) -->
     <dl v-if="order && order.fees.length > 0" class="mt-4 space-y-1 text-sm text-gray-600 dark:text-gray-300">
       <div class="flex justify-between">
-        <dt>Subtotal</dt>
+        <dt>{{ t('orderHub.subtotalLabel') }}</dt>
         <dd>{{ formatMoney(Number(order.subtotal), order.currency) }}</dd>
       </div>
       <div v-for="(fee, i) in order.fees" :key="i" class="flex justify-between">
@@ -397,7 +405,7 @@ async function onCancel(): Promise<void> {
     </dl>
 
     <p v-if="order" class="mt-4 text-right text-lg font-semibold text-gray-900 dark:text-white">
-      Total: {{ formatMoney(Number(order.total), order.currency) }}
+      {{ t('orderHub.totalLabel') }} {{ formatMoney(Number(order.total), order.currency) }}
     </p>
 
     <OrderAttendeePanel

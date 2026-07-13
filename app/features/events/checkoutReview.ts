@@ -5,6 +5,7 @@
 // so "Who's coming" is omitted entirely when nothing the buyer purchased asks for attendee details.
 // Empty groups are omitted.
 import type { Field } from '#core/field-engine/types'
+import { useT } from '#core/i18n'
 import { variantLabel } from '~/core/product/variantLabel'
 import type { ProductFieldInfo, ProductSelection } from '~/core/types/product'
 import type { ReviewGroup } from '~/core/types/review'
@@ -84,6 +85,7 @@ export function buildReviewGroups(
   cart: CartTicket[],
   checkoutAnswers: Record<string, unknown>
 ): ReviewGroup[] {
+  const { t, term } = useT()
   const groups: ReviewGroup[] = []
 
   const counts = new Map<number, number>()
@@ -101,7 +103,10 @@ export function buildReviewGroups(
         {
           key: inst.uid,
           label: `${ticket.name} · #${n}`,
-          value: `${inst.participants.length} attendees — names added after payment`,
+          value: t('checkout.review.laterSummary', {
+            count: inst.participants.length,
+            people: term('person', { plural: true, lower: true }),
+          }),
         },
       ]
     }
@@ -110,17 +115,18 @@ export function buildReviewGroups(
       key: `${inst.uid}.${i}`,
       label:
         ticket.participant_type === 'group'
-          ? `${ticket.name} · #${n} — Participant ${i + 1}`
+          ? `${ticket.name} · #${n} — ${t('checkout.review.participantLabel', { person: term('person'), n: i + 1 })}`
           : `${ticket.name} · #${n}`,
       value: (idKey ? String(p.field_data[idKey] ?? '') : '') || '—',
     }))
   })
-  if (attendeeItems.length) groups.push({ editTarget: EDIT_ATTENDEES, title: "Who's coming", items: attendeeItems })
+  if (attendeeItems.length)
+    groups.push({ editTarget: EDIT_ATTENDEES, title: t('checkout.review.whoComing'), items: attendeeItems })
 
   const addonItems = (event.form_fields ?? [])
     .map((f) => ({ key: f.field_key, label: f.label, value: formatAnswer(f, checkoutAnswers[f.field_key]) }))
     .filter((it) => it.value !== '')
-  if (addonItems.length) groups.push({ editTarget: EDIT_ADDONS, title: 'Optional extras', items: addonItems })
+  if (addonItems.length) groups.push({ editTarget: EDIT_ADDONS, title: t('common.optionalExtras'), items: addonItems })
 
   return groups
 }

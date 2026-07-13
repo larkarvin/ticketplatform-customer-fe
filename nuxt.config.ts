@@ -45,6 +45,11 @@ export default defineNuxtConfig({
       orgLabelPlural: process.env.NUXT_PUBLIC_ORG_LABEL_PLURAL || 'Organizations',
       memberLabel: process.env.NUXT_PUBLIC_MEMBER_LABEL || 'Member',
       memberLabelPlural: process.env.NUXT_PUBLIC_MEMBER_LABEL_PLURAL || 'Members',
+      // Deploy-configured copy (i18n-shaped, single-locale). `terms` = JSON noun dictionary
+      // (e.g. {"person":["Participant","Participants"]}); `copyOverrides` = JSON catalog override.
+      // Consumed by app/plugins/i18n.ts. See app/core/i18n.
+      terms: process.env.NUXT_PUBLIC_TERMS || '',
+      copyOverrides: process.env.NUXT_PUBLIC_COPY_OVERRIDES || '',
       // Backend base URL incl. version prefix, e.g. http://localhost:8000/v1
       apiUrl: process.env.NUXT_PUBLIC_API_URL || '',
       // The org this whitelabel deploy serves — sent as X-Organization-Subdomain. Primary tenant source.

@@ -1,12 +1,14 @@
 // Owns order-management actions from the order page: cancel, resend link, submit attendee details.
 // Calls the service (no direct $fetch); maps 422 → attendeeErrors keyed `${index}.${field_key}`.
 import { isValidationError } from '#core/errors'
+import { useT } from '#core/i18n'
 import { ref, type Ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { ordersService } from '../services/orders.service'
 import type { AttendeeSubmission, PublicOrder } from '../types'
 
 export function useOrderManage(order: Ref<PublicOrder | null>) {
+  const { t, term } = useT()
   const cancelling = ref(false)
   const resending = ref(false)
   const savingAttendees = ref(false)
@@ -43,7 +45,7 @@ export function useOrderManage(order: Ref<PublicOrder | null>) {
     attendeeErrors.value = {}
     try {
       order.value = await ordersService.submitAttendees(id, participants)
-      toast.success('Attendee details saved')
+      toast.success(t('orderHub.attendees.saved', { person: term('person') }))
       return true
     } catch (e) {
       if (isValidationError(e)) {

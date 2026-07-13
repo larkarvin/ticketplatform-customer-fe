@@ -5,6 +5,7 @@ import { isValidationError } from '#core/errors'
 import { getFieldType } from '#core/field-engine/registry'
 import type { Field } from '#core/field-engine/types'
 import { isCollecting, validateAll } from '#core/field-engine/validation'
+import { useT } from '#core/i18n'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import type { ReviewGroup } from '~/core/types/review'
@@ -22,6 +23,7 @@ interface Section {
 const bySort = <T extends { sort_order: number }>(a: T, b: T) => a.sort_order - b.sort_order
 
 export async function usePublicForm(slug: string) {
+  const { t } = useT()
   // Nuxt composables (useAsyncData, useHead) MUST be called synchronously before any await — after an
   // await the setup context is lost and they throw "composable called outside setup". So set them up
   // first (useHead reads `data` reactively once it resolves), then await the fetch.
@@ -169,7 +171,7 @@ export async function usePublicForm(slug: string) {
         .join(', ')
     }
     if (field.type === 'file' || field.type === 'image') {
-      return uploads[field.id]?.filename ?? (value ? 'Uploaded' : '')
+      return uploads[field.id]?.filename ?? (value ? t('forms.uploadedLabel') : '')
     }
     if (field.type === 'select') {
       const opt = field.options.find((o) => o.option_key === String(value))
@@ -181,7 +183,7 @@ export async function usePublicForm(slug: string) {
     sections.value
       .map((sec, i) => ({
         editTarget: i,
-        title: sec.title || 'Your answers',
+        title: sec.title || t('forms.review.defaultSectionTitle'),
         items: sec.fields
           .filter((f) => isCollecting(f))
           .map((f) => ({ key: f.id, label: f.label, value: formatAnswer(f, answers[String(f.id)]) }))
@@ -299,7 +301,7 @@ export async function usePublicForm(slug: string) {
     }
     const clientErrors = validateAll(allFields.value, answers)
     if (needsGuestEmail.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.value.trim())) {
-      clientErrors[-1] = 'Enter a valid email address'
+      clientErrors[-1] = t('forms.email.invalid')
     }
     errors.value = clientErrors
     if (Object.keys(clientErrors).length) {
@@ -338,7 +340,7 @@ export async function usePublicForm(slug: string) {
         focusFirstError()
       } else {
         // 403/5xx/network are toasted by the api client; 400/404/409 are rethrown for us to message.
-        toast.error("Couldn't submit your response. Please try again.")
+        toast.error(t('forms.submitError'))
       }
     } finally {
       submitting.value = false

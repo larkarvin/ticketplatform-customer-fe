@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import FieldCell from '#core/field-engine/components/FieldCell.vue'
 import type { Field } from '#core/field-engine/types'
+import { useT } from '#core/i18n'
 import { Check, ChevronDown, Copy, Trash2 } from '#icons'
 import { computed, nextTick, ref, watch } from 'vue'
 import { participantFieldErrors } from '../../checkoutValidation'
 import type { CartParticipant } from '../../types'
+
+const { t } = useT()
 
 const props = defineProps<{
   fields: Field[]
@@ -90,7 +93,7 @@ defineExpose({ focusIdentity })
         type="button"
         class="flex flex-1 items-center gap-2 text-left min-h-tap"
         :aria-expanded="open"
-        :aria-label="open ? `Collapse ${title}` : `Expand ${title}`"
+        :aria-label="open ? t('checkout.card.collapse', { title }) : t('checkout.card.expand', { title })"
         @click="open = !open"
       >
         <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ title }}</span>
@@ -105,7 +108,7 @@ defineExpose({ focusIdentity })
           "
         >
           <Check v-if="complete" :size="13" class="shrink-0" aria-hidden="true" />
-          {{ complete ? 'Complete' : `${missingCount} to add` }}
+          {{ complete ? t('checkout.card.complete') : t('checkout.card.missing', { n: missingCount }) }}
         </span>
         <ChevronDown
           :size="18"
@@ -121,7 +124,7 @@ defineExpose({ focusIdentity })
         @click="emit('copy-from-above')"
       >
         <Copy class="size-4 shrink-0" aria-hidden="true" />
-        Copy from above
+        {{ t('checkout.card.copyFromAbove') }}
       </button>
       <button
         v-if="canRemove"
@@ -131,7 +134,7 @@ defineExpose({ focusIdentity })
         @click="emit('remove')"
       >
         <Trash2 class="size-4 shrink-0" aria-hidden="true" />
-        Remove
+        {{ t('common.remove') }}
       </button>
     </div>
     <div v-show="open" data-test="card-body" class="grid grid-cols-12 gap-4 px-4 pb-4">
