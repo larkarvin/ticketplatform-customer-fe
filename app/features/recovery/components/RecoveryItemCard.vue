@@ -83,7 +83,7 @@ const dateLine = computed(() => {
         </ClientOnly>
 
         <p v-if="statusLabel" class="mt-3">
-          <span :class="['inline-block rounded-full px-3 py-1 text-sm font-medium', statusTone]">
+          <span :class="['inline-block rounded-full px-3 py-1 text-base font-medium', statusTone]">
             {{ statusLabel }}
           </span>
         </p>
