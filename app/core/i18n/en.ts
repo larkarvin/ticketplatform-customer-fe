@@ -187,6 +187,50 @@ export const en: MessageTree = {
   },
   recovery: {
     // The API never tells us whether an address was found, so none of this copy may claim it was.
+    // Two honesty rules shape every string here:
+    //   1. The request endpoint answers identically for a known and an unknown address, so the page
+    //      may only ever say "IF we have anything for that address…" — never "we found your orders".
+    //   2. After three wrong codes, `resend` still answers 200 and sends nothing at all. So no string
+    //      here may promise a delivery ("a fresh link is on its way"), and `startOver` — a genuinely
+    //      new request, the only real way out of that dead end — is always on screen.
+    pageTitle: 'Find my order',
+    heading: 'Find my order',
+    intro:
+      "Enter the email address you used when you booked. If we have anything for it, we'll email you a link to it.",
+    emailLabel: 'Your email address',
+    emailHint: 'Use the address your confirmation was sent to.',
+    submit: 'Email me my link',
+    sentHeading: 'Check your email',
+    sentBody:
+      "If we have anything for {email}, we've sent an email to it. The email has a button that opens your orders — and a 6-digit code you can type in below instead.",
+    sentNothingArrived:
+      'Nothing yet? Give it a minute, then look in your junk or spam folder. If the address above is wrong, start over below.',
+    codeLabel: 'Enter the 6-digit code',
+    codeHint: 'The code is in that email, under the button. It works for 30 minutes.',
+    codeSubmit: 'Continue',
+    resend: 'Send another email',
+    resendIn: 'You can send another email in {seconds}s',
+    startOver: 'Start over with a different email address',
+    listHeading: 'What we have for that address',
+    listEmpty:
+      "We couldn't find anything for that address. If you booked with a different email — a work address, or a partner's — try that one instead.",
+    item: {
+      orderReference: 'Order #{reference}',
+      orderedOn: 'Ordered {date}',
+      sentOn: 'Sent {date}',
+      viewOrder: 'View my order',
+      finishPayment: 'Finish payment',
+      updateAnswers: 'Update my answers',
+    },
+    status: {
+      pending: 'Not paid yet',
+      paid: 'Paid',
+      failed: 'Payment did not go through',
+      refunded: 'Refunded',
+      cancelled: 'Cancelled',
+      expired: 'Expired',
+      submitted: 'Sent',
+    },
     error: {
       email: 'Please enter the email address you used.',
       code: 'Please enter the 6-digit code from the email.',

@@ -1,0 +1,129 @@
+<!--
+  "I lost my order email" — ask for the address, then wait for the emailed link or the 6-digit code.
+
+  The honesty constraint, in one place: the API answers a known address and an unknown one identically,
+  and after three wrong codes a resend still answers cheerfully while sending nothing. So this page can
+  never claim an email was found or delivered — it says "IF we have anything for that address" — and it
+  always keeps "Start over" (a genuinely fresh request) on screen, because that is the only real way out
+  of the three-strikes dead end.
+-->
+<script setup lang="ts">
+import Button from '#core/components/ui/Button.vue'
+import { useT } from '#core/i18n'
+import { RecoveryList, useRecovery } from '~/features/recovery'
+
+const { t } = useT()
+
+const { step, email, code, items, error, pending, cooldown, canResend, submitEmail, submitCode, resend, restart } =
+  useRecovery()
+
+useSeoMeta({ title: () => t('recovery.pageTitle') })
+
+// Paste-friendly: a code copied out of the email as "123 456" (or with a stray newline) is still the
+// right code. Strip everything that isn't a digit rather than rejecting the guest for a space.
+function onCodeInput(event: Event): void {
+  const raw = (event.target as HTMLInputElement).value
+  code.value = raw.replace(/\D/g, '').slice(0, 6)
+}
+</script>
+
+<template>
+  <article class="mx-auto w-full max-w-md px-4 py-10">
+    <!-- ASK -->
+    <section v-if="step === 'ask'">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('recovery.heading') }}</h1>
+      <p class="mt-3 text-base text-gray-600 dark:text-gray-300">{{ t('recovery.intro') }}</p>
+
+      <!-- Native inputs, not FormInput/BaseInput: neither forwards `autocomplete`/`inputmode` to the
+           real <input> (their fall-through attrs land on the wrapper <div>), and both hardcode 14px
+           text — below the 16px floor this audience needs. -->
+      <form class="mt-6" novalidate @submit.prevent="submitEmail">
+        <label for="recovery-email" class="block text-base font-medium text-gray-700 dark:text-gray-300">
+          {{ t('recovery.emailLabel') }}
+        </label>
+        <p id="recovery-email-hint" class="mt-1 text-base text-gray-500 dark:text-gray-400">
+          {{ t('recovery.emailHint') }}
+        </p>
+        <input
+          id="recovery-email"
+          v-model="email"
+          type="email"
+          name="email"
+          autocomplete="email"
+          aria-describedby="recovery-email-hint"
+          class="min-h-tap mt-2 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-base text-gray-900 shadow-theme-xs focus:border-brand-500 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+        />
+
+        <p v-if="error" role="alert" class="mt-3 text-base text-danger-600">{{ error }}</p>
+
+        <Button type="submit" size="lg" class="min-h-tap mt-6 w-full" :disabled="pending">
+          {{ t('recovery.submit') }}
+        </Button>
+      </form>
+    </section>
+
+    <!-- SENT — we asked; we do NOT know whether anything was found, or whether mail actually went out. -->
+    <section v-else-if="step === 'sent'" aria-live="polite">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('recovery.sentHeading') }}</h1>
+      <p class="mt-3 text-base text-gray-600 dark:text-gray-300">{{ t('recovery.sentBody', { email }) }}</p>
+
+      <form class="mt-6" novalidate @submit.prevent="submitCode">
+        <label for="recovery-code" class="block text-base font-medium text-gray-700 dark:text-gray-300">
+          {{ t('recovery.codeLabel') }}
+        </label>
+        <p id="recovery-code-hint" class="mt-1 text-base text-gray-500 dark:text-gray-400">
+          {{ t('recovery.codeHint') }}
+        </p>
+        <!-- One field, not six boxes: six fight paste and screen readers, while `one-time-code` lets the
+             phone offer the code straight from the email. -->
+        <input
+          id="recovery-code"
+          :value="code"
+          type="text"
+          name="code"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="6"
+          aria-describedby="recovery-code-hint"
+          class="min-h-tap mt-2 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-2xl tracking-widest text-gray-900 shadow-theme-xs focus:border-brand-500 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+          @input="onCodeInput"
+        />
+
+        <p v-if="error" role="alert" class="mt-3 text-base text-danger-600">{{ error }}</p>
+
+        <!-- Never disabled on a short code: a dead button reads as broken. Press it and you get words. -->
+        <Button type="submit" size="lg" class="min-h-tap mt-6 w-full" :disabled="pending">
+          {{ t('recovery.codeSubmit') }}
+        </Button>
+      </form>
+
+      <!-- Counts down instead of going dead, and says "send another email" rather than promising one
+           arrives — after three wrong codes the API sends nothing at all. -->
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        class="min-h-tap mt-4 w-full"
+        :disabled="!canResend"
+        @click="resend()"
+      >
+        {{ canResend ? t('recovery.resend') : t('recovery.resendIn', { seconds: cooldown }) }}
+      </Button>
+
+      <p class="mt-6 text-base text-gray-500 dark:text-gray-400">{{ t('recovery.sentNothingArrived') }}</p>
+
+      <!-- Always present: the resend above may silently do nothing, and a fresh request is the only
+           way back from that. -->
+      <button
+        type="button"
+        class="min-h-tap mt-2 text-base font-medium text-brand-600 underline hover:text-brand-700"
+        @click="restart()"
+      >
+        {{ t('recovery.startOver') }}
+      </button>
+    </section>
+
+    <!-- LISTED — a valid token; we really did look, so this may speak plainly. -->
+    <RecoveryList v-else-if="step === 'listed'" :items="items" />
+  </article>
+</template>
