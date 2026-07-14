@@ -15,6 +15,7 @@ vi.stubGlobal('useSeoMeta', useSeoMeta)
 vi.stubGlobal('useRoute', () => ({ params: { token: 'magic-token-123' } }))
 
 const step = ref<RecoveryStep>('listed')
+const token = ref('magic-token-123')
 const items = ref<RecoveryItem[]>([])
 const maskedEmail = ref('')
 const error = ref('')
@@ -34,6 +35,7 @@ vi.mock('~/features/recovery', async () => {
     ...actual,
     useRecovery: () => ({
       step,
+      token,
       items,
       maskedEmail,
       error,
@@ -79,6 +81,7 @@ describe('recover/[token].vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     step.value = 'listed'
+    token.value = 'magic-token-123'
     items.value = []
     maskedEmail.value = ''
     error.value = ''
@@ -178,7 +181,8 @@ describe('recover/[token].vue', () => {
       step.value = 'failed'
     })
 
-    it('never calls the link broken, and offers another attempt with the same token', async () => {
+    it('never calls the link broken, and offers another attempt with the retained (not the route) token', async () => {
+      token.value = 'retained-live-token'
       const w = await mountLoaded()
       expect(w.text()).toContain('We could not check your link just now')
       expect(w.text()).not.toContain('That link did not work')
@@ -187,7 +191,9 @@ describe('recover/[token].vue', () => {
       const retry = w.findAll('button').find((b) => b.text().includes('Try again'))
       expect(retry).toBeTruthy()
       await retry?.trigger('click')
-      expect(loadItems).toHaveBeenCalledWith('magic-token-123')
+      // Fix 3: retries with the token the composable retained from the failed check, not a second
+      // copy of the route param — proving the exported `token` is actually used, not dead surface.
+      expect(loadItems).toHaveBeenCalledWith('retained-live-token')
     })
 
     it('shows the wait message on a 429 instead of discarding it', async () => {
@@ -196,7 +202,49 @@ describe('recover/[token].vue', () => {
       expect(w.find('[role="alert"]').text()).toContain('Too many tries')
     })
 
+    // Fix 1: on offline/5xx the composable now leaves error.value empty (the body copy already says
+    // this in calm words), so the red alert line must not render — the explanation appears once.
+    it('renders the explanation once on offline/5xx — no duplicated red alert', async () => {
+      error.value = ''
+      const w = await mountLoaded()
+      expect(w.text()).toContain('We could not check your link just now')
+      expect(w.find('[role="alert"]').exists()).toBe(false)
+    })
+
+    // Fix 2: a 429 must not leave "Try again" immediately tappable — that walks her straight back
+    // into the throttle. The page reuses the composable's existing cooldown/canResend, no 2nd timer.
+    describe('429 disables Try again for the cooldown, using the existing cooldown state', () => {
+      it('disables Try again while the cooldown is running, visibly (not colour alone)', async () => {
+        error.value = 'Too many tries. Please wait a minute, then try again.'
+        cooldown.value = 60
+        canResend.value = false
+        const w = await mountLoaded()
+        const retry = w.findAll('button').find((b) => b.text().toLowerCase().includes('try again'))
+        expect(retry?.attributes('disabled')).toBeDefined()
+        expect(retry?.text()).toContain('60')
+        expect(retry?.classes()).toContain('min-h-tap')
+      })
+
+      it('re-enables Try again once the cooldown elapses', async () => {
+        error.value = 'Too many tries. Please wait a minute, then try again.'
+        cooldown.value = 0
+        canResend.value = true
+        const w = await mountLoaded()
+        const retry = w.findAll('button').find((b) => b.text().includes('Try again'))
+        expect(retry?.attributes('disabled')).toBeUndefined()
+      })
+    })
+
     it('still keeps a fresh start one tap away, in case the network is truly gone', async () => {
+      const w = await mountLoaded()
+      const startOver = w.findAll('a').find((a) => a.attributes('href') === '/recover')
+      expect(startOver?.text()).toContain('Start over with a different email address')
+    })
+
+    it('keeps Start over reachable even while the 429 cooldown disables Try again', async () => {
+      error.value = 'Too many tries. Please wait a minute, then try again.'
+      cooldown.value = 60
+      canResend.value = false
       const w = await mountLoaded()
       const startOver = w.findAll('a').find((a) => a.attributes('href') === '/recover')
       expect(startOver?.text()).toContain('Start over with a different email address')

@@ -185,7 +185,13 @@ export function useRecovery() {
       if (isTransient(status)) {
         // We never heard back about the token, so we must not condemn it: keep it (it may well have
         // 25 minutes left) and let the page offer another attempt. A 429 says "wait", not "broken".
-        error.value = messageOf(e, t('recovery.error.checkFailed'))
+        // Empty fallback on purpose: the `failed` screen's own body copy already says this in calm
+        // words, so the red alert line below it should only appear when there is something MORE
+        // specific to say — a 429's "wait a minute", which messageOf() returns regardless of fallback.
+        error.value = messageOf(e, '')
+        // A 429 also means "Try again" would walk straight back into the same throttle: reuse the
+        // resend cooldown so the page can disable it until the wait is over.
+        if (status === 429) startCooldown()
         step.value = 'failed'
         return
       }

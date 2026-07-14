@@ -228,11 +228,45 @@ describe('useRecovery', () => {
       stop()
     })
 
-    it('uses plain-words copy when the transport gives us nothing to say', async () => {
+    // The `failed` screen's own body copy already says this in calm words; leaving error.value empty
+    // stops the guest reading the same sentence twice, once calmly and once in a red alert.
+    it('leaves error empty on offline/500 — the screen body already says it, once', async () => {
       items.mockRejectedValue(new Error('Failed to fetch'))
       const { recovery, stop } = mount()
       await recovery.loadItems('tok-live')
-      expect(recovery.error.value).toBe('We could not check your link just now. Please try again.')
+      expect(recovery.error.value).toBe('')
+      stop()
+    })
+
+    it('leaves error empty on a 5xx too, not just a fully offline fetch', async () => {
+      items.mockRejectedValue(transportError(500))
+      const { recovery, stop } = mount()
+      await recovery.loadItems('tok-live')
+      expect(recovery.error.value).toBe('')
+      stop()
+    })
+
+    // A 429 says "wait", and "Try again" must not be usable straight away — reuse the same cooldown
+    // resend uses rather than inventing a second timer.
+    it('starts the retry cooldown on a 429, then clears it once the wait is over', async () => {
+      items.mockRejectedValue(transportError(429))
+      const { recovery, stop } = mount()
+      await recovery.loadItems('tok-live')
+      expect(recovery.step.value).toBe('failed')
+      expect(recovery.cooldown.value).toBe(60)
+      expect(recovery.canResend.value).toBe(false)
+      vi.advanceTimersByTime(60_000)
+      expect(recovery.cooldown.value).toBe(0)
+      expect(recovery.canResend.value).toBe(true)
+      stop()
+    })
+
+    it('does not start a cooldown on a plain offline/500 failure — nothing to wait out', async () => {
+      items.mockRejectedValue(new Error('Failed to fetch'))
+      const { recovery, stop } = mount()
+      await recovery.loadItems('tok-live')
+      expect(recovery.cooldown.value).toBe(0)
+      expect(recovery.canResend.value).toBe(true)
       stop()
     })
 

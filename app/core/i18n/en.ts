@@ -230,6 +230,9 @@ export const en: MessageTree = {
     checkFailedBody:
       'The connection dropped, or something went wrong on our side. Your link usually still works — try again below.',
     checkFailedRetry: 'Try again',
+    // Shown instead of the retry button's label while the 429 cooldown the composable started is
+    // still running — mirrors resendIn so the same wait reads the same way everywhere.
+    checkFailedRetryIn: 'You can try again in {seconds}s',
     listHeading: 'What we have for that address',
     listEmpty:
       "We couldn't find anything for that address. If you booked with a different email — a work address, or a partner's — try that one instead.",

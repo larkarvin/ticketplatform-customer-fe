@@ -27,9 +27,20 @@ import { RecoveryList, useRecovery } from '~/features/recovery'
 
 const { t } = useT()
 const route = useRoute()
-const token = String(route.params.token)
+const routeToken = String(route.params.token)
 
-const { step, items, maskedEmail, error, pending, cooldown, canResend, loadItems, resend } = useRecovery()
+const {
+  step,
+  token: retainedToken,
+  items,
+  maskedEmail,
+  error,
+  pending,
+  cooldown,
+  canResend,
+  loadItems,
+  resend,
+} = useRecovery()
 
 // True until the client has actually asked the API. Keeps the server render and the first client
 // render identical (see note 1 above) — the outcome is only ever decided in the browser.
@@ -40,7 +51,7 @@ const checking = ref(true)
 const resendPressed = ref(false)
 
 onMounted(async () => {
-  await loadItems(token)
+  await loadItems(routeToken)
   checking.value = false
 })
 
@@ -49,10 +60,10 @@ function onResend(): void {
   resend()
 }
 
-// The check failed, not the link — so retry with the SAME token rather than sending her back to the
-// start with a link that probably still has 25 minutes left on it.
+// The check failed, not the link — so retry with the SAME token the composable retained, rather than
+// sending her back to the start with a link that probably still has 25 minutes left on it.
 function onRetry(): void {
-  void loadItems(token)
+  void loadItems(retainedToken.value)
 }
 
 // A token in the URL: never index it, and never leak it in a referrer.
@@ -112,8 +123,11 @@ useSeoMeta({ title: () => t('recovery.pageTitle'), robots: 'noindex, nofollow' }
            not "your link is broken". Discarding it is what sent the guest round the throttle again. -->
       <p v-if="error" role="alert" class="mt-3 text-base text-danger-600">{{ error }}</p>
 
-      <Button type="button" size="lg" class="min-h-tap mt-6 w-full" :disabled="pending" @click="onRetry">
-        {{ t('recovery.checkFailedRetry') }}
+      <!-- On a 429 the composable starts the same cooldown resend uses: disable the button and say so
+           in words (not just a dimmed color) until it elapses, so "Try again" cannot walk her straight
+           back into the throttle. -->
+      <Button type="button" size="lg" class="min-h-tap mt-6 w-full" :disabled="pending || !canResend" @click="onRetry">
+        {{ canResend ? t('recovery.checkFailedRetry') : t('recovery.checkFailedRetryIn', { seconds: cooldown }) }}
       </Button>
 
       <!-- Kept alongside the retry: if the network is truly gone, a fresh request is still the way out. -->
