@@ -10,7 +10,7 @@ import { isApiError, isValidationError } from '#core/errors'
 import { useT } from '#core/i18n'
 import { computed, onScopeDispose, ref } from 'vue'
 import { recoveryService } from '../services/recovery.service'
-import type { RecoveryExpiredResponse, RecoveryItem } from '../types'
+import type { RecoveryExpiredResponse, RecoveryItem, RecoveryVerifyResponse } from '../types'
 
 const RESEND_COOLDOWN_SECONDS = 60
 const CODE_PATTERN = /^\d{6}$/
@@ -136,13 +136,21 @@ export function useRecovery() {
     }
     pending.value = true
     error.value = ''
+    let verified: RecoveryVerifyResponse
     try {
-      const verified = await recoveryService.verify(email.value, entered)
-      token.value = verified.token
+      verified = await recoveryService.verify(email.value, entered)
+    } catch (e) {
+      error.value = messageOf(e, t('recovery.error.codeWrong'))
+      pending.value = false
+      return
+    }
+    token.value = verified.token
+    try {
+      // The code was already accepted above — a failure here is a load problem, not a wrong code.
       items.value = await recoveryService.items(verified.token)
       step.value = 'listed'
     } catch (e) {
-      error.value = messageOf(e, t('recovery.error.codeWrong'))
+      error.value = messageOf(e, t('recovery.error.listFailed'))
     } finally {
       pending.value = false
     }

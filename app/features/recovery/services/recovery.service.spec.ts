@@ -40,6 +40,21 @@ describe('recoveryService', () => {
     expect(r).toEqual([row])
   })
 
+  it('items passes through a null created_at untouched (the API contract is nullable)', async () => {
+    const row = {
+      type: 'submission',
+      title: 'Volunteer Sign-up',
+      reference: '',
+      status: 'pending',
+      url: 'https://site/f/abc',
+      created_at: null,
+    }
+    get.mockResolvedValue({ data: [row] })
+    const r = await recoveryService.items('tok-123')
+    expect(r).toEqual([row])
+    expect(r[0]?.created_at).toBeNull()
+  })
+
   it('resend posts the token', async () => {
     post.mockResolvedValue({ message: 'A fresh link is on its way.' })
     await recoveryService.resend('tok-123')

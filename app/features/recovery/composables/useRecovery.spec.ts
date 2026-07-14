@@ -114,6 +114,17 @@ describe('useRecovery', () => {
     stop()
   })
 
+  it('accepts an item whose created_at is null (the API contract is nullable)', async () => {
+    items.mockResolvedValue([{ ...ROW, created_at: null }])
+    const { recovery, stop } = mount()
+    recovery.email.value = 'gran@example.com'
+    recovery.code.value = '123456'
+    await recovery.submitCode()
+    expect(recovery.step.value).toBe('listed')
+    expect(recovery.items.value[0]?.created_at).toBeNull()
+    stop()
+  })
+
   it("surfaces the API's own message on a wrong code — a 422 is a ValidationError, whose message is on `.message`", async () => {
     verify.mockRejectedValue(new ValidationError({}, 'That code is not right.'))
     const { recovery, stop } = mount()
@@ -142,6 +153,20 @@ describe('useRecovery', () => {
     await recovery.submitEmail()
     expect(recovery.error.value).toBe('Too many tries. Please wait a minute, then try again.')
     expect(recovery.step.value).toBe('ask')
+    stop()
+  })
+
+  it('a correct code whose subsequent items() call fails is NOT told the code was wrong', async () => {
+    items.mockRejectedValue(transportError(500))
+    const { recovery, stop } = mount()
+    recovery.email.value = 'gran@example.com'
+    recovery.code.value = '123456'
+    await recovery.submitCode()
+    expect(verify).toHaveBeenCalled()
+    expect(recovery.error.value).not.toBe('That code is not right. Please check it and try again.')
+    expect(recovery.error.value).toBe(
+      'Your code was right, but we could not load your orders just now. Please try again.'
+    )
     stop()
   })
 

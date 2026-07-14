@@ -12,7 +12,8 @@ export interface RecoveryItem {
   status: string
   /** A ready-to-follow link that authorizes itself (signed pay URL / submission edit slug). */
   url: string
-  created_at: string
+  /** Nullable on the wire (`RecoveryItemResource::createdAt?->toIso8601String()`) — do not format blindly. */
+  created_at: string | null
 }
 
 /** 200 from POST /recovery/verify — the 6-digit code exchanged for a 30-minute listing token. */

@@ -194,6 +194,7 @@ export const en: MessageTree = {
       sendFailed: 'We could not send that just now. Please try again.',
       tooMany: 'Too many tries. Please wait a minute, then try again.',
       linkInvalid: 'That link is not valid. Please enter your email address to start again.',
+      listFailed: 'Your code was right, but we could not load your orders just now. Please try again.',
     },
   },
 }
