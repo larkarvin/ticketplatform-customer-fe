@@ -5,6 +5,7 @@
 import { Timer } from '#icons'
 import { computed, reactive } from 'vue'
 import QuantityStepper from '~/features/forms/components/controls/QuantityStepper.vue'
+import { ticketPriceLabel } from '../ticketPricing'
 import type { CheckoutSelection, PublicTicket } from '../types'
 
 const props = defineProps<{ tickets: PublicTicket[] }>()
@@ -22,8 +23,7 @@ function inc(t: PublicTicket) {
 }
 const canIncrement = (t: PublicTicket) => t.is_available && t.is_on_sale && (qty[t.id] ?? 0) < maxFor(t)
 
-const currentPrice = (t: PublicTicket) =>
-  t.is_early_bird && t.early_bird_price_formatted ? t.early_bird_price_formatted : t.price_formatted
+const currentPrice = (t: PublicTicket) => ticketPriceLabel(t)
 const selection = computed<CheckoutSelection[]>(() =>
   props.tickets.filter((t) => (qty[t.id] ?? 0) > 0).map((t) => ({ ticket_id: t.id, quantity: qty[t.id] ?? 0 }))
 )

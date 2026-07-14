@@ -1,3 +1,5 @@
+import type { TicketPricing } from './ticketPricing'
+
 // Public event DTOs (snake_case — the API contract shape) for the read-only event page.
 import type { Field } from '#core/field-engine/types'
 
@@ -89,7 +91,7 @@ export interface PublicEventListItem {
   location: string | null
   currency: string
   cover: { url: string } | null
-  tickets: { price: number; price_formatted: string }[]
+  tickets: TicketPricing[]
 }
 
 /** A buyer's chosen quantity per ticket, from the event card. */

@@ -4,6 +4,7 @@
 import { Calendar, MapPin } from '#icons'
 import { computed } from 'vue'
 import { formatEventDate } from '../eventDate'
+import { ticketEffectivePrice, ticketPriceLabel } from '../ticketPricing'
 import type { PublicEventListItem } from '../types'
 
 const props = defineProps<{ event: PublicEventListItem }>()
@@ -13,8 +14,11 @@ const when = computed(() => formatEventDate(props.event.starts_at, props.event.e
 const fromPrice = computed(() => {
   const { tickets } = props.event
   if (!tickets.length) return null
-  const cheapest = tickets.reduce((min, t) => (t.price < min.price ? t : min), tickets[0]!)
-  return cheapest.price_formatted
+  const cheapest = tickets.reduce(
+    (min, t) => (ticketEffectivePrice(t) < ticketEffectivePrice(min) ? t : min),
+    tickets[0]!
+  )
+  return ticketPriceLabel(cheapest)
 })
 </script>
 
