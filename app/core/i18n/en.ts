@@ -217,6 +217,9 @@ export const en: MessageTree = {
     expiredHeading: 'That link has expired',
     // Says what we CAN do, not that we did: the resend below may find nothing to send.
     expiredBody: 'Our links work for 30 minutes. We can send another email to {email}.',
+    // Fallback for the rare case the 410 body omits the masked address — still says what we CAN do,
+    // just without naming an address we were not given.
+    expiredBodyNoEmail: 'Our links work for 30 minutes. We can send another email below.',
     invalidHeading: 'That link did not work',
     invalidBody:
       'Email programs sometimes cut a link short. Start over below and we will email you a new one, if we have anything for your address.',

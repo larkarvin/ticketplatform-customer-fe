@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest'
 import type { RecoveryItem } from '../types'
 import RecoveryList from './RecoveryList.vue'
 
-const stubs = { ClientOnly: { template: '<div><slot /></div>' } }
+const stubs = {
+  ClientOnly: { template: '<div><slot /></div>' },
+  NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
+}
 
 function item(overrides: Partial<RecoveryItem> = {}): RecoveryItem {
   return {
@@ -33,5 +36,16 @@ describe('RecoveryList', () => {
     const w = mount(RecoveryList, { props: { items: [] }, global: { stubs } })
     expect(w.text()).toContain("We couldn't find anything for that address")
     expect(w.findAll('li')).toHaveLength(0)
+  })
+
+  it('gives the guest a way to actually try a different address, not just a suggestion to', () => {
+    const w = mount(RecoveryList, { props: { items: [] }, global: { stubs } })
+    const startOver = w.findAll('a').find((a) => a.attributes('href') === '/recover')
+    expect(startOver?.text()).toContain('Start over with a different email address')
+  })
+
+  it('does not offer the start-over link when the address owns something', () => {
+    const w = mount(RecoveryList, { props: { items: [item()] }, global: { stubs } })
+    expect(w.findAll('a').some((a) => a.attributes('href') === '/recover')).toBe(false)
   })
 })

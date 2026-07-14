@@ -133,6 +133,25 @@ describe('recover/[token].vue', () => {
       expect(w.text().toLowerCase()).not.toContain("we've sent")
     })
 
+    it('falls back to a version of the sentence with no address when the 410 body omits masked_email, instead of a dangling "to ."', async () => {
+      maskedEmail.value = ''
+      const w = await mountLoaded()
+      expect(w.text()).not.toContain('to .')
+      expect(w.text()).toContain('Our links work for 30 minutes')
+    })
+
+    it('does not suggest checking junk/spam before the guest has pressed resend', async () => {
+      const w = await mountLoaded()
+      expect(w.text()).not.toContain('Nothing yet?')
+    })
+
+    it('shows the junk/spam hint only after resend has actually been pressed', async () => {
+      const w = await mountLoaded()
+      expect(w.text()).not.toContain('Nothing yet?')
+      await w.find('button').trigger('click')
+      expect(w.text()).toContain('Nothing yet?')
+    })
+
     it('keeps a genuinely fresh request on screen — resend can silently send nothing after three wrong codes', async () => {
       const w = await mountLoaded()
       const startOver = w.findAll('a').find((a) => a.attributes('href') === '/recover')

@@ -21,9 +21,22 @@ const { t } = useT()
   <section aria-live="polite">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('recovery.listHeading') }}</h1>
 
-    <p v-if="items.length === 0" class="mt-3 text-base text-gray-600 dark:text-gray-300">
-      {{ t('recovery.listEmpty') }}
-    </p>
+    <template v-if="items.length === 0">
+      <p class="mt-3 text-base text-gray-600 dark:text-gray-300">
+        {{ t('recovery.listEmpty') }}
+      </p>
+
+      <!-- The empty state tells the guest to try a different address but, without this, gives them no
+           way to actually do that — this is the branch they're most likely to land on after recovering
+           the wrong email. Neither entrance (/recover, /recover/{token}) shows another start-over
+           control alongside a listed-but-empty result, so this is the only one on screen. -->
+      <NuxtLink
+        to="/recover"
+        class="min-h-tap mt-2 inline-flex items-center text-base font-medium text-brand-600 underline hover:text-brand-700"
+      >
+        {{ t('recovery.startOver') }}
+      </NuxtLink>
+    </template>
 
     <ul v-else class="mt-6 space-y-4">
       <li v-for="item in items" :key="item.url">
