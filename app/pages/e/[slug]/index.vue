@@ -38,8 +38,10 @@ function onCheckout(selection: CheckoutSelection[]): void {
     <!-- Full-width banner -->
     <EventBanner :event="event" />
 
-    <!-- Quiet, subordinate to the primary ticket CTA below — for the guest about to register twice. -->
-    <p class="mx-auto mt-3 w-full max-w-5xl px-4 text-sm text-gray-500">
+    <!-- Quiet, subordinate to the primary ticket CTA below — for the guest about to register twice.
+         Subordination comes from placement and colour, never from shrinking the type: 16px is the floor
+         for a 60+ audience. -->
+    <p class="mx-auto mt-3 w-full max-w-5xl px-4 text-base text-gray-500">
       <NuxtLink to="/recover" class="inline-flex min-h-tap items-center text-brand-600 hover:underline">
         {{ t('recovery.alreadyRegistered') }}
       </NuxtLink>

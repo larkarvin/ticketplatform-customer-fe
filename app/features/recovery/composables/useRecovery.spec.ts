@@ -197,8 +197,57 @@ describe('useRecovery', () => {
     await recovery.loadItems('tampered')
     expect(recovery.step.value).toBe('ask')
     expect(recovery.maskedEmail.value).toBe('')
+    expect(recovery.token.value).toBe('')
     expect(recovery.error.value).toBe('This link is not valid.')
     stop()
+  })
+
+  // The failure that cost a guest her still-valid link: a dropped mobile connection is not a verdict
+  // on the token, so it must never burn it or be reported as a broken link.
+  describe('a transient failure keeps the link alive', () => {
+    it.each([
+      ['a dropped connection (no status)', new Error('Failed to fetch')],
+      ['a 500', transportError(500)],
+      ['a 429', transportError(429)],
+    ])('loadItems on %s keeps the token and lands on `failed`, not `ask`', async (_label, thrown) => {
+      items.mockRejectedValue(thrown)
+      const { recovery, stop } = mount()
+      await recovery.loadItems('tok-live')
+      expect(recovery.step.value).toBe('failed')
+      // The whole point: the token is still good for another 25 minutes — retryable, not discarded.
+      expect(recovery.token.value).toBe('tok-live')
+      expect(recovery.error.value).not.toContain('not valid')
+      stop()
+    })
+
+    it('tells a rate-limited guest to wait, rather than that her link is broken', async () => {
+      items.mockRejectedValue(transportError(429))
+      const { recovery, stop } = mount()
+      await recovery.loadItems('tok-live')
+      expect(recovery.error.value).toBe('Too many tries. Please wait a minute, then try again.')
+      stop()
+    })
+
+    it('uses plain-words copy when the transport gives us nothing to say', async () => {
+      items.mockRejectedValue(new Error('Failed to fetch'))
+      const { recovery, stop } = mount()
+      await recovery.loadItems('tok-live')
+      expect(recovery.error.value).toBe('We could not check your link just now. Please try again.')
+      stop()
+    })
+
+    it('retrying with the retained token succeeds once the network is back', async () => {
+      items.mockRejectedValueOnce(transportError(500))
+      const { recovery, stop } = mount()
+      await recovery.loadItems('tok-live')
+      expect(recovery.step.value).toBe('failed')
+
+      await recovery.loadItems(recovery.token.value)
+      expect(items).toHaveBeenLastCalledWith('tok-live')
+      expect(recovery.step.value).toBe('listed')
+      expect(recovery.items.value).toEqual([ROW])
+      stop()
+    })
   })
 
   it('resend after an expired link uses the token — the address rides inside it', async () => {

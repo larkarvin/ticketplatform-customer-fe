@@ -22,8 +22,17 @@ const CODE_PATTERN = /^\d{6}$/
  * `listed`  — a valid token listed the address's orders/submissions.
  * `expired` — a genuine magic link that is past its 30 minutes; we know the masked address, so we
  *             can offer a one-tap resend without the guest retyping it.
+ * `failed`  — the CHECK failed (offline, a dropped mobile connection, a 5xx, a 429), which tells us
+ *             nothing about the token. It is very likely still valid, so we KEEP it and offer another
+ *             attempt — never the "that link did not work" dead end, which would make the guest throw
+ *             a live link away.
  */
-export type RecoveryStep = 'ask' | 'sent' | 'listed' | 'expired'
+export type RecoveryStep = 'ask' | 'sent' | 'listed' | 'expired' | 'failed'
+
+/** Offline/5xx/429: the request never got a verdict on the token, so the token survives. */
+function isTransient(status: number | undefined): boolean {
+  return status === undefined || status === 429 || status >= 500
+}
 
 /** Errors rethrown untouched by the API client (429/410/…) still carry the raw transport shape. */
 interface TransportError {
@@ -166,10 +175,18 @@ export function useRecovery() {
       items.value = await recoveryService.items(magicToken)
       step.value = 'listed'
     } catch (e) {
-      if (statusOf(e) === 410) {
+      const status = statusOf(e)
+      if (status === 410) {
         // Genuine link, past its 30 minutes. The API masks the address for us, so we can resend.
         maskedEmail.value = maskedEmailOf(e)
         step.value = 'expired'
+        return
+      }
+      if (isTransient(status)) {
+        // We never heard back about the token, so we must not condemn it: keep it (it may well have
+        // 25 minutes left) and let the page offer another attempt. A 429 says "wait", not "broken".
+        error.value = messageOf(e, t('recovery.error.checkFailed'))
+        step.value = 'failed'
         return
       }
       // Tampered/unknown token: it names nobody, so the only way on is a fresh request.
@@ -207,6 +224,8 @@ export function useRecovery() {
 
   return {
     step,
+    // Exposed so a transient failure can be retried with the SAME token instead of discarding it.
+    token,
     email,
     code,
     items,

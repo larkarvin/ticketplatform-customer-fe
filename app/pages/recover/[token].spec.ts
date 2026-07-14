@@ -20,6 +20,7 @@ const maskedEmail = ref('')
 const error = ref('')
 const cooldown = ref(0)
 const canResend = ref(true)
+const pending = ref(false)
 const resend = vi.fn()
 
 // Resolves on a microtask, like the real network call — so `checking` is still true on first render.
@@ -31,7 +32,17 @@ vi.mock('~/features/recovery', async () => {
   const actual = await vi.importActual<typeof import('~/features/recovery')>('~/features/recovery')
   return {
     ...actual,
-    useRecovery: () => ({ step, items, maskedEmail, error, cooldown, canResend, loadItems, resend }),
+    useRecovery: () => ({
+      step,
+      items,
+      maskedEmail,
+      error,
+      pending,
+      cooldown,
+      canResend,
+      loadItems,
+      resend,
+    }),
   }
 })
 
@@ -73,6 +84,7 @@ describe('recover/[token].vue', () => {
     error.value = ''
     cooldown.value = 0
     canResend.value = true
+    pending.value = false
   })
 
   it('decides nothing before the client has asked — the first render is the same on the server and in the browser', () => {
@@ -156,6 +168,47 @@ describe('recover/[token].vue', () => {
       const w = await mountLoaded()
       const startOver = w.findAll('a').find((a) => a.attributes('href') === '/recover')
       expect(startOver?.text()).toContain('Start over with a different email address')
+    })
+  })
+
+  // A dropped mobile connection is not a broken link. Telling her it is would make her throw away a
+  // token that still has 25 minutes on it — and, on a 429, walk straight back into the throttle.
+  describe('transient failure (offline / 5xx / 429)', () => {
+    beforeEach(() => {
+      step.value = 'failed'
+    })
+
+    it('never calls the link broken, and offers another attempt with the same token', async () => {
+      const w = await mountLoaded()
+      expect(w.text()).toContain('We could not check your link just now')
+      expect(w.text()).not.toContain('That link did not work')
+
+      loadItems.mockClear()
+      const retry = w.findAll('button').find((b) => b.text().includes('Try again'))
+      expect(retry).toBeTruthy()
+      await retry?.trigger('click')
+      expect(loadItems).toHaveBeenCalledWith('magic-token-123')
+    })
+
+    it('shows the wait message on a 429 instead of discarding it', async () => {
+      error.value = 'Too many tries. Please wait a minute, then try again.'
+      const w = await mountLoaded()
+      expect(w.find('[role="alert"]').text()).toContain('Too many tries')
+    })
+
+    it('still keeps a fresh start one tap away, in case the network is truly gone', async () => {
+      const w = await mountLoaded()
+      const startOver = w.findAll('a').find((a) => a.attributes('href') === '/recover')
+      expect(startOver?.text()).toContain('Start over with a different email address')
+    })
+
+    it('says nothing about whether the address exists, and shows no list', async () => {
+      items.value = [order()]
+      const w = await mountLoaded()
+      const text = w.text().toLowerCase()
+      expect(text).not.toContain('@')
+      expect(text).not.toContain('what we have for that address')
+      expect(w.findAll('li')).toHaveLength(0)
     })
   })
 

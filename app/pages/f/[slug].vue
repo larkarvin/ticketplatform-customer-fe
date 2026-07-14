@@ -14,8 +14,10 @@ const state = await usePublicForm(slug.value)
 
 <template>
   <div>
-    <!-- Quiet, subordinate to the form's own primary submit CTA — for the guest about to submit twice. -->
-    <p class="mb-3 px-4 text-sm text-gray-500 sm:px-0">
+    <!-- Quiet, subordinate to the form's own primary submit CTA — for the guest about to submit twice.
+         Subordination comes from placement and colour, never from shrinking the type: 16px is the floor
+         for a 60+ audience. -->
+    <p class="mb-3 px-4 text-base text-gray-500 sm:px-0">
       <NuxtLink to="/recover" class="inline-flex min-h-tap items-center text-brand-600 hover:underline">
         {{ t('recovery.alreadyRegistered') }}
       </NuxtLink>

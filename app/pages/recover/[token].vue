@@ -1,10 +1,13 @@
 <!--
   What the button in the recovery email opens. The token in the URL is the whole credential, so this
-  page never asks for anything — it just reports one of three outcomes:
+  page never asks for anything — it just reports one of four outcomes:
 
     listed   — the token is good: hand the rows to the same RecoveryList the code path renders.
     expired  — a genuine link past its 30 minutes. The API answers 410 with the address MASKED, which
                is the only reason we can offer a one-tap resend instead of making the guest retype it.
+    failed   — the CHECK failed (offline, a dropped mobile connection, a 5xx, a 429). That is a verdict
+               on the request, not on the token: the link is very likely still good, so we keep it and
+               offer another attempt rather than telling her it is broken.
     invalid  — a tampered/garbage token names nobody, so the only way on is a fresh request at /recover.
 
   Two constraints shape the rest:
@@ -26,7 +29,7 @@ const { t } = useT()
 const route = useRoute()
 const token = String(route.params.token)
 
-const { step, items, maskedEmail, error, cooldown, canResend, loadItems, resend } = useRecovery()
+const { step, items, maskedEmail, error, pending, cooldown, canResend, loadItems, resend } = useRecovery()
 
 // True until the client has actually asked the API. Keeps the server render and the first client
 // render identical (see note 1 above) — the outcome is only ever decided in the browser.
@@ -44,6 +47,12 @@ onMounted(async () => {
 function onResend(): void {
   resendPressed.value = true
   resend()
+}
+
+// The check failed, not the link — so retry with the SAME token rather than sending her back to the
+// start with a link that probably still has 25 minutes left on it.
+function onRetry(): void {
+  void loadItems(token)
 }
 
 // A token in the URL: never index it, and never leak it in a referrer.
@@ -85,6 +94,29 @@ useSeoMeta({ title: () => t('recovery.pageTitle'), robots: 'noindex, nofollow' }
       </p>
 
       <!-- The real way out of the resend-sends-nothing dead end: a brand-new request. -->
+      <NuxtLink
+        to="/recover"
+        class="min-h-tap mt-2 inline-flex items-center text-base font-medium text-brand-600 underline hover:text-brand-700"
+      >
+        {{ t('recovery.startOver') }}
+      </NuxtLink>
+    </section>
+
+    <!-- FAILED — the request never came back (offline / 5xx / 429). The token is untouched and probably
+         still has time left on it, so nothing here may call the link broken: offer another go. -->
+    <section v-else-if="step === 'failed'" aria-live="polite">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('recovery.checkFailedHeading') }}</h1>
+      <p class="mt-3 text-base text-gray-600 dark:text-gray-300">{{ t('recovery.checkFailedBody') }}</p>
+
+      <!-- The reason, when we have a more specific one — notably a 429, which means "wait a minute",
+           not "your link is broken". Discarding it is what sent the guest round the throttle again. -->
+      <p v-if="error" role="alert" class="mt-3 text-base text-danger-600">{{ error }}</p>
+
+      <Button type="button" size="lg" class="min-h-tap mt-6 w-full" :disabled="pending" @click="onRetry">
+        {{ t('recovery.checkFailedRetry') }}
+      </Button>
+
+      <!-- Kept alongside the retry: if the network is truly gone, a fresh request is still the way out. -->
       <NuxtLink
         to="/recover"
         class="min-h-tap mt-2 inline-flex items-center text-base font-medium text-brand-600 underline hover:text-brand-700"

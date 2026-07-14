@@ -223,6 +223,13 @@ export const en: MessageTree = {
     invalidHeading: 'That link did not work',
     invalidBody:
       'Email programs sometimes cut a link short. Start over below and we will email you a new one, if we have anything for your address.',
+    // The check itself failed (offline, a dropped mobile connection, a 500, a rate limit) — which says
+    // nothing about the link. It is very likely still good, so this copy must never call it broken:
+    // it offers another attempt, and keeps a fresh start available anyway.
+    checkFailedHeading: 'We could not check your link just now',
+    checkFailedBody:
+      'The connection dropped, or something went wrong on our side. Your link usually still works — try again below.',
+    checkFailedRetry: 'Try again',
     listHeading: 'What we have for that address',
     listEmpty:
       "We couldn't find anything for that address. If you booked with a different email — a work address, or a partner's — try that one instead.",
@@ -250,6 +257,7 @@ export const en: MessageTree = {
       sendFailed: 'We could not send that just now. Please try again.',
       tooMany: 'Too many tries. Please wait a minute, then try again.',
       linkInvalid: 'That link is not valid. Please enter your email address to start again.',
+      checkFailed: 'We could not check your link just now. Please try again.',
       listFailed: 'Your code was right, but we could not load your orders just now. Please try again.',
     },
     // The three discoverability entry points (footer, order-hub error state, event/form pages) —
