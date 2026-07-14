@@ -252,5 +252,10 @@ export const en: MessageTree = {
       linkInvalid: 'That link is not valid. Please enter your email address to start again.',
       listFailed: 'Your code was right, but we could not load your orders just now. Please try again.',
     },
+    // The three discoverability entry points (footer, order-hub error state, event/form pages) —
+    // all link to /recover. None of these promise anything was found; they just point the way.
+    footerLink: 'Find my order',
+    alreadyRegistered: 'Already registered? Find my order',
+    orderErrorCta: "Can't open your order? Find my order",
   },
 }

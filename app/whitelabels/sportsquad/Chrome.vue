@@ -1,11 +1,13 @@
 <!-- app/whitelabels/sportsquad/Chrome.vue — header/footer for the NON-home sportsquad pages. The home
      page hides this chrome (it ports the Martex template which brings its own header/footer). -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { computed } from 'vue'
 import { staffLinks } from '../staffLinks'
 import { chrome } from './content'
 import './style.css'
 
+const { t } = useT()
 const props = defineProps<{ staffUrl: string; orgName: string; logoUrl?: string | null }>()
 const links = computed(() => staffLinks(props.staffUrl))
 const displayName = computed(() => props.orgName?.trim() || chrome.brandName)
@@ -40,6 +42,7 @@ const displayName = computed(() => props.orgName?.trim() || chrome.brandName)
           <NuxtLink v-for="l in chrome.footerLinks" :key="l.to" :to="l.to" class="min-h-tap">
             {{ l.label }}
           </NuxtLink>
+          <NuxtLink to="/recover" class="min-h-tap">{{ t('recovery.footerLink') }}</NuxtLink>
           <a :href="`mailto:${chrome.contactEmail}`" class="min-h-tap">{{ chrome.contactEmail }}</a>
         </nav>
       </div>

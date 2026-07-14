@@ -1,5 +1,6 @@
 <!-- customer-fe/app/pages/e/[slug]/index.vue -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { computed } from 'vue'
 import type { CheckoutSelection } from '~/features/events'
 import {
@@ -11,6 +12,8 @@ import {
   useEventSeo,
   usePublicEvent,
 } from '~/features/events'
+
+const { t } = useT()
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
@@ -34,6 +37,13 @@ function onCheckout(selection: CheckoutSelection[]): void {
   <article>
     <!-- Full-width banner -->
     <EventBanner :event="event" />
+
+    <!-- Quiet, subordinate to the primary ticket CTA below — for the guest about to register twice. -->
+    <p class="mx-auto mt-3 w-full max-w-5xl px-4 text-sm text-gray-500">
+      <NuxtLink to="/recover" class="inline-flex min-h-tap items-center text-brand-600 hover:underline">
+        {{ t('recovery.alreadyRegistered') }}
+      </NuxtLink>
+    </p>
 
     <!-- Two columns: event info (left) + sticky ticket card (right, overlapping the banner) -->
     <div class="mx-auto w-full max-w-5xl px-4">
