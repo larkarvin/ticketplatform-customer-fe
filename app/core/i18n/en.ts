@@ -211,6 +211,15 @@ export const en: MessageTree = {
     resend: 'Send another email',
     resendIn: 'You can send another email in {seconds}s',
     startOver: 'Start over with a different email address',
+    // /recover/{token} — the three outcomes of opening the button in the email.
+    linkCheckingHeading: 'Opening your link',
+    linkCheckingBody: 'One moment — we are checking the link from your email.',
+    expiredHeading: 'That link has expired',
+    // Says what we CAN do, not that we did: the resend below may find nothing to send.
+    expiredBody: 'Our links work for 30 minutes. We can send another email to {email}.',
+    invalidHeading: 'That link did not work',
+    invalidBody:
+      'Email programs sometimes cut a link short. Start over below and we will email you a new one, if we have anything for your address.',
     listHeading: 'What we have for that address',
     listEmpty:
       "We couldn't find anything for that address. If you booked with a different email — a work address, or a partner's — try that one instead.",
