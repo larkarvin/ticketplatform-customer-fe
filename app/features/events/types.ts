@@ -1,7 +1,6 @@
-import type { TicketPricing } from './ticketPricing'
-
 // Public event DTOs (snake_case — the API contract shape) for the read-only event page.
 import type { Field } from '#core/field-engine/types'
+import type { TicketPricing } from './ticketPricing'
 
 export interface EventMedia {
   id: number
@@ -11,16 +10,11 @@ export interface EventMedia {
   size?: number
 }
 
-export interface PublicTicket {
+export interface PublicTicket extends TicketPricing {
   id: number
   name: string
   description: string | null
-  price: number
-  price_formatted: string
-  early_bird_price: number | null
   early_bird_ends_at: string | null
-  is_early_bird: boolean
-  early_bird_price_formatted: string | null
   currency: string
   is_on_sale: boolean
   is_available: boolean

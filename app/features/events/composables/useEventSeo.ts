@@ -1,5 +1,6 @@
 // Event-page SEO: meta/OG/Twitter, canonical, JSON-LD (schema.org Event), and noindex for unlisted
 // events. `buildEventJsonLd` is pure (unit-tested); `useEventSeo` wires it into the Nuxt head.
+import { ticketEffectivePrice } from '../ticketPricing'
 import type { PublicEvent } from '../types'
 
 interface SeoOpts {
@@ -9,7 +10,7 @@ interface SeoOpts {
 }
 
 export function buildEventJsonLd(event: PublicEvent, opts: SeoOpts): Record<string, unknown> {
-  const prices = event.tickets.map((t) => t.price)
+  const prices = event.tickets.map((t) => ticketEffectivePrice(t))
   const url = `${opts.siteUrl}/e/${event.slug}`
   const ld: Record<string, unknown> = {
     '@context': 'https://schema.org',

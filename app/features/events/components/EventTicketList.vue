@@ -5,7 +5,7 @@
 import { Timer } from '#icons'
 import { computed, reactive } from 'vue'
 import QuantityStepper from '~/features/forms/components/controls/QuantityStepper.vue'
-import { ticketPriceLabel } from '../ticketPricing'
+import { isEarlyBirdActive, ticketPriceLabel } from '../ticketPricing'
 import type { CheckoutSelection, PublicTicket } from '../types'
 
 const props = defineProps<{ tickets: PublicTicket[] }>()
@@ -24,6 +24,7 @@ function inc(t: PublicTicket) {
 const canIncrement = (t: PublicTicket) => t.is_available && t.is_on_sale && (qty[t.id] ?? 0) < maxFor(t)
 
 const currentPrice = (t: PublicTicket) => ticketPriceLabel(t)
+const showsDiscount = (t: PublicTicket) => isEarlyBirdActive(t)
 const selection = computed<CheckoutSelection[]>(() =>
   props.tickets.filter((t) => (qty[t.id] ?? 0) > 0).map((t) => ({ ticket_id: t.id, quantity: qty[t.id] ?? 0 }))
 )
@@ -40,10 +41,10 @@ const totalQty = computed(() => selection.value.reduce((n, s) => n + s.quantity,
           <p class="font-medium text-gray-900 dark:text-white">{{ t.name }}</p>
           <p class="text-sm">
             <span class="font-semibold">{{ currentPrice(t) }}</span>
-            <span v-if="t.is_early_bird" class="ml-1 text-xs text-gray-400 line-through">{{ t.price_formatted }}</span>
+            <span v-if="showsDiscount(t)" class="ml-1 text-xs text-gray-400 line-through">{{ t.price_formatted }}</span>
           </p>
           <p
-            v-if="t.is_early_bird"
+            v-if="showsDiscount(t)"
             class="mt-0.5 flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400"
           >
             <Timer :size="14" aria-hidden="true" />
