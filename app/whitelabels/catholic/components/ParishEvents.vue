@@ -4,7 +4,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PublicEventListItem } from '~/features/events'
-import { formatEventDateParts, formatEventWhen } from '~/features/events'
+import { formatEventDateParts, formatEventWhen, ticketEffectivePrice, ticketPriceLabel } from '~/features/events'
 
 const props = withDefaults(
   defineProps<{
@@ -19,8 +19,11 @@ const props = withDefaults(
 
 function fromPrice(e: PublicEventListItem): string | null {
   if (!e.tickets.length) return null
-  const cheapest = e.tickets.reduce((min, t) => (t.price < min.price ? t : min), e.tickets[0]!)
-  return cheapest.price_formatted
+  const cheapest = e.tickets.reduce(
+    (min, t) => (ticketEffectivePrice(t) < ticketEffectivePrice(min) ? t : min),
+    e.tickets[0]!
+  )
+  return ticketPriceLabel(cheapest)
 }
 
 const rows = computed(() =>

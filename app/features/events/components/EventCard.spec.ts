@@ -17,8 +17,20 @@ function event(p: Partial<PublicEventListItem> = {}): PublicEventListItem {
     currency: 'USD',
     cover: null,
     tickets: [
-      { price: 50, price_formatted: 'USD 50.00' },
-      { price: 20, price_formatted: 'USD 20.00' },
+      {
+        price: 50,
+        price_formatted: 'USD 50.00',
+        early_bird_price: null,
+        early_bird_price_formatted: null,
+        is_early_bird: false,
+      },
+      {
+        price: 20,
+        price_formatted: 'USD 20.00',
+        early_bird_price: null,
+        early_bird_price_formatted: null,
+        is_early_bird: false,
+      },
     ],
     ...p,
   }
@@ -27,6 +39,36 @@ function event(p: Partial<PublicEventListItem> = {}): PublicEventListItem {
 const stubs = { NuxtLink: { template: '<a :to="to"><slot /></a>', props: ['to'] } }
 
 describe('EventCard', () => {
+  it('shows the early-bird price as the "from" price when it is the cheapest a buyer can pay', () => {
+    // The 50-dollar ticket drops to 10 on early bird, undercutting the 20-dollar one. Pricing off the
+    // regular price would advertise "From USD 20.00" and then charge less — and, worse, a regular
+    // price that undercuts an early bird would advertise a price the buyer can never get.
+    const w = mount(EventCard, {
+      props: {
+        event: event({
+          tickets: [
+            {
+              price: 50,
+              price_formatted: 'USD 50.00',
+              early_bird_price: 10,
+              early_bird_price_formatted: 'USD 10.00',
+              is_early_bird: true,
+            },
+            {
+              price: 20,
+              price_formatted: 'USD 20.00',
+              early_bird_price: null,
+              early_bird_price_formatted: null,
+              is_early_bird: false,
+            },
+          ],
+        }),
+      },
+      global: { stubs },
+    })
+    expect(w.text()).toContain('From USD 10.00')
+  })
+
   it('renders title, formatted date, location and the cheapest ticket price', () => {
     const w = mount(EventCard, { props: { event: event() }, global: { stubs } })
     expect(w.text()).toContain('Spring Gala')

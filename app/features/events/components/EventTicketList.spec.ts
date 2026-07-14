@@ -60,4 +60,36 @@ describe('EventTicketList', () => {
     const cta = w.find('[data-testid="get-tickets"]')
     expect(cta.attributes('disabled')).toBeDefined()
   })
+
+  it('shows the early-bird price with the regular price struck through, and the badge', () => {
+    const w = mount(EventTicketList, {
+      props: {
+        tickets: [
+          ticket({
+            id: 9,
+            price_formatted: '\u20b1100.00',
+            early_bird_price: 80,
+            early_bird_price_formatted: '\u20b180.00',
+            is_early_bird: true,
+          }),
+        ],
+      },
+    })
+    expect(w.text()).toContain('\u20b180.00')
+    expect(w.text()).toContain('Early bird')
+    expect(w.find('.line-through').text()).toBe('\u20b1100.00')
+  })
+
+  it('does not badge or strike through a ticket flagged early bird with no early-bird price', () => {
+    // The badge and the strikethrough gate on the same predicate as the price, so we can never
+    // present a ticket as discounted while showing its regular price.
+    const w = mount(EventTicketList, {
+      props: {
+        tickets: [ticket({ id: 10, is_early_bird: true, early_bird_price: null, early_bird_price_formatted: null })],
+      },
+    })
+    expect(w.text()).not.toContain('Early bird')
+    expect(w.find('.line-through').exists()).toBe(false)
+    expect(w.text()).toContain('\u20b1100.00')
+  })
 })

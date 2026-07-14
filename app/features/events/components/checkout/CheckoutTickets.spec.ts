@@ -94,6 +94,26 @@ const baseProps = () => ({
 })
 
 describe('CheckoutTickets', () => {
+  it('shows the early-bird price, not the regular price, for a ticket on early bird', () => {
+    // The API charges Ticket::effectivePrice(). Showing price_formatted here would quote the buyer
+    // 100 per ticket at checkout while the order total is built from 80 — the same mismatch, inverted.
+    const earlyBird = {
+      ...event,
+      tickets: [
+        {
+          ...event.tickets[0]!,
+          price_formatted: '\u20b1100.00',
+          early_bird_price: 80,
+          early_bird_price_formatted: '\u20b180.00',
+          is_early_bird: true,
+        },
+      ],
+    }
+    const w = mount(CheckoutTickets, { props: { ...baseProps(), event: earlyBird } })
+    expect(w.text()).toContain('\u20b180.00')
+    expect(w.text()).not.toContain('\u20b1100.00')
+  })
+
   it('renders one QuantityStepper per ticket type', () => {
     const w = mount(CheckoutTickets, { props: baseProps() })
     expect(w.findAllComponents({ name: 'QuantityStepper' })).toHaveLength(2)
