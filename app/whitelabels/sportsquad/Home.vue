@@ -3,6 +3,7 @@
      template's own stylesheets are loaded via useHead so it looks identical. The app chrome is
      hidden on this page (the template ships its own header/footer) and dark mode is disabled. -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { computed, onMounted } from 'vue'
 import type { PublicEventListItem } from '~/features/events'
 import { EventCard, EventListing } from '~/features/events'
@@ -10,6 +11,8 @@ import { staffLinks } from '../staffLinks'
 import siteBody from './site-body.html?raw'
 
 const props = defineProps<{ events: PublicEventListItem[]; error?: unknown; staffUrl: string }>()
+
+const { t } = useT()
 
 // Organizer sign in / sign up links (the staff app); fall back to home when the staff URL is unset.
 const links = computed(() => staffLinks(props.staffUrl))
@@ -24,6 +27,11 @@ onMounted(() => {
   const signup = links.value.signUp || '/'
   document.querySelectorAll('[data-sq="signin"]').forEach((a) => a.setAttribute('href', signin))
   document.querySelectorAll('[data-sq="signup"]').forEach((a) => a.setAttribute('href', signup))
+  // The "Find my order" footer link reuses the shared recovery copy so it can't drift from the
+  // app-chrome footer link on every other page.
+  document.querySelectorAll('[data-sq="recover"]').forEach((a) => {
+    a.textContent = t('recovery.footerLink')
+  })
 })
 
 const base = '/whitelabels/sportsquad/site'
