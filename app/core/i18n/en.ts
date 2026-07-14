@@ -185,4 +185,15 @@ export const en: MessageTree = {
       valueAria: 'Quantity for {label}',
     },
   },
+  recovery: {
+    // The API never tells us whether an address was found, so none of this copy may claim it was.
+    error: {
+      email: 'Please enter the email address you used.',
+      code: 'Please enter the 6-digit code from the email.',
+      codeWrong: 'That code is not right. Please check it and try again.',
+      sendFailed: 'We could not send that just now. Please try again.',
+      tooMany: 'Too many tries. Please wait a minute, then try again.',
+      linkInvalid: 'That link is not valid. Please enter your email address to start again.',
+    },
+  },
 }
