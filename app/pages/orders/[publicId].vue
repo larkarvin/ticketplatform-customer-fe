@@ -362,6 +362,9 @@ async function onCancel(): Promise<void> {
         >
           {{ t('common.tryAgain') }}
         </button>
+        <NuxtLink to="/recover" class="mt-3 flex min-h-tap items-center text-base text-brand-600 underline">
+          {{ t('recovery.orderErrorCta') }}
+        </NuxtLink>
       </div>
     </section>
 

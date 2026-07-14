@@ -3,11 +3,14 @@
      header/footer; on every other page (forms, checkout, orders) it renders the plain neutral chrome
      so those pages keep their original, untouched look. -->
 <script setup lang="ts">
+import { useT } from '#core/i18n'
 import { computed } from 'vue'
 import { staffLinks } from '../staffLinks'
 import BrandLogo from './components/BrandLogo.vue'
 import { chrome } from './content'
 import './theme.css'
+
+const { t } = useT()
 
 // Pure component: orgName + logoUrl + staffUrl + isHome come from the layout (which has Nuxt
 // context), so Chrome uses no Nuxt auto-imports and stays unit-testable.
@@ -81,6 +84,9 @@ const displayName = computed(() => props.orgName?.trim() || chrome.brandName)
           >
             {{ l.label }}
           </NuxtLink>
+          <NuxtLink to="/recover" class="ct-focus min-h-tap transition hover:text-brand-600">
+            {{ t('recovery.footerLink') }}
+          </NuxtLink>
           <a :href="`mailto:${chrome.contactEmail}`" class="ct-focus min-h-tap transition hover:text-brand-600">
             {{ chrome.contactEmail }}
           </a>
@@ -96,6 +102,7 @@ const displayName = computed(() => props.orgName?.trim() || chrome.brandName)
         <span>{{ displayName }}</span>
         <nav class="flex items-center gap-4">
           <NuxtLink v-for="l in chrome.footerLinks" :key="l.to" :to="l.to" class="min-h-tap">{{ l.label }}</NuxtLink>
+          <NuxtLink to="/recover" class="min-h-tap">{{ t('recovery.footerLink') }}</NuxtLink>
           <a :href="`mailto:${chrome.contactEmail}`" class="min-h-tap">{{ chrome.contactEmail }}</a>
         </nav>
       </div>
