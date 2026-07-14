@@ -23,7 +23,7 @@
 import Button from '#core/components/ui/Button.vue'
 import { useT } from '#core/i18n'
 import { onMounted, ref } from 'vue'
-import { RecoveryList, useRecovery } from '~/features/recovery'
+import { RecoveryCheckFailed, RecoveryList, useRecovery } from '~/features/recovery'
 
 const { t } = useT()
 const route = useRoute()
@@ -114,30 +114,25 @@ useSeoMeta({ title: () => t('recovery.pageTitle'), robots: 'noindex, nofollow' }
     </section>
 
     <!-- FAILED — the request never came back (offline / 5xx / 429). The token is untouched and probably
-         still has time left on it, so nothing here may call the link broken: offer another go. -->
-    <section v-else-if="step === 'failed'" aria-live="polite">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('recovery.checkFailedHeading') }}</h1>
-      <p class="mt-3 text-base text-gray-600 dark:text-gray-300">{{ t('recovery.checkFailedBody') }}</p>
-
-      <!-- The reason, when we have a more specific one — notably a 429, which means "wait a minute",
-           not "your link is broken". Discarding it is what sent the guest round the throttle again. -->
-      <p v-if="error" role="alert" class="mt-3 text-base text-danger-600">{{ error }}</p>
-
-      <!-- On a 429 the composable starts the same cooldown resend uses: disable the button and say so
-           in words (not just a dimmed color) until it elapses, so "Try again" cannot walk her straight
-           back into the throttle. -->
-      <Button type="button" size="lg" class="min-h-tap mt-6 w-full" :disabled="pending || !canResend" @click="onRetry">
-        {{ canResend ? t('recovery.checkFailedRetry') : t('recovery.checkFailedRetryIn', { seconds: cooldown }) }}
-      </Button>
-
-      <!-- Kept alongside the retry: if the network is truly gone, a fresh request is still the way out. -->
-      <NuxtLink
-        to="/recover"
-        class="min-h-tap mt-2 inline-flex items-center text-base font-medium text-brand-600 underline hover:text-brand-700"
-      >
-        {{ t('recovery.startOver') }}
-      </NuxtLink>
-    </section>
+         still has time left on it, so nothing here may call the link broken: offer another go. Shared
+         with /recover's own post-verify transient failure so the two cannot drift. -->
+    <RecoveryCheckFailed
+      v-else-if="step === 'failed'"
+      :error="error"
+      :can-resend="canResend"
+      :cooldown="cooldown"
+      :pending="pending"
+      @retry="onRetry"
+    >
+      <template #start-over>
+        <NuxtLink
+          to="/recover"
+          class="min-h-tap mt-2 inline-flex items-center text-base font-medium text-brand-600 underline hover:text-brand-700"
+        >
+          {{ t('recovery.startOver') }}
+        </NuxtLink>
+      </template>
+    </RecoveryCheckFailed>
 
     <!-- INVALID — a token we cannot trust names nobody. Say nothing about any address; just start again. -->
     <section v-else aria-live="polite">

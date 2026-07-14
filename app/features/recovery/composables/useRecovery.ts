@@ -149,20 +149,19 @@ export function useRecovery() {
     try {
       verified = await recoveryService.verify(email.value, entered)
     } catch (e) {
+      // Only a genuine verify() failure is "that code is not right" — this is the one path that may say it.
       error.value = messageOf(e, t('recovery.error.codeWrong'))
       pending.value = false
       return
     }
-    token.value = verified.token
-    try {
-      // The code was already accepted above — a failure here is a load problem, not a wrong code.
-      items.value = await recoveryService.items(verified.token)
-      step.value = 'listed'
-    } catch (e) {
-      error.value = messageOf(e, t('recovery.error.listFailed'))
-    } finally {
-      pending.value = false
-    }
+    // The 6-digit code is single-use: verify() just CONSUMED it. Listing the orders is now the exact same
+    // job the magic link does, so hand it to loadItems — one shared "load the list, transient vs invalid"
+    // path. A transient failure there lands on `failed` (whose Try again re-lists with the retained token),
+    // never back on this code field, where re-submitting the spent code would be told it is "wrong" and
+    // burn the guest's remaining attempts on a code that already worked. Release `pending` first so
+    // loadItems' own re-entrancy guard does not short-circuit the delegated call.
+    pending.value = false
+    await loadItems(verified.token)
   }
 
   /** Entry point for the magic link: `/recover/{token}` hands us a token straight from the email. */

@@ -10,12 +10,26 @@
 <script setup lang="ts">
 import Button from '#core/components/ui/Button.vue'
 import { useT } from '#core/i18n'
-import { RecoveryList, useRecovery } from '~/features/recovery'
+import { RecoveryCheckFailed, RecoveryList, useRecovery } from '~/features/recovery'
 
 const { t } = useT()
 
-const { step, email, code, items, error, pending, cooldown, canResend, submitEmail, submitCode, resend, restart } =
-  useRecovery()
+const {
+  step,
+  token,
+  email,
+  code,
+  items,
+  error,
+  pending,
+  cooldown,
+  canResend,
+  submitEmail,
+  submitCode,
+  resend,
+  loadItems,
+  restart,
+} = useRecovery()
 
 useSeoMeta({ title: () => t('recovery.pageTitle') })
 
@@ -24,6 +38,13 @@ useSeoMeta({ title: () => t('recovery.pageTitle') })
 function onCodeInput(event: Event): void {
   const raw = (event.target as HTMLInputElement).value
   code.value = raw.replace(/\D/g, '').slice(0, 6)
+}
+
+// The listing dropped after a good code, not the code itself — so retry the LISTING with the token the
+// composable retained from verify(), never re-run submitCode (that would re-submit the already-consumed
+// code and be told, wrongly, that it is not right).
+function onRetry(): void {
+  void loadItems(token.value)
 }
 </script>
 
@@ -125,5 +146,28 @@ function onCodeInput(event: Event): void {
 
     <!-- LISTED — a valid token; we really did look, so this may speak plainly. -->
     <RecoveryList v-else-if="step === 'listed'" :items="items" />
+
+    <!-- FAILED — the code was accepted (and spent), but loading the orders dropped (offline / 5xx / 429).
+         The token is untouched, so we keep it and offer another go at the LISTING — never back to the code
+         field, where the consumed code would be told it is wrong. Shared with /recover/{token}. -->
+    <RecoveryCheckFailed
+      v-else-if="step === 'failed'"
+      :error="error"
+      :can-resend="canResend"
+      :cooldown="cooldown"
+      :pending="pending"
+      @retry="onRetry"
+    >
+      <template #start-over>
+        <!-- Already on /recover, so a fresh start resets the state machine in place rather than navigating. -->
+        <button
+          type="button"
+          class="min-h-tap mt-2 text-base font-medium text-brand-600 underline hover:text-brand-700"
+          @click="restart()"
+        >
+          {{ t('recovery.startOver') }}
+        </button>
+      </template>
+    </RecoveryCheckFailed>
   </article>
 </template>

@@ -156,17 +156,39 @@ describe('useRecovery', () => {
     stop()
   })
 
-  it('a correct code whose subsequent items() call fails is NOT told the code was wrong', async () => {
+  // The single-use code is CONSUMED by verify(). If the listing that follows drops transiently, the guest
+  // must not be dropped back on the code field — re-typing the (now spent) code would be told it is wrong
+  // and burn her remaining attempts on a code that already worked. She lands on `failed` instead, token
+  // retained, so Try again can re-run the LISTING.
+  it('a correct code whose subsequent items() call fails lands on `failed` (retryable), never on "wrong code"', async () => {
     items.mockRejectedValue(transportError(500))
     const { recovery, stop } = mount()
     recovery.email.value = 'gran@example.com'
     recovery.code.value = '123456'
     await recovery.submitCode()
     expect(verify).toHaveBeenCalled()
+    expect(recovery.step.value).toBe('failed')
+    expect(recovery.token.value).toBe('tok-123')
     expect(recovery.error.value).not.toBe('That code is not right. Please check it and try again.')
-    expect(recovery.error.value).toBe(
-      'Your code was right, but we could not load your orders just now. Please try again.'
-    )
+    stop()
+  })
+
+  it('Try again after a good code re-lists with the retained token — it never re-runs verify on the spent code', async () => {
+    items.mockRejectedValueOnce(transportError(500))
+    const { recovery, stop } = mount()
+    recovery.email.value = 'gran@example.com'
+    recovery.code.value = '123456'
+    await recovery.submitCode()
+    expect(recovery.step.value).toBe('failed')
+
+    verify.mockClear()
+    items.mockClear()
+    // What the `failed` screen's Try again does: retry the listing with the retained token, not submitCode.
+    await recovery.loadItems(recovery.token.value)
+    expect(verify).not.toHaveBeenCalled()
+    expect(items).toHaveBeenCalledWith('tok-123')
+    expect(recovery.step.value).toBe('listed')
+    expect(recovery.items.value).toEqual([ROW])
     stop()
   })
 

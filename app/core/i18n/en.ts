@@ -260,8 +260,6 @@ export const en: MessageTree = {
       sendFailed: 'We could not send that just now. Please try again.',
       tooMany: 'Too many tries. Please wait a minute, then try again.',
       linkInvalid: 'That link is not valid. Please enter your email address to start again.',
-      checkFailed: 'We could not check your link just now. Please try again.',
-      listFailed: 'Your code was right, but we could not load your orders just now. Please try again.',
     },
     // The three discoverability entry points (footer, order-hub error state, event/form pages) —
     // all link to /recover. None of these promise anything was found; they just point the way.

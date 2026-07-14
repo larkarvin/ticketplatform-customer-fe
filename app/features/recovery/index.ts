@@ -1,3 +1,4 @@
+export { default as RecoveryCheckFailed } from './components/RecoveryCheckFailed.vue'
 export { default as RecoveryItemCard } from './components/RecoveryItemCard.vue'
 export { default as RecoveryList } from './components/RecoveryList.vue'
 export { useRecovery } from './composables/useRecovery'
