@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import Button from '#core/components/ui/Button.vue'
 import { useT } from '#core/i18n'
-import { RecoveryCheckFailed, RecoveryList, useRecovery } from '~/features/recovery'
+import { RecoveryCheckFailed, RecoveryExpired, RecoveryList, useRecovery } from '~/features/recovery'
 
 const { t } = useT()
 
@@ -20,6 +20,7 @@ const {
   email,
   code,
   items,
+  maskedEmail,
   error,
   pending,
   cooldown,
@@ -169,5 +170,45 @@ function onRetry(): void {
         </button>
       </template>
     </RecoveryCheckFailed>
+
+    <!-- EXPIRED — 410: this page's post-verify listing runs through the SAME shared loadItems() as the
+         magic link, and that path can reach a genuine 410 on a retry (a good code, a transient failure,
+         then >30 min later a Try again). Without this branch that path rendered blank — the dead end this
+         fix closes. Shared component with /recover/{token} so the expired screen cannot drift again. -->
+    <RecoveryExpired
+      v-else-if="step === 'expired'"
+      :masked-email="maskedEmail"
+      :error="error"
+      :can-resend="canResend"
+      :cooldown="cooldown"
+      @resend="resend"
+    >
+      <template #start-over>
+        <!-- Already on /recover, so a fresh start resets the state machine in place rather than navigating. -->
+        <button
+          type="button"
+          class="min-h-tap mt-2 text-base font-medium text-brand-600 underline hover:text-brand-700"
+          @click="restart()"
+        >
+          {{ t('recovery.startOver') }}
+        </button>
+      </template>
+    </RecoveryExpired>
+
+    <!-- DEFENSIVE FALLBACK — no known `step` reaches here, but if the state machine ever grows a value
+         this page has no branch for, a blank page is the worst outcome for a 60+ guest. Render a safe,
+         neutral way out (a fresh request) instead of nothing. -->
+    <section v-else aria-live="polite">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('recovery.invalidHeading') }}</h1>
+      <p class="mt-3 text-base text-gray-600 dark:text-gray-300">{{ t('recovery.invalidBody') }}</p>
+
+      <button
+        type="button"
+        class="min-h-tap mt-6 flex w-full items-center justify-center rounded-lg bg-brand-600 px-4 text-base font-semibold text-white hover:bg-brand-700"
+        @click="restart()"
+      >
+        {{ t('recovery.startOver') }}
+      </button>
+    </section>
   </article>
 </template>

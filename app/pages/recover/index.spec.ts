@@ -17,6 +17,7 @@ const token = ref('')
 const email = ref('gran@example.com')
 const code = ref('')
 const items = ref<RecoveryItem[]>([])
+const maskedEmail = ref('')
 const error = ref('')
 const pending = ref(false)
 const cooldown = ref(60)
@@ -39,6 +40,7 @@ vi.mock('~/features/recovery', async () => {
       email,
       code,
       items,
+      maskedEmail,
       error,
       pending,
       cooldown,
@@ -134,6 +136,93 @@ describe('recover/index.vue — failed step (transient listing failure after a g
 
   it('keeps Start over reachable, resetting the state machine in place', async () => {
     const w = mountAtFailed()
+    const startOver = w.findAll('button').find((b) => b.text().includes('Start over'))
+    expect(startOver).toBeTruthy()
+    await startOver?.trigger('click')
+    expect(restart).toHaveBeenCalled()
+  })
+})
+
+// The regression this fix closes: a good code, a transient listing failure (→ `failed`, token retained),
+// then the guest returns >30 min later and taps Try again → the shared loadItems() path meets a 410 and
+// sets `step='expired'`. Before the fix this page had no `expired` branch and no final v-else, so that
+// reachable path rendered a BLANK page — a hard dead end for exactly the 60+ guest this feature protects.
+// The expired screen is the same shared component the magic-link page uses, so the two cannot drift.
+describe('recover/index.vue — expired step (410 reached via the shared loadItems path)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  function mountAtExpired(masked = 'g***@example.com') {
+    step.value = 'expired'
+    maskedEmail.value = masked
+    email.value = 'gran@example.com'
+    error.value = ''
+    pending.value = false
+    cooldown.value = 0
+    canResend.value = true
+    return mount(RecoverPage, { global: { stubs: { ClientOnly: { template: '<div><slot /></div>' } } } })
+  }
+
+  it('renders a real expired screen — never blank — naming the masked address from the 410', () => {
+    const w = mountAtExpired()
+    expect(w.text().trim()).not.toBe('')
+    expect(w.text()).toContain('That link has expired')
+    expect(w.text()).toContain('g***@example.com')
+  })
+
+  it('falls back to the no-address variant when the 410 body omits masked_email, instead of a dangling "to ."', () => {
+    const w = mountAtExpired('')
+    expect(w.text()).not.toContain('to .')
+    expect(w.text()).toContain('Our links work for 30 minutes')
+  })
+
+  it('offers a resend affordance without retyping the address, and never promises it arrives', async () => {
+    const w = mountAtExpired()
+    const resendBtn = w.findAll('button').find((b) => b.text().includes('Send another email'))
+    expect(resendBtn).toBeTruthy()
+    await resendBtn?.trigger('click')
+    expect(resend).toHaveBeenCalled()
+    expect(w.text().toLowerCase()).not.toContain('on its way')
+  })
+
+  it('shows the junk/spam hint only after resend has actually been pressed', async () => {
+    const w = mountAtExpired()
+    expect(w.text()).not.toContain('Nothing yet?')
+    await w
+      .findAll('button')
+      .find((b) => b.text().includes('Send another email'))
+      ?.trigger('click')
+    expect(w.text()).toContain('Nothing yet?')
+  })
+
+  it('keeps a Start over control on screen, resetting the state machine in place', async () => {
+    const w = mountAtExpired()
+    const startOver = w.findAll('button').find((b) => b.text().includes('Start over'))
+    expect(startOver).toBeTruthy()
+    await startOver?.trigger('click')
+    expect(restart).toHaveBeenCalled()
+  })
+})
+
+// The structural guarantee behind the fix: a final defensive v-else. No known `step` reaches it today,
+// but if the state machine ever grows a value this page has no branch for, the page must degrade to a
+// safe way out — never to a blank page, the dead end that started all this.
+describe('recover/index.vue — defensive fallback (no step ever renders blank)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('renders a safe screen with a Start over control for an unexpected step, instead of nothing', async () => {
+    // A value outside the RecoveryStep union stands in for a future step this page has no branch for.
+    const unexpected: string = 'some-future-step'
+    step.value = unexpected as RecoveryStep
+    email.value = 'gran@example.com'
+    error.value = ''
+    pending.value = false
+    const w = mount(RecoverPage, { global: { stubs: { ClientOnly: { template: '<div><slot /></div>' } } } })
+
+    expect(w.text().trim()).not.toBe('')
     const startOver = w.findAll('button').find((b) => b.text().includes('Start over'))
     expect(startOver).toBeTruthy()
     await startOver?.trigger('click')
