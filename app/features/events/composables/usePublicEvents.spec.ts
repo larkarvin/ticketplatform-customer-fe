@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
-const { listAll } = vi.hoisted(() => ({ listAll: vi.fn() }))
+const { listAll, list } = vi.hoisted(() => ({ listAll: vi.fn(), list: vi.fn() }))
 vi.mock('~/features/events/services/events.service', () => ({
-  eventsService: { listAll },
+  eventsService: { listAll, list },
 }))
 
 // Stub the Nuxt auto-import the composable relies on (runs outside a Nuxt app here).
 beforeEach(() => {
   listAll.mockReset()
+  list.mockReset()
   vi.stubGlobal('useAsyncData', (_key: string, handler: () => Promise<unknown>) => {
     const data = ref<unknown>(null)
     const pending = ref(true)
@@ -69,5 +70,17 @@ describe('usePublicEvents', () => {
     listAll.mockResolvedValue([])
     const { refresh } = usePublicEvents()
     expect(typeof refresh).toBe('function')
+  })
+
+  it('scope "upcoming" calls the server-filtered list() and never populates past', async () => {
+    const gala = { id: 1, slug: 'gala', title: 'Gala', tickets: [], starts_at: '2999-01-01T00:00:00Z', ends_at: null }
+    list.mockResolvedValue([gala])
+    const { events, upcoming, past } = usePublicEvents('upcoming')
+    await new Promise((r) => setTimeout(r, 0))
+    expect(list).toHaveBeenCalled()
+    expect(listAll).not.toHaveBeenCalled()
+    expect(upcoming.value).toEqual([gala])
+    expect(events.value).toEqual(upcoming.value)
+    expect(past.value).toEqual([])
   })
 })

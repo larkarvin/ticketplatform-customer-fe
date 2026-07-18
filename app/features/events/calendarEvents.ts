@@ -15,19 +15,26 @@ export interface CalendarEvent {
 // runtime's timezone for a "no timezone" event would make behavior depend on the machine running
 // the code, which is not deterministic in tests or across servers.
 function toEventLocal(iso: string, timeZone: string): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date(iso))
-  const get = (t: string): string => parts.find((p) => p.type === t)?.value ?? '00'
-  const hour = get('hour') === '24' ? '00' : get('hour')
-  return `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}`
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date(iso))
+    const get = (t: string): string => parts.find((p) => p.type === t)?.value ?? '00'
+    const hour = get('hour') === '24' ? '00' : get('hour')
+    return `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}`
+  } catch {
+    // Intl.DateTimeFormat throws RangeError on an unknown/invalid IANA timeZone. One bad event's
+    // timezone must not crash the whole calendar computed — fall back to the raw ISO string, same
+    // as the null-timezone passthrough below.
+    return iso
+  }
 }
 
 function toCalendarTimestamp(iso: string, timeZone: string | null): string {

@@ -101,4 +101,27 @@ describe('EventCard', () => {
     const w = mount(EventCard, { props: { event: event(), past: true }, global: { stubs } })
     expect(w.text()).not.toContain('From')
   })
+
+  it('mutes the fallback cover and title (not via parent opacity) when past is true', () => {
+    // The past section no longer wraps this card in a parent `opacity-70` (that dims the text
+    // below AA contrast). Muting must instead be self-contained: cover gets opacity+grayscale,
+    // title downshifts to gray-700, meta lines stay full-opacity gray-600.
+    const w = mount(EventCard, { props: { event: event(), past: true }, global: { stubs } })
+    const fallback = w.find('svg').element.parentElement
+    expect(fallback?.className).toContain('opacity-60')
+    expect(fallback?.className).toContain('grayscale')
+    const title = w.find('h2')
+    expect(title.classes()).toContain('text-gray-700')
+    expect(title.classes()).not.toContain('text-gray-900')
+  })
+
+  it('mutes the cover image (not via parent opacity) when past is true and a cover exists', () => {
+    const w = mount(EventCard, {
+      props: { event: event({ cover: { url: 'https://x/c.jpg' } }), past: true },
+      global: { stubs },
+    })
+    const img = w.find('img')
+    expect(img.classes()).toContain('opacity-60')
+    expect(img.classes()).toContain('grayscale')
+  })
 })

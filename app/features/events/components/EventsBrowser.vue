@@ -15,7 +15,7 @@ import EventCard from './EventCard.vue'
 
 const props = defineProps<{ view: 'list' | 'calendar' }>()
 
-const { upcoming, past, error, refresh } = usePublicEvents()
+const { upcoming, past, pending, error, refresh } = usePublicEvents()
 const isCalendar = computed(() => props.view === 'calendar')
 
 // Lazy so the list view never pays FullCalendar's bundle weight.
@@ -54,13 +54,15 @@ const EventsCalendar = defineAsyncComponent(() => import('./EventsCalendar.vue')
         <button
           type="button"
           data-test="retry-list"
-          class="min-h-tap mt-3 rounded-lg border border-gray-300 px-4 font-medium text-gray-700"
+          class="min-h-tap mt-3 rounded-lg border border-gray-300 px-4 font-medium text-gray-700 disabled:opacity-60"
+          :disabled="pending"
           @click="refresh()"
         >
-          Try again
+          {{ pending ? 'Loading…' : 'Try again' }}
         </button>
       </div>
       <template v-else>
+        <h2 class="mb-4 text-xl font-semibold">Upcoming events</h2>
         <div v-if="upcoming.length" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <EventCard v-for="e in upcoming" :key="e.id" :event="e" />
         </div>
@@ -70,7 +72,7 @@ const EventsCalendar = defineAsyncComponent(() => import('./EventsCalendar.vue')
 
         <section v-if="past.length" class="mt-10">
           <h2 class="mb-4 text-xl font-semibold text-gray-500">Past events</h2>
-          <div class="grid gap-6 opacity-70 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <EventCard v-for="e in past" :key="e.id" :event="e" :past="true" />
           </div>
         </section>
@@ -83,10 +85,11 @@ const EventsCalendar = defineAsyncComponent(() => import('./EventsCalendar.vue')
         <button
           type="button"
           data-test="retry-calendar"
-          class="min-h-tap mt-3 rounded-lg border border-gray-300 px-4 font-medium text-gray-700"
+          class="min-h-tap mt-3 rounded-lg border border-gray-300 px-4 font-medium text-gray-700 disabled:opacity-60"
+          :disabled="pending"
           @click="refresh()"
         >
-          Try again
+          {{ pending ? 'Loading…' : 'Try again' }}
         </button>
       </div>
       <ClientOnly v-else>

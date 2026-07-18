@@ -36,4 +36,9 @@ describe('toCalendarEvents', () => {
     expect(mapped?.start).toBe('2026-09-12T06:00:00')
     expect(mapped?.end).toBe('2026-09-12T08:00:00')
   })
+
+  it('falls back to the raw ISO string (no throw) when the timezone is unrecognized', () => {
+    const mapped = toCalendarEvents([ev({ timezone: 'Not/AZone', starts_at: '2026-09-12T06:00:00Z' })])[0]
+    expect(mapped?.start).toBe('2026-09-12T06:00:00Z')
+  })
 })

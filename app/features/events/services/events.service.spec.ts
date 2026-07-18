@@ -43,6 +43,13 @@ describe('eventsService', () => {
     expect(r.order_number).toBe('A1')
   })
 
+  it('list requests only upcoming public events + unwraps the data envelope', async () => {
+    get.mockResolvedValue({ data: [{ id: 1 }] })
+    const events = await eventsService.list()
+    expect(get).toHaveBeenCalledWith('/events/public', { query: { 'filter[upcoming]': 1 } })
+    expect(events).toEqual([{ id: 1 }])
+  })
+
   it('listAll requests every public event (no upcoming filter) + unwraps the data envelope', async () => {
     get.mockResolvedValue({ data: [{ id: 1 }] })
     const events = await eventsService.listAll()
