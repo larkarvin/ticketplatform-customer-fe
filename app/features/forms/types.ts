@@ -45,11 +45,13 @@ export interface SubmitResult {
   payment_total?: number
 }
 
+/** Shape of FieldMediaResource — the API returns `name`, not `original_filename`, and no `id`. */
 export interface UploadedMedia {
-  id: number
   uuid: string
-  original_filename: string
   url: string
+  name: string
+  mime_type?: string
+  size?: number
 }
 
 /** Answers keyed by field id, plus optional guest email. */

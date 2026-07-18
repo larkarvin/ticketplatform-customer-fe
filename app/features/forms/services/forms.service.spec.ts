@@ -38,7 +38,7 @@ describe('formsService', () => {
   })
 
   it('uploadFieldMedia posts multipart FormData to the field upload endpoint', async () => {
-    post.mockResolvedValue({ data: { id: 3, uuid: 'abc', original_filename: 'f.png', url: '/u' } })
+    post.mockResolvedValue({ data: { uuid: 'abc', url: '/u', name: 'f.png', mime_type: 'image/png', size: 1 } })
     const file = new File(['x'], 'f.png', { type: 'image/png' })
     const media = await formsService.uploadFieldMedia('x', 9, file)
     const [url, body] = post.mock.calls[0] ?? []
