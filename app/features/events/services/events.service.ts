@@ -5,7 +5,7 @@ import type { EventOrderResponse, OrderCalculation, PublicEvent, PublicEventList
 export const eventsService = {
   list: (): Promise<PublicEventListItem[]> =>
     useApiClient()
-      .get<{ data: PublicEventListItem[] }>('/events/public/', { query: { 'filter[upcoming]': 1 } })
+      .get<{ data: PublicEventListItem[] }>('/events/public', { query: { 'filter[upcoming]': 1 } })
       .then((r) => r.data),
 
   getPublicEvent: (slug: string): Promise<PublicEvent> =>
