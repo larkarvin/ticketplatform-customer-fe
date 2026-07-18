@@ -120,7 +120,7 @@ export async function usePublicForm(slug: string) {
     try {
       const media = await formsService.uploadFieldMedia(slug, fieldId, file)
       setAnswer(fieldId, media.uuid)
-      uploads[fieldId] = { uploading: false, filename: media.original_filename }
+      uploads[fieldId] = { uploading: false, filename: media.name }
     } catch {
       uploads[fieldId] = { uploading: false, filename: null }
       // api client already toasted the failure

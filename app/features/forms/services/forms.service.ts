@@ -9,7 +9,9 @@ export const formsService = {
       .then((r) => r.data),
 
   submitForm: (slug: string, answers: SubmitAnswers): Promise<SubmitResult> =>
-    useApiClient().post<SubmitResult>(`/forms/public/${slug}/submit`, answers),
+    useApiClient()
+      .post<{ data: SubmitResult }>(`/forms/public/${slug}/submit`, answers)
+      .then((r) => r.data),
 
   // Server-authoritative price breakdown for the current answers (keyed by field id).
   calculatePayment: (slug: string, data: Record<string, unknown>): Promise<PaymentBreakdown> =>
@@ -20,7 +22,9 @@ export const formsService = {
   uploadFieldMedia: (slug: string, fieldId: number, file: File): Promise<UploadedMedia> => {
     const form = new FormData()
     form.append('file', file)
-    return useApiClient().post<UploadedMedia>(`/forms/public/${slug}/fields/${fieldId}/upload`, form)
+    return useApiClient()
+      .post<{ data: UploadedMedia }>(`/forms/public/${slug}/fields/${fieldId}/upload`, form)
+      .then((r) => r.data)
   },
 
   // Kick off payment for the order minted by submit. The /orders/{id}/pay endpoint is

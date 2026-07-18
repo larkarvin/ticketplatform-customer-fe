@@ -59,8 +59,11 @@ const displayName = computed(() => props.orgName?.trim() || chrome.brandName)
         </NuxtLink>
         <nav v-if="links.enabled" class="flex items-center gap-4 text-sm">
           <span class="hidden text-gray-400 sm:inline">For organizers</span>
-          <a :href="links.signIn" class="min-h-tap font-medium text-gray-700">Sign in</a>
-          <a :href="links.signUp" class="min-h-tap rounded-full bg-brand-500 px-4 py-2 font-medium text-white">
+          <a :href="links.signIn" class="min-h-tap inline-flex items-center font-medium text-gray-700">Sign in</a>
+          <a
+            :href="links.signUp"
+            class="min-h-tap inline-flex items-center rounded-full bg-brand-500 px-4 py-2 font-medium text-white"
+          >
             Sign up
           </a>
         </nav>
