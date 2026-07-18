@@ -5,7 +5,7 @@
 import dayGridPlugin from '@fullcalendar/daygrid'
 import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/vue3'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { toCalendarEvents } from '../calendarEvents'
 import type { PublicEventListItem } from '../types'
 
@@ -23,11 +23,20 @@ onBeforeUnmount(() => mq.removeEventListener('change', onChange))
 
 const calendarRef = ref<InstanceType<typeof FullCalendar> | null>(null)
 
+// FullCalendar only reads `initialView` once at construction — resetOptions ignores
+// later changes to it. Drive view switching through the calendar API instead so an
+// already-mounted calendar reacts to viewport crossings (resize/tablet rotation).
+watch(isDesktop, (desktop) => {
+  calendarRef.value?.getApi().changeView(desktop ? 'dayGridMonth' : 'listMonth')
+})
+
+const events = computed(() => toCalendarEvents([...props.past, ...props.upcoming]))
+
 const options = computed(() => ({
   plugins: [dayGridPlugin, listPlugin],
   initialView: isDesktop.value ? 'dayGridMonth' : 'listMonth',
   headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-  events: toCalendarEvents([...props.past, ...props.upcoming]),
+  events: events.value,
   height: 'auto',
   // Navigate in-app instead of the default full page load FullCalendar does for `url`.
   eventClick: (info: { jsEvent: MouseEvent; event: { url: string } }) => {
