@@ -8,6 +8,12 @@ export const eventsService = {
       .get<{ data: PublicEventListItem[] }>('/events/public', { query: { 'filter[upcoming]': 1 } })
       .then((r) => r.data),
 
+  // Every published, listed event (past + future) — the /events browser splits client-side.
+  listAll: (): Promise<PublicEventListItem[]> =>
+    useApiClient()
+      .get<{ data: PublicEventListItem[] }>('/events/public')
+      .then((r) => r.data),
+
   getPublicEvent: (slug: string): Promise<PublicEvent> =>
     useApiClient()
       .get<{ data: PublicEvent }>(`/events/public/${slug}`)
