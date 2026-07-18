@@ -23,10 +23,12 @@ describe('buildSitemapXml', () => {
     expect(xml).not.toContain('<lastmod>')
   })
 
-  it('produces only the home URL when there are no events', () => {
+  it('produces the static pages (home + events browser) when there are no events', () => {
     const xml = buildSitemapXml('https://tix.test', [])
 
     expect(xml).toContain('<loc>https://tix.test/</loc>')
-    expect(xml.match(/<url>/g)).toHaveLength(1)
+    expect(xml).toContain('<loc>https://tix.test/events</loc>')
+    expect(xml).toContain('<loc>https://tix.test/events/calendar</loc>')
+    expect(xml.match(/<url>/g)).toHaveLength(3)
   })
 })
