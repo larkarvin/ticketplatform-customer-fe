@@ -106,7 +106,12 @@ useHead({ link: [{ rel: 'canonical', href: `${origin}/` }] })
             Create your event, sell tickets, and build custom registration forms — with payments collected all in one
             place. Set up in minutes and share a single link.
           </p>
-          <a :href="links.signUp || '/'" class="btn !rounded-[4px] btn--theme hover--tra-white">Post your events</a>
+          <div class="flex flex-wrap items-center gap-6">
+            <a href="/events" class="btn !rounded-[4px] btn--theme hover--tra-white">See all events</a>
+            <a :href="links.signUp || '/'" class="color--white min-h-tap inline-flex items-center underline">
+              Post your events
+            </a>
+          </div>
         </div>
         <EventCard :event="singleEvent" />
       </div>
