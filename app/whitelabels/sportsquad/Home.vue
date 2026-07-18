@@ -116,8 +116,11 @@ useHead({ link: [{ rel: 'canonical', href: `${origin}/` }] })
         <div class="mt-[40px]">
           <EventListing :events="events" :error="error" :heading="''" />
         </div>
-        <div class="mt-[45px] text-center">
-          <a :href="links.signUp || '/'" class="btn !rounded-[4px] btn--theme hover--tra-white">Post your events</a>
+        <div class="mt-[45px] flex flex-wrap items-center justify-center gap-6">
+          <a href="/events" class="btn !rounded-[4px] btn--theme hover--tra-white">See all events</a>
+          <a :href="links.signUp || '/'" class="color--white min-h-tap inline-flex items-center underline">
+            Post your events
+          </a>
         </div>
       </div>
     </Teleport>
