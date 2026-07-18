@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { computed } from 'vue'
 import EventsBrowser from './EventsBrowser.vue'
 
@@ -30,9 +30,20 @@ const past = [
     location: null,
     currency: 'USD',
     cover: null,
-    tickets: [],
+    tickets: [
+      {
+        price: 20,
+        price_formatted: 'USD 20.00',
+        early_bird_price: null,
+        early_bird_price_formatted: null,
+        is_early_bird: false,
+      },
+    ],
   },
 ]
+
+const refresh = vi.fn()
+const errorValue = { value: undefined as unknown }
 
 vi.mock('../composables/usePublicEvents', () => ({
   usePublicEvents: () => ({
@@ -40,7 +51,8 @@ vi.mock('../composables/usePublicEvents', () => ({
     upcoming: computed(() => upcoming),
     past: computed(() => past),
     pending: computed(() => false),
-    error: computed(() => undefined),
+    error: computed(() => errorValue.value),
+    refresh,
   }),
 }))
 
@@ -50,6 +62,35 @@ const stubs = {
 }
 
 describe('EventsBrowser', () => {
+  afterEach(() => {
+    errorValue.value = undefined
+    refresh.mockReset()
+  })
+
+  it('past events never show a price, even when their event has tickets', () => {
+    const w = mount(EventsBrowser, { props: { view: 'list' }, global: { stubs } })
+    const pastSection = w.findAll('section').find((s) => s.text().includes('Past events'))
+    expect(pastSection?.text()).not.toContain('From')
+  })
+
+  it('list view shows a retry button on error that calls refresh', async () => {
+    errorValue.value = new Error('boom')
+    const w = mount(EventsBrowser, { props: { view: 'list' }, global: { stubs } })
+    const btn = w.find('[data-test="retry-list"]')
+    expect(btn.exists()).toBe(true)
+    await btn.trigger('click')
+    expect(refresh).toHaveBeenCalled()
+  })
+
+  it('calendar view shows a retry button on error that calls refresh', async () => {
+    errorValue.value = new Error('boom')
+    const w = mount(EventsBrowser, { props: { view: 'calendar' }, global: { stubs } })
+    const btn = w.find('[data-test="retry-calendar"]')
+    expect(btn.exists()).toBe(true)
+    await btn.trigger('click')
+    expect(refresh).toHaveBeenCalled()
+  })
+
   it('list view renders upcoming events and a past section', () => {
     const w = mount(EventsBrowser, { props: { view: 'list' }, global: { stubs } })
     expect(w.text()).toContain('Upcoming A')

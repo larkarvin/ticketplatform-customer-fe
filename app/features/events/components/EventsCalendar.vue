@@ -56,14 +56,14 @@ const options = computed(() => ({
 <style scoped>
 /* TailAdmin-flavored FullCalendar theming via CSS vars (FullCalendar v6 exposes these). */
 .events-calendar :deep(.fc) {
-  --fc-border-color: var(--color-gray-200, #e5e7eb);
-  --fc-today-bg-color: var(--color-brand-50, #eff6ff);
-  --fc-event-bg-color: var(--color-brand-500, #3b82f6);
-  --fc-event-border-color: var(--color-brand-500, #3b82f6);
-  --fc-button-bg-color: var(--color-brand-500, #3b82f6);
-  --fc-button-border-color: var(--color-brand-500, #3b82f6);
-  --fc-button-active-bg-color: var(--color-brand-600, #2563eb);
-  --fc-button-hover-bg-color: var(--color-brand-600, #2563eb);
+  --fc-border-color: var(--color-gray-200);
+  --fc-today-bg-color: var(--color-brand-50);
+  --fc-event-bg-color: var(--color-brand-500);
+  --fc-event-border-color: var(--color-brand-500);
+  --fc-button-bg-color: var(--color-brand-500);
+  --fc-button-border-color: var(--color-brand-500);
+  --fc-button-active-bg-color: var(--color-brand-600);
+  --fc-button-hover-bg-color: var(--color-brand-600);
   font-size: 0.875rem;
 }
 .events-calendar :deep(.fc .fc-toolbar-title) {

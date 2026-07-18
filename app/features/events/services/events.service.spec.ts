@@ -12,13 +12,6 @@ describe('eventsService', () => {
     post.mockReset()
   })
 
-  it('list requests upcoming public events + unwraps the data envelope', async () => {
-    get.mockResolvedValue({ data: [{ id: 1, slug: 'gala', title: 'Gala', tickets: [] }] })
-    const events = await eventsService.list()
-    expect(get).toHaveBeenCalledWith('/events/public', { query: { 'filter[upcoming]': 1 } })
-    expect(events).toEqual([{ id: 1, slug: 'gala', title: 'Gala', tickets: [] }])
-  })
-
   it('getPublicEvent unwraps the data envelope', async () => {
     get.mockResolvedValue({ data: { id: 1, slug: 'gala', title: 'Gala', tickets: [] } })
     const event = await eventsService.getPublicEvent('gala')

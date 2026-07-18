@@ -24,7 +24,7 @@ beforeEach(() => {
       .finally(() => {
         pending.value = false
       })
-    return Object.assign(promise, { data, pending, error })
+    return Object.assign(promise, { data, pending, error, refresh: vi.fn() })
   })
 })
 
@@ -63,5 +63,11 @@ describe('usePublicEvents', () => {
     expect(upcoming.value.map((e) => e.id)).toEqual([2])
     expect(past.value.map((e) => e.id)).toEqual([1])
     expect(events.value).toEqual(upcoming.value)
+  })
+
+  it('exposes refresh from useAsyncData for retry-on-error UIs', async () => {
+    listAll.mockResolvedValue([])
+    const { refresh } = usePublicEvents()
+    expect(typeof refresh).toBe('function')
   })
 })

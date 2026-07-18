@@ -3,11 +3,6 @@ import { useApiClient } from '#core/api'
 import type { EventOrderResponse, OrderCalculation, PublicEvent, PublicEventListItem, RegisterPayload } from '../types'
 
 export const eventsService = {
-  list: (): Promise<PublicEventListItem[]> =>
-    useApiClient()
-      .get<{ data: PublicEventListItem[] }>('/events/public', { query: { 'filter[upcoming]': 1 } })
-      .then((r) => r.data),
-
   // Every published, listed event (past + future) — the /events browser splits client-side.
   listAll: (): Promise<PublicEventListItem[]> =>
     useApiClient()

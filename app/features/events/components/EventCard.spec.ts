@@ -96,4 +96,9 @@ describe('EventCard', () => {
     const w = mount(EventCard, { props: { event: event({ tickets: [] }) }, global: { stubs } })
     expect(w.text()).not.toContain('From')
   })
+
+  it('hides the price when past is true, even with tickets', () => {
+    const w = mount(EventCard, { props: { event: event(), past: true }, global: { stubs } })
+    expect(w.text()).not.toContain('From')
+  })
 })
