@@ -7,11 +7,12 @@ import { formatEventDate } from '../eventDate'
 import { ticketEffectivePrice, ticketPriceLabel } from '../ticketPricing'
 import type { PublicEventListItem } from '../types'
 
-const props = defineProps<{ event: PublicEventListItem }>()
+const props = withDefaults(defineProps<{ event: PublicEventListItem; past?: boolean }>(), { past: false })
 
 const when = computed(() => formatEventDate(props.event.starts_at, props.event.ends_at, props.event.timezone))
 
 const fromPrice = computed(() => {
+  if (props.past) return null
   const { tickets } = props.event
   if (!tickets.length) return null
   const cheapest = tickets.reduce(
@@ -36,14 +37,24 @@ const fromPrice = computed(() => {
         width="400"
         height="200"
         class="h-48 w-full object-cover"
+        :class="{ 'opacity-60 grayscale': past }"
       />
-      <div v-else class="flex h-48 items-center justify-center text-gray-300 dark:text-gray-600">
+      <div
+        v-else
+        class="flex h-48 items-center justify-center text-gray-300 dark:text-gray-600"
+        :class="{ 'opacity-60 grayscale': past }"
+      >
         <Calendar :size="48" aria-hidden="true" />
       </div>
     </div>
 
     <div class="flex flex-1 flex-col gap-2 p-5">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ event.title }}</h2>
+      <h2
+        class="text-lg font-semibold"
+        :class="past ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white'"
+      >
+        {{ event.title }}
+      </h2>
 
       <p class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
         <Calendar :size="16" class="shrink-0 text-gray-400" aria-hidden="true" />

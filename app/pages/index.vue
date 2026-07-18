@@ -2,7 +2,7 @@
 import Home from '#whitelabel/Home.vue'
 import { usePublicEvents } from '~/features/events'
 
-const { events, error } = usePublicEvents()
+const { events, error } = usePublicEvents('upcoming')
 const staffUrl = useRuntimeConfig().public.staffUrl as string
 </script>
 

@@ -21,15 +21,20 @@ const displayName = computed(() => props.orgName?.trim() || chrome.brandName)
           <img v-if="logoUrl" :src="logoUrl" :alt="displayName" class="h-8 w-auto" />
           <span v-else class="sq-accent text-xl font-bold">{{ displayName }}</span>
         </NuxtLink>
-        <nav v-if="links.enabled" class="flex items-center gap-4 text-sm">
-          <span class="hidden text-gray-400 sm:inline">For organizers</span>
-          <a :href="links.signIn" class="min-h-tap inline-flex items-center font-semibold text-gray-700">Sign in</a>
-          <a
-            :href="links.signUp"
-            class="sq-accent-bg min-h-tap inline-flex items-center rounded-full px-4 py-2 font-semibold text-white"
-          >
-            Sign up
-          </a>
+        <nav class="flex items-center gap-4 text-sm">
+          <NuxtLink to="/events" class="min-h-tap inline-flex items-center font-semibold text-gray-700">
+            Events
+          </NuxtLink>
+          <template v-if="links.enabled">
+            <span class="hidden text-gray-400 sm:inline">For organizers</span>
+            <a :href="links.signIn" class="min-h-tap inline-flex items-center font-semibold text-gray-700">Sign in</a>
+            <a
+              :href="links.signUp"
+              class="sq-accent-bg min-h-tap inline-flex items-center rounded-full px-4 py-2 font-semibold text-white"
+            >
+              Sign up
+            </a>
+          </template>
         </nav>
       </div>
     </header>
