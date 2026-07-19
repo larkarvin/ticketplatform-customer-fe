@@ -31,6 +31,12 @@ const displayName = computed(() => props.orgName?.trim() || chrome.brandName)
           <BrandLogo v-else />
         </NuxtLink>
         <nav class="flex items-center gap-3 text-sm sm:gap-5">
+          <NuxtLink
+            to="/events"
+            class="ct-focus min-h-tap inline-flex items-center font-medium text-gray-700 transition hover:text-brand-600"
+          >
+            Events
+          </NuxtLink>
           <a
             :href="links.signIn || '/'"
             class="ct-focus min-h-tap inline-flex items-center font-medium text-gray-700 transition hover:text-brand-600"
