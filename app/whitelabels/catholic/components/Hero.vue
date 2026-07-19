@@ -11,12 +11,12 @@ defineProps<{ eyebrow: string; heading: string; lead: string; browse: string; se
       <h1 class="mt-4 text-5xl text-brand-600 sm:text-6xl">{{ heading }}</h1>
       <p class="mt-5 max-w-md text-xl text-gray-600">{{ lead }}</p>
       <div class="mt-8 flex flex-wrap gap-4">
-        <a
-          href="#events"
+        <NuxtLink
+          to="/events"
           class="ct-focus min-h-tap inline-flex items-center rounded-full bg-brand-600 px-6 py-3.5 font-semibold text-white transition hover:bg-brand-700"
         >
           {{ browse }}
-        </a>
+        </NuxtLink>
         <a
           :href="setUpHref || '/'"
           class="ct-focus min-h-tap inline-flex items-center rounded-full border border-gray-300 px-6 py-3.5 font-semibold text-brand-600 transition hover:border-brand-600 hover:bg-gray-100"
