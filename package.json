@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "nuxt dev --host 0.0.0.0",
+    "dev:catholic": "npm_config_site=catholictickets.com nuxt dev --host 0.0.0.0 --dotenv .env.catholictickets.dev",
     "build": "nuxt build",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
